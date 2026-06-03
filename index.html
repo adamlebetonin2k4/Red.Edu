@@ -17,40 +17,40 @@
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
     <style>
-        /* ===== THEME VARIABLES ===== */
+        /* ===== THEME VARIABLES — RED ONLY ===== */
         :root {
             --neon-red: #dc2626;
             --neon-red-light: #ef4444;
+            --neon-red-dark: #991b1b;
             --neon-red-glow: rgba(220, 38, 38, 0.4);
-            --neon-cyan: #06b6d4;
-            --neon-purple: #8b5cf6;
-            --neon-pink: #ec4899;
             
-            --bg-main: #f8f9fc;
-            --bg-surface: rgba(255, 255, 255, 0.75);
+            /* Light mode: pure white + red */
+            --bg-main: #ffffff;
+            --bg-surface: rgba(250, 250, 250, 0.9);
             --bg-solid: #ffffff;
             --text-primary: #0f172a;
             --text-secondary: #64748b;
-            --border-color: rgba(220, 38, 38, 0.12);
-            --border-subtle: #e2e8f0;
-            --grid-opacity: 0.04;
+            --border-color: rgba(220, 38, 38, 0.15);
+            --border-subtle: #e5e5e5;
+            --grid-opacity: 0.05;
         }
 
         body.dark-mode {
-            --bg-main: #05050a;
-            --bg-surface: rgba(15, 15, 25, 0.75);
-            --bg-solid: #0f0f1a;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --border-color: rgba(239, 68, 68, 0.25);
-            --border-subtle: #1e293b;
-            --grid-opacity: 0.08;
+            /* Dark mode: neutral grey + red (no blue tint) */
+            --bg-main: #121212;
+            --bg-surface: rgba(28, 28, 28, 0.9);
+            --bg-solid: #1a1a1a;
+            --text-primary: #e8e8e8;
+            --text-secondary: #9a9a9a;
+            --border-color: rgba(220, 38, 38, 0.3);
+            --border-subtle: #2a2a2a;
+            --grid-opacity: 0.06;
         }
 
         /* ===== GLOBAL STYLES ===== */
         html, body {
             height: 100vh;
-            overflow: hidden; /* Prevent whole-page scroll */
+            overflow: hidden;
         }
 
         * {
@@ -60,7 +60,7 @@
         *::-webkit-scrollbar { width: 8px; height: 8px; }
         *::-webkit-scrollbar-track { background: var(--bg-main); }
         *::-webkit-scrollbar-thumb { 
-            background: linear-gradient(180deg, var(--neon-red), #991b1b); 
+            background: linear-gradient(180deg, var(--neon-red), var(--neon-red-dark)); 
             border-radius: 4px;
         }
 
@@ -85,15 +85,15 @@
             position: fixed; width: 500px; height: 500px; border-radius: 50%;
             pointer-events: none; z-index: -1;
             background: radial-gradient(circle, 
-                rgba(220, 38, 38, 0.1) 0%, 
-                rgba(6, 182, 212, 0.05) 30%, 
+                rgba(220, 38, 38, 0.12) 0%, 
+                rgba(220, 38, 38, 0.04) 30%, 
                 transparent 70%);
             transform: translate(-50%, -50%);
             transition: all 0.15s ease;
             mix-blend-mode: screen;
         }
 
-        /* ===== HOLOGRAPHIC GRID ===== */
+        /* ===== HOLOGRAPHIC GRID (red only) ===== */
         body::before {
             content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
             background-image: 
@@ -106,11 +106,11 @@
             0% { background-position: 0 0; } 100% { background-position: 60px 60px; }
         }
 
-        /* ===== HEADER (fixed, non-scrolling) ===== */
+        /* ===== HEADER ===== */
         header {
             background: var(--bg-surface);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
             border-bottom: 1px solid var(--border-color);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             flex-shrink: 0;
@@ -125,9 +125,9 @@
 
         #theme-toggle { transition: color 0.2s, transform 0.3s, filter 0.3s; color: var(--text-secondary); }
         #theme-toggle:hover {
-            color: var(--neon-purple);
+            color: var(--neon-red) !important;
             transform: rotate(15deg) scale(1.1);
-            filter: drop-shadow(0 0 8px var(--neon-purple));
+            filter: drop-shadow(0 0 8px var(--neon-red-glow));
         }
 
         /* ===== MOBILE MENU BUTTON ===== */
@@ -150,15 +150,9 @@
             box-shadow: 0 0 12px var(--neon-red-glow);
         }
 
-        /* ===== DESKTOP NAVIGATION ===== */
-        .desktop-nav {
-            display: flex;
-        }
-        
+        .desktop-nav { display: flex; }
         @media (max-width: 768px) {
-            .desktop-nav {
-                display: none !important;
-            }
+            .desktop-nav { display: none !important; }
         }
 
         /* ===== TABS ===== */
@@ -179,7 +173,7 @@
             border-bottom: 2px solid rgba(220, 38, 38, 0.5) !important;
         }
 
-        /* Mobile navigation - SOLID BACKGROUND */
+        /* Mobile navigation - solid grey/red */
         #mobile-nav {
             display: none;
             position: absolute;
@@ -194,9 +188,7 @@
             z-index: 50;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
         }
-        #mobile-nav.active {
-            display: block;
-        }
+        #mobile-nav.active { display: block; }
         #mobile-nav .nav-tab {
             display: block;
             width: 100%;
@@ -228,10 +220,10 @@
         #btn-refresh { transition: all 0.4s; color: var(--text-secondary); }
         #btn-refresh:hover { color: var(--neon-red); transform: rotate(180deg); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
 
-        /* ===== MAIN CONTENT (scrollable area) ===== */
+        /* ===== MAIN CONTENT ===== */
         main {
             flex: 1 1 auto;
-            min-height: 0; /* Critical for scroll within flex child */
+            min-height: 0;
             overflow-y: auto;
             overflow-x: hidden;
             position: relative;
@@ -250,7 +242,7 @@
         }
         .pdf-item::before {
             content: ''; position: absolute; top: -100%; left: -100%; width: 300%; height: 300%;
-            background: linear-gradient(45deg, transparent 40%, rgba(220, 38, 38, 0.1) 45%, rgba(139, 92, 246, 0.1) 50%, transparent 60%);
+            background: linear-gradient(45deg, transparent 40%, rgba(220, 38, 38, 0.12) 45%, rgba(220, 38, 38, 0.08) 50%, transparent 60%);
             transition: all 0.6s ease; pointer-events: none;
         }
         .pdf-item:hover::before { top: -50%; left: -50%; }
@@ -310,13 +302,15 @@
         .pdf-item i.fa-external-link-alt { color: var(--text-secondary); opacity: 0.5; transition: all 0.3s; }
         .pdf-item:hover i.fa-external-link-alt { opacity: 1; color: var(--neon-red); filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
 
+        /* Thumbnail container — subtle red tint only */
         .pdf-item > div:first-child {
-            background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
+            background: rgba(220, 38, 38, 0.06) !important;
             border: 1px solid var(--border-color);
         }
 
         #content-guide h2, #content-compiled h2 {
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-red) 50%, var(--neon-purple) 100%);
+            /* Red gradient only */
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-red) 100%);
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
         #content-guide > div, #content-compiled > div {
@@ -326,14 +320,19 @@
         }
         #content-guide > div::before, #content-compiled > div::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, var(--neon-red), var(--neon-purple), var(--neon-cyan), var(--neon-red));
-            background-size: 300% 100%; animation: rainbow-flow 4s linear infinite;
+            /* Red shimmer only (no rainbow) */
+            background: linear-gradient(90deg, transparent 0%, var(--neon-red) 50%, transparent 100%);
+            background-size: 200% 100%;
+            animation: red-shimmer 3s linear infinite;
         }
-        @keyframes rainbow-flow { 0% { background-position: 0% 0%; } 100% { background-position: 300% 0%; } }
+        @keyframes red-shimmer { 
+            0% { background-position: -200% 0; } 
+            100% { background-position: 200% 0; } 
+        }
 
         #content-guide h3 { color: var(--neon-red) !important; font-weight: 700; letter-spacing: 0.05em; }
         .highlight-box {
-            background: linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%) !important;
+            background: rgba(220, 38, 38, 0.08) !important;
             border-left: 4px solid var(--neon-red) !important;
         }
         #content-guide strong { color: var(--neon-red); }
@@ -345,12 +344,12 @@
         }
         .note-compilation-item::before {
             content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-            background: linear-gradient(180deg, var(--neon-red), var(--neon-purple)); opacity: 0; transition: opacity 0.3s;
+            background: var(--neon-red); opacity: 0; transition: opacity 0.3s;
         }
         .note-compilation-item:hover { border-color: var(--neon-red) !important; transform: translateX(4px); }
         .note-compilation-item:hover::before { opacity: 1; }
 
-        /* ===== FOOTER (fixed, non-scrolling) ===== */
+        /* ===== FOOTER ===== */
         footer {
             background: var(--bg-surface) !important; 
             backdrop-filter: blur(10px);
@@ -362,17 +361,20 @@
         }
         footer::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, var(--neon-red), var(--neon-purple), var(--neon-cyan), transparent);
-            background-size: 200% 100%; animation: rainbow-flow 4s linear infinite;
+            /* Red shimmer only */
+            background: linear-gradient(90deg, transparent 0%, var(--neon-red) 50%, transparent 100%);
+            background-size: 200% 100%;
+            animation: red-shimmer 3s linear infinite;
         }
         footer a { color: var(--text-secondary); transition: all 0.3s; }
         footer a:hover { color: var(--neon-red) !important; text-shadow: 0 0 10px var(--neon-red-glow); }
 
+        /* ===== MODAL ===== */
         #viewer-modal { background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         body.dark-mode #viewer-modal { background: rgba(0,0,0,0.8); }
         
         #viewer-modal > div:first-child {
-            background: linear-gradient(90deg, var(--bg-surface) 0%, rgba(254, 242, 242, 0.9) 50%, rgba(237, 233, 254, 0.9) 100%) !important;
+            background: var(--bg-surface) !important;
             border-bottom: 2px solid var(--neon-red) !important;
             box-shadow: 0 4px 20px rgba(220, 38, 38, 0.15);
         }
@@ -381,7 +383,7 @@
         #close-modal:hover { color: var(--neon-red) !important; transform: translateX(-3px); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
 
         #btn-download-pdf {
-            background: linear-gradient(135deg, var(--neon-red) 0%, #991b1b 100%) !important; color: #fff !important;
+            background: linear-gradient(135deg, var(--neon-red) 0%, var(--neon-red-dark) 100%) !important; color: #fff !important;
             box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); transition: all 0.3s;
         }
         #btn-download-pdf:hover { box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5); transform: translateY(-1px); }
@@ -411,11 +413,12 @@
 
         #viewer-modal .flex-\[2\] { background: var(--border-subtle) !important; border-right: 1px solid var(--border-subtle) !important; }
 
+        /* Tech corners — all red now */
         .tech-corner { position: fixed; width: 60px; height: 60px; pointer-events: none; z-index: 5; opacity: 0.3; }
         .tech-corner.top-left { top: 20px; left: 20px; border-top: 1px solid var(--neon-red); border-left: 1px solid var(--neon-red); }
-        .tech-corner.top-right { top: 20px; right: 20px; border-top: 1px solid var(--neon-purple); border-right: 1px solid var(--neon-purple); }
-        .tech-corner.bottom-left { bottom: 20px; left: 20px; border-bottom: 1px solid var(--neon-cyan); border-left: 1px solid var(--neon-cyan); }
-        .tech-corner.bottom-right { bottom: 20px; right: 20px; border-bottom: 1px solid var(--neon-pink); border-right: 1px solid var(--neon-pink); }
+        .tech-corner.top-right { top: 20px; right: 20px; border-top: 1px solid var(--neon-red); border-right: 1px solid var(--neon-red); }
+        .tech-corner.bottom-left { bottom: 20px; left: 20px; border-bottom: 1px solid var(--neon-red); border-left: 1px solid var(--neon-red); }
+        .tech-corner.bottom-right { bottom: 20px; right: 20px; border-bottom: 1px solid var(--neon-red); border-right: 1px solid var(--neon-red); }
 
         .data-tag {
             position: fixed; font-family: 'JetBrains Mono', monospace !important; font-size: 10px;
@@ -428,35 +431,28 @@
                 padding-left: 1rem !important;
                 padding-right: 1rem !important;
             }
-            
             header h1 {
                 font-size: 1.1rem !important;
                 letter-spacing: 0.1em !important;
             }
-            
             .container {
                 padding-left: 1rem !important;
                 padding-right: 1rem !important;
             }
-            
             main {
                 padding-left: 1rem !important;
                 padding-right: 1rem !important;
             }
-            
             .pdf-item {
                 padding: 1rem !important;
             }
-            
             .pdf-item .w-16 {
                 width: 3.5rem !important;
                 height: 4.5rem !important;
             }
-            
             .pdf-item h3 {
                 font-size: 1rem !important;
             }
-            
             #viewer-modal .flex-1.md\:w-\[400px\] {
                 width: 100% !important;
                 max-width: none !important;
@@ -476,7 +472,6 @@
     <div class="data-tag" style="top: 30%; left: 2%;">SYS.ONLINE</div>
     <div class="data-tag" style="top: 60%; right: 2%;">NODE.ACTIVE</div>
 
-    <!-- HEADER: cố định, không scroll -->
     <header>
         <div class="container mx-auto px-6 py-3">
             <div class="flex justify-between items-center">
@@ -524,7 +519,6 @@
         </div>
     </header>
 
-    <!-- MAIN: đây là vùng scroll được -->
     <main>
         <div class="container mx-auto max-w-4xl">
             
@@ -556,7 +550,7 @@
                     </div>
                     <div class="pt-4" style="border-top: 1px solid var(--border-subtle);">
                         <p class="mb-4 italic" style="color: var(--text-secondary);">Nếu bạn muốn thảo luận, trao đổi sâu hơn về các tác phẩm hoặc kết nối với cộng đồng, hãy tham gia kênh Discord của chúng tôi:</p>
-                        <a href="https://discord.gg/tMY2uWycda" target="_blank" class="inline-flex items-center text-white font-bold py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg" style="background: linear-gradient(135deg, #5865F2 0%, #4752C4 100%);">
+                        <a href="https://discord.gg/tMY2uWycda" target="_blank" class="inline-flex items-center text-white font-bold py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg" style="background: linear-gradient(135deg, var(--neon-red) 0%, var(--neon-red-dark) 100%);">
                             <i class="fab fa-discord text-2xl mr-3"></i><span>Tham gia Discord RED. Education</span>
                         </a>
                     </div>
@@ -567,7 +561,7 @@
                 <h2 class="text-2xl sm:text-3xl mb-4 sm:mb-6 pb-3">Tổng hợp tất cả ghi chú</h2>
                 <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <p style="color: var(--text-secondary);" class="text-sm"><i class="fas fa-info-circle mr-2"></i>Tất cả ghi chú đã lưu của bạn, được tổng hợp theo thứ tự ID sách.</p>
-                    <button id="btn-download-all-notes" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center w-full sm:w-auto justify-center" style="background: linear-gradient(135deg, var(--neon-red) 0%, #991b1b 100%); color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
+                    <button id="btn-download-all-notes" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center w-full sm:w-auto justify-center" style="background: linear-gradient(135deg, var(--neon-red) 0%, var(--neon-red-dark) 100%); color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
                         <i class="fas fa-download mr-2"></i> Tải tất cả ghi chú (.txt)
                     </button>
                 </div>
@@ -582,7 +576,6 @@
         </div>
     </main>
 
-    <!-- FOOTER: cố định, không scroll -->
     <footer class="py-6 sm:py-8">
         <div class="container mx-auto px-6">
             <div class="flex flex-wrap justify-center gap-4 sm:gap-6 mb-4 sm:mb-6">
@@ -723,7 +716,8 @@
         const particles = [];
         const PARTICLE_COUNT = 50;
         const CONNECTION_DIST = 150;
-        const particleColors = ['#dc2626', '#8b5cf6', '#06b6d4', '#ec4899'];
+        // Red shades only - no purple/cyan/pink
+        const particleColors = ['#dc2626', '#ef4444', '#b91c1c', '#f87171', '#991b1b'];
 
         class Particle {
             constructor() {
@@ -747,7 +741,7 @@
             draw() {
                 holoCtx.beginPath(); holoCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 holoCtx.fillStyle = this.color;
-                holoCtx.globalAlpha = isDarkMode ? 0.6 : 0.3;
+                holoCtx.globalAlpha = isDarkMode ? 0.5 : 0.25;
                 holoCtx.fill(); holoCtx.globalAlpha = 1;
             }
         }
@@ -771,9 +765,11 @@
                     const dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < CONNECTION_DIST) {
                         holoCtx.beginPath(); holoCtx.moveTo(particles[i].x, particles[i].y); holoCtx.lineTo(particles[j].x, particles[j].y);
+                        // Red only gradient (was red-to-purple)
                         const gradient = holoCtx.createLinearGradient(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
-                        gradient.addColorStop(0, `rgba(220, 38, 38, ${(1 - dist/CONNECTION_DIST) * (isDarkMode ? 0.4 : 0.15)})`);
-                        gradient.addColorStop(1, `rgba(139, 92, 246, ${(1 - dist/CONNECTION_DIST) * (isDarkMode ? 0.4 : 0.15)})`);
+                        const alpha = (1 - dist/CONNECTION_DIST) * (isDarkMode ? 0.35 : 0.15);
+                        gradient.addColorStop(0, `rgba(220, 38, 38, ${alpha})`);
+                        gradient.addColorStop(1, `rgba(185, 28, 28, ${alpha})`);
                         holoCtx.strokeStyle = gradient; holoCtx.lineWidth = 0.8; holoCtx.stroke();
                     }
                 }
@@ -782,7 +778,7 @@
                     const dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < 180) {
                         holoCtx.beginPath(); holoCtx.moveTo(particles[i].x, particles[i].y); holoCtx.lineTo(mouse.x, mouse.y);
-                        holoCtx.strokeStyle = `rgba(220, 38, 38, ${(1 - dist/180) * (isDarkMode ? 0.5 : 0.2)})`;
+                        holoCtx.strokeStyle = `rgba(220, 38, 38, ${(1 - dist/180) * (isDarkMode ? 0.4 : 0.2)})`;
                         holoCtx.lineWidth = 1; holoCtx.stroke();
                     }
                 }
@@ -829,7 +825,6 @@
                 }
             });
             if (tabName === 'compiled') loadCompiledNotes();
-            // Scroll back to top when switching tabs
             document.querySelector('main').scrollTop = 0;
         }
 
