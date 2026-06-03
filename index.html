@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RED. Education</title>
+    
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="shortcut icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+
+    <style>
+        /* ===== THEME VARIABLES ===== */
+        :root {
+            --neon-red: #dc2626;
+            --neon-red-light: #ef4444;
+            --neon-red-glow: rgba(220, 38, 38, 0.4);
+            --neon-cyan: #06b6d4;
+            --neon-purple: #8b5cf6;
+            --neon-pink: #ec4899;
+            
+            --bg-main: #f8f9fc;
+            --bg-surface: rgba(255, 255, 255, 0.75);
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border-color: rgba(220, 38, 38, 0.12);
+            --border-subtle: #e2e8f0;
+            --matrix-opacity: 0.3;
+            --grid-opacity: 0.04;
+        }
+
+        body.dark-mode {
+            --bg-main: #05050a;
+            --bg-surface: rgba(15, 15, 25, 0.75);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: rgba(239, 68, 68, 0.25);
+            --border-subtle: #1e293b;
+            --matrix-opacity: 0.6;
+            --grid-opacity: 0.08;
+        }
+
+        /* ===== GLOBAL STYLES ===== */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-red) var(--border-subtle);
+        }
+        *::-webkit-scrollbar { width: 8px; height: 8px; }
+        *::-webkit-scrollbar-track { background: var(--bg-main); }
+        *::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, var(--neon-red), #991b1b); 
+            border-radius: 4px;
+        }
+
+        body { 
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace !important; }
+
+        /* ===== INTERACTIVE LAYERS ===== */
+        #holo-canvas, #matrix-canvas {
+            position: fixed; inset: 0; pointer-events: none; z-index: -2;
+        }
+        #matrix-canvas { opacity: var(--matrix-opacity); }
+
+        #cursor-glow {
+            position: fixed; width: 500px; height: 500px; border-radius: 50%;
+            pointer-events: none; z-index: -1;
+            background: radial-gradient(circle, 
+                rgba(220, 38, 38, 0.1) 0%, 
+                rgba(6, 182, 212, 0.05) 30%, 
+                transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: all 0.15s ease;
+            mix-blend-mode: screen;
+        }
+
+        /* ===== HOLOGRAPHIC GRID ===== */
+        body::before {
+            content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+            background-image: 
+                linear-gradient(rgba(220, 38, 38, var(--grid-opacity)) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(220, 38, 38, var(--grid-opacity)) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: grid-shift 20s linear infinite;
+        }
+        @keyframes grid-shift {
+            0% { background-position: 0 0; } 100% { background-position: 60px 60px; }
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        header h1 {
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-red) 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        #theme-toggle { transition: all 0.3s; color: var(--text-secondary); }
+        #theme-toggle:hover {
+            color: var(--neon-purple);
+            transform: rotate(15deg) scale(1.1);
+            filter: drop-shadow(0 0 8px var(--neon-purple));
+        }
+
+        /* ===== TABS ===== */
+        .nav-tab {
+            font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+            font-size: 0.72rem !important; transition: all 0.3s;
+            padding: 8px 4px !important; color: var(--text-secondary) !important;
+        }
+        .nav-tab.active-tab {
+            color: var(--neon-red) !important; opacity: 1 !important;
+            border-bottom: 2px solid var(--neon-red) !important;
+            text-shadow: 0 0 12px var(--neon-red-glow);
+        }
+        .nav-tab.inactive-tab { border-bottom: 2px solid transparent !important; opacity: 0.7 !important; }
+        .nav-tab.inactive-tab:hover {
+            color: var(--neon-red) !important; opacity: 1 !important;
+            border-bottom: 2px solid rgba(220, 38, 38, 0.5) !important;
+        }
+
+        #btn-refresh { transition: all 0.4s; color: var(--text-secondary); }
+        #btn-refresh:hover { color: var(--neon-red); transform: rotate(180deg); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
+
+        /* ===== MAIN CONTENT ===== */
+        main h2 {
+            font-weight: 700; letter-spacing: 0.05em; color: var(--text-primary) !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+        }
+
+        .pdf-item {
+            background: var(--bg-surface); backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle) !important;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .pdf-item::before {
+            content: ''; position: absolute; top: -100%; left: -100%; width: 300%; height: 300%;
+            background: linear-gradient(45deg, transparent 40%, rgba(220, 38, 38, 0.1) 45%, rgba(139, 92, 246, 0.1) 50%, transparent 60%);
+            transition: all 0.6s ease; pointer-events: none;
+        }
+        .pdf-item:hover::before { top: -50%; left: -50%; }
+        .pdf-item:hover {
+            transform: translateY(-4px) !important; border-color: var(--neon-red) !important;
+            box-shadow: 0 12px 32px rgba(220, 38, 38, 0.15);
+        }
+        .pdf-item h3 { color: var(--text-primary) !important; font-weight: 700; transition: color 0.3s; }
+        .pdf-item:hover h3 { color: var(--neon-red) !important; }
+        .pdf-item p { color: var(--text-secondary) !important; font-family: 'JetBrains Mono', monospace !important; font-size: 0.68rem !important; }
+        .pdf-item i.fa-external-link-alt { color: var(--text-secondary); opacity: 0.5; transition: all 0.3s; }
+        .pdf-item:hover i.fa-external-link-alt { opacity: 1; color: var(--neon-red); filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
+
+        .pdf-item > div:first-child {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
+            border: 1px solid var(--border-color);
+        }
+
+        #content-guide h2, #content-compiled h2 {
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-red) 50%, var(--neon-purple) 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        #content-guide > div, #content-compiled > div {
+            background: var(--bg-surface) !important; backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color) !important; color: var(--text-primary) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); position: relative; overflow: hidden;
+        }
+        #content-guide > div::before, #content-compiled > div::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--neon-red), var(--neon-purple), var(--neon-cyan), var(--neon-red));
+            background-size: 300% 100%; animation: rainbow-flow 4s linear infinite;
+        }
+        @keyframes rainbow-flow { 0% { background-position: 0% 0%; } 100% { background-position: 300% 0%; } }
+
+        #content-guide h3 { color: var(--neon-red) !important; font-weight: 700; letter-spacing: 0.05em; }
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%) !important;
+            border-left: 4px solid var(--neon-red) !important;
+        }
+        #content-guide strong { color: var(--neon-red); }
+
+        .note-compilation-item {
+            background: var(--bg-surface); backdrop-filter: blur(10px);
+            border: 1px solid var(--border-subtle) !important;
+            transition: all 0.4s; position: relative; overflow: hidden;
+        }
+        .note-compilation-item::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+            background: linear-gradient(180deg, var(--neon-red), var(--neon-purple)); opacity: 0; transition: opacity 0.3s;
+        }
+        .note-compilation-item:hover { border-color: var(--neon-red) !important; transform: translateX(4px); }
+        .note-compilation-item:hover::before { opacity: 1; }
+
+        footer {
+            background: var(--bg-surface) !important; backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-color);
+            position: relative;
+        }
+        footer::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-red), var(--neon-purple), var(--neon-cyan), transparent);
+            background-size: 200% 100%; animation: rainbow-flow 4s linear infinite;
+        }
+        footer a { color: var(--text-secondary); transition: all 0.3s; }
+        footer a:hover { color: var(--neon-red) !important; text-shadow: 0 0 10px var(--neon-red-glow); }
+
+        #viewer-modal { background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        body.dark-mode #viewer-modal { background: rgba(0,0,0,0.8); }
+        
+        #viewer-modal > div:first-child {
+            background: linear-gradient(90deg, var(--bg-surface) 0%, rgba(254, 242, 242, 0.9) 50%, rgba(237, 233, 254, 0.9) 100%) !important;
+            border-bottom: 2px solid var(--neon-red) !important;
+            box-shadow: 0 4px 20px rgba(220, 38, 38, 0.15);
+        }
+        #modal-title { font-weight: 700; letter-spacing: 0.08em; color: var(--text-primary) !important; }
+        #close-modal { transition: all 0.3s; color: var(--text-secondary); }
+        #close-modal:hover { color: var(--neon-red) !important; transform: translateX(-3px); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
+
+        #btn-download-pdf {
+            background: linear-gradient(135deg, var(--neon-red) 0%, #991b1b 100%) !important; color: #fff !important;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); transition: all 0.3s;
+        }
+        #btn-download-pdf:hover { box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5); transform: translateY(-1px); }
+        
+        #btn-download-notes {
+            background: transparent !important; border: 2px solid var(--neon-red) !important; color: var(--neon-red) !important; transition: all 0.3s;
+        }
+        #btn-download-notes:hover { background: rgba(220, 38, 38, 0.1) !important; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
+
+        #viewer-modal .flex-1.md\:w-\[400px\] { background: var(--bg-surface) !important; border-left: 1px solid var(--border-subtle); }
+        #viewer-modal .flex-1.md\:w-\[400px\] > div:first-child { background: var(--bg-main) !important; border-bottom: 1px solid var(--border-subtle) !important; }
+        #viewer-modal .flex-1.md\:w-\[400px\] h4 { color: var(--text-primary) !important; font-weight: 700; letter-spacing: 0.15em; }
+        #viewer-modal .flex-1.md\:w-\[400px\] .fa-sticky-note { color: var(--neon-red) !important; filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
+        
+        #note-id-display { background: rgba(220, 38, 38, 0.1) !important; color: var(--neon-red) !important; border: 1px solid rgba(220, 38, 38, 0.3); font-family: 'JetBrains Mono', monospace !important; }
+        #save-status { color: #10b981 !important; }
+        #btn-clear-notes { color: var(--neon-red) !important; transition: all 0.3s; }
+        #btn-clear-notes:hover { filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
+
+        #note-area {
+            background: var(--bg-main) !important; color: var(--text-primary) !important;
+            font-family: 'JetBrains Mono', monospace !important; font-size: 14px !important;
+            caret-color: var(--neon-red); border: none;
+        }
+        #note-area::placeholder { color: var(--text-secondary) !important; font-style: italic; }
+        #note-area:focus { box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.2); }
+
+        #viewer-modal .flex-\[2\] { background: var(--border-subtle) !important; border-right: 1px solid var(--border-subtle) !important; }
+
+        .tech-corner { position: fixed; width: 60px; height: 60px; pointer-events: none; z-index: 5; opacity: 0.3; }
+        .tech-corner.top-left { top: 20px; left: 20px; border-top: 1px solid var(--neon-red); border-left: 1px solid var(--neon-red); }
+        .tech-corner.top-right { top: 20px; right: 20px; border-top: 1px solid var(--neon-purple); border-right: 1px solid var(--neon-purple); }
+        .tech-corner.bottom-left { bottom: 20px; left: 20px; border-bottom: 1px solid var(--neon-cyan); border-left: 1px solid var(--neon-cyan); }
+        .tech-corner.bottom-right { bottom: 20px; right: 20px; border-bottom: 1px solid var(--neon-pink); border-right: 1px solid var(--neon-pink); }
+
+        .data-tag {
+            position: fixed; font-family: 'JetBrains Mono', monospace !important; font-size: 10px;
+            color: var(--neon-red); opacity: 0.3; pointer-events: none; z-index: 3; letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <canvas id="holo-canvas"></canvas>
+    <canvas id="matrix-canvas"></canvas>
+    <div id="cursor-glow"></div>
+
+    <div class="tech-corner top-left"></div>
+    <div class="tech-corner top-right"></div>
+    <div class="tech-corner bottom-left"></div>
+    <div class="tech-corner bottom-right"></div>
+    <div class="data-tag" style="top: 30%; left: 2%;">SYS.ONLINE</div>
+    <div class="data-tag" style="top: 60%; right: 2%;">NODE.ACTIVE</div>
+
+    <header class="shadow-md sticky top-0 z-40">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="logo.png" alt="Logo" class="h-10 w-auto object-contain rounded p-1 bg-white/50" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='block';">
+                <i id="logo-fallback" class="fas fa-graduation-cap text-2xl rounded p-1.5 hidden items-center justify-center" style="background: white; color: #dc2626;"></i>
+                <h1 class="text-xl tracking-wide">RED. EDUCATION</h1>
+            </div>
+            <nav class="flex items-center space-x-3">
+                <button id="tab-books" class="nav-tab active-tab cursor-pointer">Giáo trình</button>
+                <button id="tab-guide" class="nav-tab inactive-tab cursor-pointer">Hướng dẫn đọc</button>
+                <button id="tab-compiled" class="nav-tab inactive-tab cursor-pointer">Tổng hợp ghi chú</button>
+                
+                <button id="theme-toggle" class="p-2 ml-2" title="Chế độ sáng/tối">
+                    <i class="fas fa-moon text-lg"></i>
+                </button>
+                <button id="btn-refresh" class="p-2" title="Làm mới danh sách">
+                    <i class="fas fa-sync-alt text-lg"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-10 flex-grow max-w-4xl">
+        
+        <div id="content-books">
+            <h2 class="text-2xl mb-6 pb-2">Các tác phẩm và bài đọc</h2>
+            <div id="pdf-list" class="space-y-4">
+                <div class="flex items-center justify-center p-10 rounded border" style="background: var(--bg-surface); border-color: var(--border-subtle) !important;">
+                    <i class="fas fa-circle-notch fa-spin text-xl mr-3" style="color: var(--neon-red);"></i>
+                    <span class="text-sm font-mono" style="color: var(--text-secondary);">Đang tải danh sách...</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-guide" class="hidden">
+            <h2 class="text-3xl mb-8 pb-3">Cách đọc và trình tự đọc các tác phẩm</h2>
+            <div class="p-8 rounded-lg space-y-6 leading-relaxed text-[16px]">
+                <div>
+                    <h3 class="text-xl mb-3 flex items-center"><i class="fas fa-compass mr-2"></i> Điều hướng và Cách đọc</h3>
+                    <p>Chào mừng bạn đến với kho tàng triết học của RED. Education. Website được thiết kế để bạn có thể đọc và ghi chú trực tiếp. Khi mở bất kỳ tác phẩm nào, màn hình sẽ chia làm hai phần: trình đọc PDF bên trái và không gian Ghi chú (Notes) bên phải. Mọi ghi chú của bạn đều được tự động lưu lại theo mã số của tác phẩm đó.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl mb-3 flex items-center"><i class="fas fa-list-ol mr-2"></i> Trình tự đọc</h3>
+                    <p>Các tác phẩm trong danh sách <strong>Giáo trình</strong> được đánh số thứ tự từ thấp đến cao. Bạn <strong>bắt buộc phải đọc theo đúng trình tự này</strong>. Các con số thể hiện mạch tư duy lịch sử và logic phát triển của triết học từ giai đoạn khởi thủy đến hiện đại.</p>
+                </div>
+                <div class="p-5 rounded-r-lg highlight-box">
+                    <h3 class="text-lg mb-2 flex items-center"><i class="fas fa-lightbulb mr-2"></i> Về phần "Tóm tắt và nhận xét"</h3>
+                    <p class="mb-3">Trong mỗi tác phẩm, ngay sau phần Mục lục, sẽ có một phần <strong>"Tóm tắt và nhận xét"</strong>. Người đọc nên đặc biệt quan tâm đến phần này.</p>
+                    <p>Đây là nơi tôi cung cấp các gợi mở và đánh giá của tác phẩm. Bạn có thể sử dụng công cụ <strong>Ghi chú (Notes)</strong> trên website để ghi lại những suy nghĩ và phân tích của chính bạn.</p>
+                </div>
+                <div class="pt-4" style="border-top: 1px solid var(--border-subtle);">
+                    <p class="mb-4 italic" style="color: var(--text-secondary);">Nếu bạn muốn thảo luận, trao đổi sâu hơn về các tác phẩm hoặc kết nối với cộng đồng, hãy tham gia kênh Discord của chúng tôi:</p>
+                    <a href="https://discord.gg/tMY2uWycda" target="_blank" class="inline-flex items-center text-white font-bold py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg" style="background: linear-gradient(135deg, #5865F2 0%, #4752C4 100%);">
+                        <i class="fab fa-discord text-2xl mr-3"></i><span>Tham gia Discord RED. Education</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-compiled" class="hidden">
+            <h2 class="text-3xl mb-6 pb-3">Tổng hợp tất cả ghi chú</h2>
+            <div class="mb-6 flex justify-between items-center">
+                <p style="color: var(--text-secondary);" class="text-sm"><i class="fas fa-info-circle mr-2"></i>Tất cả ghi chú đã lưu của bạn, được tổng hợp theo thứ tự ID sách.</p>
+                <button id="btn-download-all-notes" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center" style="background: linear-gradient(135deg, var(--neon-red) 0%, #991b1b 100%); color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
+                    <i class="fas fa-download mr-2"></i> Tải tất cả ghi chú (.txt)
+                </button>
+            </div>
+            <div id="compiled-notes-list" class="space-y-4">
+                <div class="flex items-center justify-center p-10 rounded border" style="background: var(--bg-surface); border-color: var(--border-subtle) !important;">
+                    <i class="fas fa-circle-notch fa-spin text-xl mr-3" style="color: var(--neon-red);"></i>
+                    <span class="text-sm font-mono" style="color: var(--text-secondary);">Đang tải ghi chú...</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="py-8 mt-auto relative">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-wrap justify-center gap-6 mb-6">
+                <a href="https://discord.gg/tMY2uWycda" target="_blank" class="flex items-center space-x-2 transition"><i class="fab fa-discord text-xl"></i><span class="text-sm font-medium">Discord</span></a>
+                <a href="https://redpublications.substack.com" target="_blank" class="flex items-center space-x-2 transition"><i class="fas fa-rss text-xl"></i><span class="text-sm font-medium">Substack</span></a>
+                <a href="https://www.youtube.com/@RedcollectiveVN" target="_blank" class="flex items-center space-x-2 transition"><i class="fab fa-youtube text-xl"></i><span class="text-sm font-medium">YouTube</span></a>
+            </div>
+            <div class="pt-4 text-center text-xs" style="border-top: 1px solid var(--border-color);">
+                <p class="font-mono" style="color: var(--text-secondary);">&copy; 2026 RED. EDUCATION // ALL RIGHTS RESERVED</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="viewer-modal" class="fixed inset-0 z-50 hidden flex flex-col h-screen">
+        <div class="shadow-lg flex-shrink-0">
+            <div class="px-6 py-3 flex justify-between items-center flex-wrap gap-4">
+                <div class="flex items-center space-x-3">
+                    <button id="close-modal" class="p-2 -ml-2" title="Đóng"><i class="fas fa-arrow-left text-xl"></i></button>
+                    <h3 id="modal-title" class="truncate max-w-md text-lg">Tài liệu</h3>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="btn-download-notes" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center">
+                        <i class="fas fa-file-alt mr-2"></i> <span class="hidden sm:inline">Tải</span> Notes
+                    </button>
+                    <button id="btn-download-pdf" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center">
+                        <i class="fas fa-file-pdf mr-2"></i> <span class="hidden sm:inline">Tải</span> PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <div class="flex-[2] relative">
+                <iframe id="pdf-frame" src="" class="w-full h-full border-0"></iframe>
+            </div>
+            <div class="flex-1 md:w-[400px] lg:w-[450px] flex flex-col flex-shrink-0">
+                <div class="px-4 py-3 flex justify-between items-center shadow-sm flex-shrink-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-sticky-note"></i>
+                        <h4 class="text-sm uppercase tracking-wide">Ghi chú</h4>
+                        <span id="note-id-display" class="text-xs px-2 py-0.5 rounded hidden sm:inline-block"></span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span id="save-status" class="text-xs font-medium opacity-0 transition-opacity duration-300"><i class="fas fa-check-circle mr-1"></i>Đã lưu</span>
+                        <button id="btn-clear-notes" class="text-xs font-semibold" title="Xóa"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+                <textarea id="note-area" class="flex-1 w-full p-5 leading-relaxed focus:outline-none resize-none" placeholder="Viết ghi chú của bạn tại đây... (Tự động lưu theo ID sách)"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = themeToggle.querySelector('i');
+        let isDarkMode = localStorage.getItem('red_theme') === 'dark';
+
+        function applyTheme() {
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                themeIcon.className = 'fas fa-sun';
+            } else {
+                document.body.classList.remove('dark-mode');
+                themeIcon.className = 'fas fa-moon';
+            }
+        }
+        applyTheme();
+
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('red_theme', isDarkMode ? 'dark' : 'light');
+            applyTheme();
+        });
+
+        const holoCanvas = document.getElementById('holo-canvas');
+        const holoCtx = holoCanvas.getContext('2d');
+        const matrixCanvas = document.getElementById('matrix-canvas');
+        const matrixCtx = matrixCanvas.getContext('2d');
+
+        function resizeCanvases() {
+            holoCanvas.width = window.innerWidth;
+            holoCanvas.height = window.innerHeight;
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+            columns = Math.floor(matrixCanvas.width / fontSize);
+            drops = Array(columns).fill(1).map(() => Math.random() * matrixCanvas.height);
+        }
+
+        const particles = [];
+        const PARTICLE_COUNT = 50;
+        const CONNECTION_DIST = 150;
+        const particleColors = ['#dc2626', '#8b5cf6', '#06b6d4', '#ec4899'];
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * holoCanvas.width;
+                this.y = Math.random() * holoCanvas.height;
+                this.vx = (Math.random() - 0.5) * 0.4;
+                this.vy = (Math.random() - 0.5) * 0.4;
+                this.size = Math.random() * 2 + 1;
+                this.color = particleColors[Math.floor(Math.random() * particleColors.length)];
+            }
+            update(mouse) {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > holoCanvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > holoCanvas.height) this.vy *= -1;
+                if (mouse.x !== null) {
+                    const dx = this.x - mouse.x; const dy = this.y - mouse.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 120) { this.x += (dx / dist) * 2; this.y += (dy / dist) * 2; }
+                }
+            }
+            draw() {
+                holoCtx.beginPath(); holoCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                holoCtx.fillStyle = this.color;
+                holoCtx.globalAlpha = isDarkMode ? 0.6 : 0.3;
+                holoCtx.fill(); holoCtx.globalAlpha = 1;
+            }
+        }
+        for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+        let mouse = { x: null, y: null };
+        document.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX; mouse.y = e.clientY;
+            const glow = document.getElementById('cursor-glow');
+            glow.style.left = e.clientX + 'px'; glow.style.top = e.clientY + 'px';
+        });
+        document.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+        function animateParticles() {
+            holoCtx.clearRect(0, 0, holoCanvas.width, holoCanvas.height);
+            particles.forEach(p => { p.update(mouse); p.draw(); });
+
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < CONNECTION_DIST) {
+                        holoCtx.beginPath(); holoCtx.moveTo(particles[i].x, particles[i].y); holoCtx.lineTo(particles[j].x, particles[j].y);
+                        const gradient = holoCtx.createLinearGradient(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+                        gradient.addColorStop(0, `rgba(220, 38, 38, ${(1 - dist/CONNECTION_DIST) * (isDarkMode ? 0.4 : 0.15)})`);
+                        gradient.addColorStop(1, `rgba(139, 92, 246, ${(1 - dist/CONNECTION_DIST) * (isDarkMode ? 0.4 : 0.15)})`);
+                        holoCtx.strokeStyle = gradient; holoCtx.lineWidth = 0.8; holoCtx.stroke();
+                    }
+                }
+                if (mouse.x !== null) {
+                    const dx = particles[i].x - mouse.x; const dy = particles[i].y - mouse.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 180) {
+                        holoCtx.beginPath(); holoCtx.moveTo(particles[i].x, particles[i].y); holoCtx.lineTo(mouse.x, mouse.y);
+                        holoCtx.strokeStyle = `rgba(220, 38, 38, ${(1 - dist/180) * (isDarkMode ? 0.5 : 0.2)})`;
+                        holoCtx.lineWidth = 1; holoCtx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const fontSize = 12;
+        let columns = 0;
+        let drops = [];
+
+        function drawMatrix() {
+            matrixCtx.fillStyle = isDarkMode ? 'rgba(5, 5, 10, 0.06)' : 'rgba(248, 249, 252, 0.06)';
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            matrixCtx.font = fontSize + 'px JetBrains Mono';
+            const colors = ['#dc2626', '#8b5cf6', '#06b6d4'];
+            for (let i = 0; i < drops.length; i++) {
+                if (i >= columns) continue;
+                const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                matrixCtx.fillStyle = colors[i % colors.length];
+                matrixCtx.globalAlpha = isDarkMode ? 0.35 : 0.15;
+                matrixCtx.fillText(char, i * fontSize, drops[i] * fontSize);
+                matrixCtx.globalAlpha = 1;
+                if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.985) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 80);
+
+        resizeCanvases();
+        window.addEventListener('resize', resizeCanvases);
+
+        let currentFile = '';
+        let currentBookId = '';
+        let allFilesMap = {};
+        const listContainer = document.getElementById('pdf-list');
+        const compiledNotesList = document.getElementById('compiled-notes-list');
+        const viewerModal = document.getElementById('viewer-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const pdfFrame = document.getElementById('pdf-frame');
+        const noteArea = document.getElementById('note-area');
+        const saveStatus = document.getElementById('save-status');
+        const noteIdDisplay = document.getElementById('note-id-display');
+
+        const tabBooks = document.getElementById('tab-books');
+        const tabGuide = document.getElementById('tab-guide');
+        const tabCompiled = document.getElementById('tab-compiled');
+        const contentBooks = document.getElementById('content-books');
+        const contentGuide = document.getElementById('content-guide');
+        const contentCompiled = document.getElementById('content-compiled');
+
+        function switchMainTab(tabName) {
+            const tabs = [
+                { btn: tabBooks, content: contentBooks, name: 'books' },
+                { btn: tabGuide, content: contentGuide, name: 'guide' },
+                { btn: tabCompiled, content: contentCompiled, name: 'compiled' }
+            ];
+            tabs.forEach(t => {
+                if (t.name === tabName) {
+                    t.content.classList.remove('hidden');
+                    t.btn.className = 'nav-tab active-tab cursor-pointer';
+                } else {
+                    t.content.classList.add('hidden');
+                    t.btn.className = 'nav-tab inactive-tab cursor-pointer';
+                }
+            });
+            if (tabName === 'compiled') loadCompiledNotes();
+        }
+
+        tabBooks.addEventListener('click', () => switchMainTab('books'));
+        tabGuide.addEventListener('click', () => switchMainTab('guide'));
+        tabCompiled.addEventListener('click', () => switchMainTab('compiled'));
+
+        function getBookId(filename) { const match = filename.match(/^\d+/); return match ? match[0] : filename.replace('.pdf', ''); }
+
+        async function generateThumbnail(pdfUrl, canvasId) {
+            try {
+                const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+                const page = await pdf.getPage(1);
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const viewport = page.getViewport({ scale: 0.6 });
+                canvas.width = viewport.width; canvas.height = viewport.height;
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                canvas.style.display = 'block'; canvas.previousElementSibling.style.display = 'none';
+            } catch (e) {}
+        }
+
+        function loadBooksList(bustCache = false) {
+            const fetchUrl = bustCache ? `files.json?t=${Date.now()}` : 'files.json';
+            fetch(fetchUrl).then(r => r.json()).then(files => {
+                listContainer.innerHTML = '';
+                files.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+                allFilesMap = {};
+                files.forEach((file, idx) => {
+                    const bookId = getBookId(file); allFilesMap[bookId] = file;
+                    let displayName = file.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ');
+                    const item = document.createElement('div');
+                    item.className = 'pdf-item flex items-center p-4 rounded cursor-pointer';
+                    item.innerHTML = `
+                        <div class="w-16 h-20 flex-shrink-0 mr-5 rounded flex items-center justify-center shadow-sm overflow-hidden relative">
+                            <i class="fas fa-circle-notch fa-spin text-white text-xl loading-icon"></i>
+                            <canvas id="thumb-${idx}" class="w-full h-full object-cover hidden"></canvas>
+                        </div>
+                        <div class="flex-1"><h3 class="truncate">${displayName}</h3><p class="mt-1 font-mono">// Nhấn để mở trình đọc & ghi chú</p></div>
+                        <i class="fas fa-external-link-alt text-xl"></i>`;
+                    item.addEventListener('click', () => openViewer(`Giao_trinh_triet_hoc/${file}`, file));
+                    listContainer.appendChild(item);
+                    generateThumbnail(`Giao_trinh_triet_hoc/${file}`, `thumb-${idx}`);
+                });
+            }).catch(err => {
+                listContainer.innerHTML = `<div class="text-center p-8 rounded" style="background: rgba(220,38,38,0.05); border: 1px solid var(--neon-red);"><p class="font-mono" style="color: var(--neon-red);">// Lỗi tải danh sách.</p></div>`;
+            });
+        }
+
+        function loadCompiledNotes() {
+            compiledNotesList.innerHTML = '';
+            const notesData = [];
+            for (let key in localStorage) {
+                if (key.startsWith('red_notes_')) {
+                    const bookId = key.replace('red_notes_', '');
+                    const noteContent = localStorage.getItem(key);
+                    if (noteContent && noteContent.trim()) notesData.push({ id: bookId, content: noteContent, filename: allFilesMap[bookId] || null });
+                }
+            }
+            notesData.sort((a, b) => { const numA = parseInt(a.id); const numB = parseInt(b.id); if (!isNaN(numA) && !isNaN(numB)) return numA - numB; return a.id.localeCompare(b.id); });
+
+            if (notesData.length === 0) {
+                compiledNotesList.innerHTML = `<div class="text-center p-10 rounded" style="background: var(--bg-surface); border: 1px solid var(--border-subtle);">
+                    <i class="fas fa-inbox text-4xl mb-4" style="color: var(--text-secondary); opacity:0.3;"></i>
+                    <p style="color: var(--text-secondary);">Chưa có ghi chú nào được lưu.</p>
+                    <p class="text-xs mt-2 font-mono" style="color: var(--text-secondary); opacity:0.6;">Mở một tác phẩm và bắt đầu viết ghi chú để thấy chúng ở đây.</p></div>`;
+                return;
+            }
+            notesData.forEach(note => {
+                const displayName = note.filename ? note.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ') : `Tác phẩm ${note.id}`;
+                const item = document.createElement('div');
+                item.className = 'note-compilation-item p-5 rounded';
+                item.innerHTML = `<div class="mb-3">
+                    <span class="text-xs font-bold px-2 py-1 rounded font-mono" style="background: rgba(220, 38, 38, 0.1); color: var(--neon-red);">ID ${note.id}</span>
+                    <span class="ml-2 font-semibold" style="color: var(--text-primary);">${displayName}</span></div>
+                    <div class="whitespace-pre-wrap" style="color: var(--text-secondary); line-height: 1.6;">
+                        <span class="font-semibold" style="color: var(--neon-red);">Note:</span> ${note.content}</div>`;
+                compiledNotesList.appendChild(item);
+            });
+        }
+
+        document.getElementById('btn-download-all-notes').addEventListener('click', () => {
+            const notesData = [];
+            for (let key in localStorage) {
+                if (key.startsWith('red_notes_')) {
+                    const bookId = key.replace('red_notes_', '');
+                    const noteContent = localStorage.getItem(key);
+                    if (noteContent && noteContent.trim()) {
+                        const displayName = allFilesMap[bookId] ? allFilesMap[bookId].replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ') : `Tác phẩm ${bookId}`;
+                        notesData.push(`${bookId}. ${displayName}\nNote: ${noteContent}\n`);
+                    }
+                }
+            }
+            if (notesData.length === 0) { alert('Chưa có ghi chú nào để tải xuống!'); return; }
+            const allNotesText = notesData.join('\n---\n\n');
+            const blob = new Blob([allNotesText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a'); link.href = url; link.download = 'RED_Education_All_Notes.txt'; link.click(); URL.revokeObjectURL(url);
+        });
+
+        loadBooksList(true);
+
+        document.getElementById('btn-refresh').addEventListener('click', () => {
+            const icon = document.querySelector('#btn-refresh i'); icon.classList.add('fa-spin');
+            listContainer.innerHTML = `<div class="flex items-center justify-center p-10 rounded" style="background: var(--bg-surface); border: 1px solid var(--border-subtle);">
+                <i class="fas fa-circle-notch fa-spin text-xl mr-3" style="color: var(--neon-red);"></i>
+                <span class="text-sm font-mono" style="color: var(--text-secondary);">Đang làm mới danh sách...</span></div>`;
+            setTimeout(() => { loadBooksList(true); setTimeout(() => { icon.classList.remove('fa-spin'); }, 1000); }, 300);
+        });
+
+        function openViewer(url, filename) {
+            currentFile = filename; currentBookId = getBookId(filename);
+            modalTitle.textContent = filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ');
+            noteIdDisplay.textContent = `ID: ${currentBookId}`;
+            pdfFrame.src = url;
+            let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
+            if (!savedNotes) {
+                const oldNotes = localStorage.getItem(`red_notes_${filename}`);
+                if (oldNotes) { savedNotes = oldNotes; localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); localStorage.removeItem(`red_notes_${filename}`); } else { savedNotes = ''; }
+            }
+            noteArea.value = savedNotes; viewerModal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
+        }
+
+        function closeViewer() { viewerModal.classList.add('hidden'); document.body.style.overflow = ''; pdfFrame.src = ''; }
+        document.getElementById('close-modal').addEventListener('click', closeViewer);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !viewerModal.classList.contains('hidden')) closeViewer(); });
+
+        let saveTimeout;
+        noteArea.addEventListener('input', (e) => {
+            localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
+            saveStatus.style.opacity = '1'; clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => { saveStatus.style.opacity = '0'; }, 1500);
+        });
+
+        document.getElementById('btn-clear-notes').addEventListener('click', () => {
+            if (confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) { noteArea.value = ''; localStorage.removeItem(`red_notes_${currentBookId}`); }
+        });
+
+        document.getElementById('btn-download-pdf').addEventListener('click', () => { const link = document.createElement('a'); link.href = pdfFrame.src; link.download = currentFile; link.click(); });
+        document.getElementById('btn-download-notes').addEventListener('click', () => {
+            const text = noteArea.value; if (!text.trim()) { alert('Chưa có ghi chú!'); return; }
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `ID_${currentBookId}_notes.txt`; link.click(); URL.revokeObjectURL(url);
+        });
+    </script>
+
+<script src="https://static.app/js/static.js" type="text/javascript"></script>
+</body>
+</html>
