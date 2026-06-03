@@ -28,6 +28,7 @@
             
             --bg-main: #f8f9fc;
             --bg-surface: rgba(255, 255, 255, 0.75);
+            --bg-solid: #ffffff;
             --text-primary: #0f172a;
             --text-secondary: #64748b;
             --border-color: rgba(220, 38, 38, 0.12);
@@ -38,6 +39,7 @@
         body.dark-mode {
             --bg-main: #05050a;
             --bg-surface: rgba(15, 15, 25, 0.75);
+            --bg-solid: #0f0f1a;
             --text-primary: #e2e8f0;
             --text-secondary: #94a3b8;
             --border-color: rgba(239, 68, 68, 0.25);
@@ -122,12 +124,33 @@
 
         /* ===== MOBILE MENU BUTTON ===== */
         #mobile-menu-btn {
-            display: none;
             transition: all 0.3s;
             color: var(--text-secondary);
+            background: var(--bg-solid);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         #mobile-menu-btn:hover {
             color: var(--neon-red);
+            border-color: var(--neon-red);
+            box-shadow: 0 0 12px var(--neon-red-glow);
+        }
+
+        /* ===== DESKTOP NAVIGATION ===== */
+        .desktop-nav {
+            display: flex;
+        }
+        
+        @media (max-width: 768px) {
+            .desktop-nav {
+                display: none !important;
+            }
         }
 
         /* ===== TABS ===== */
@@ -148,19 +171,20 @@
             border-bottom: 2px solid rgba(220, 38, 38, 0.5) !important;
         }
 
-        /* Mobile navigation */
+        /* Mobile navigation - SOLID BACKGROUND */
         #mobile-nav {
             display: none;
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
-            background: var(--bg-surface);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem;
+            background: var(--bg-solid) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            border-bottom: 2px solid var(--border-color);
+            padding: 1.5rem 1rem;
             z-index: 50;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
         }
         #mobile-nav.active {
             display: block;
@@ -169,14 +193,28 @@
             display: block;
             width: 100%;
             text-align: left;
-            padding: 12px 16px !important;
-            margin-bottom: 8px;
-            border-radius: 8px;
+            padding: 16px 20px !important;
+            margin-bottom: 12px;
+            border-radius: 12px;
             border-bottom: none !important;
+            background: var(--bg-main);
+            border: 1px solid var(--border-subtle);
+            font-size: 0.95rem !important;
+            transition: all 0.3s;
+        }
+        #mobile-nav .nav-tab:hover {
+            border-color: var(--neon-red);
+            transform: translateX(4px);
         }
         #mobile-nav .nav-tab.active-tab {
             background: rgba(220, 38, 38, 0.1);
-            border-left: 3px solid var(--neon-red) !important;
+            border: 2px solid var(--neon-red) !important;
+            color: var(--neon-red) !important;
+        }
+        #mobile-nav .nav-tab i {
+            width: 24px;
+            margin-right: 12px;
+            color: var(--neon-red);
         }
 
         #btn-refresh { transition: all 0.4s; color: var(--text-secondary); }
@@ -366,12 +404,9 @@
 
         /* ===== MOBILE RESPONSIVE ===== */
         @media (max-width: 768px) {
-            #mobile-menu-btn {
-                display: block;
-            }
-            
-            .desktop-nav {
-                display: none;
+            header .container {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
             }
             
             header h1 {
@@ -400,11 +435,6 @@
             
             .pdf-item h3 {
                 font-size: 1rem !important;
-            }
-            
-            #mobile-nav .nav-tab {
-                font-size: 0.9rem !important;
-                padding: 14px 16px !important;
             }
             
             #viewer-modal .flex-1.md\:w-\[400px\] {
@@ -437,38 +467,42 @@
                     <h1 class="text-lg tracking-wide sm:hidden">RED.</h1>
                 </div>
                 
-                <!-- Right Side Actions -->
-                <div class="flex items-center space-x-2">
-                    <!-- Desktop Navigation -->
-                    <nav class="desktop-nav flex items-center space-x-1">
-                        <button id="tab-books" class="nav-tab active-tab cursor-pointer">Giáo trình</button>
-                        <button id="tab-guide" class="nav-tab inactive-tab cursor-pointer hidden lg:block">Hướng dẫn</button>
-                        <button id="tab-compiled" class="nav-tab inactive-tab cursor-pointer hidden xl:block">Ghi chú</button>
-                    </nav>
-                    
-                    <!-- Action Buttons -->
-                    <button id="theme-toggle" class="p-2" title="Chế độ sáng/tối">
+                <!-- Desktop Navigation (hidden on mobile) -->
+                <nav class="desktop-nav flex items-center space-x-1">
+                    <button id="tab-books" class="nav-tab active-tab cursor-pointer">Giáo trình</button>
+                    <button id="tab-guide" class="nav-tab inactive-tab cursor-pointer hidden lg:block">Hướng dẫn</button>
+                    <button id="tab-compiled" class="nav-tab inactive-tab cursor-pointer hidden xl:block">Ghi chú</button>
+                    <button id="theme-toggle" class="p-2 ml-2" title="Chế độ sáng/tối">
                         <i class="fas fa-moon text-lg"></i>
                     </button>
-                    <button id="btn-refresh" class="p-2 hidden sm:block" title="Làm mới danh sách">
+                    <button id="btn-refresh" class="p-2" title="Làm mới danh sách">
                         <i class="fas fa-sync-alt text-lg"></i>
                     </button>
-                    
-                    <!-- Mobile Menu Button -->
-                    <button id="mobile-menu-btn" class="p-2" title="Menu">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
-                </div>
+                </nav>
+                
+                <!-- Mobile Menu Button (ONLY visible on mobile) -->
+                <button id="mobile-menu-btn" class="md:hidden" title="Menu">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
             </div>
         </div>
         
-        <!-- Mobile Navigation Dropdown -->
+        <!-- Mobile Navigation Dropdown - SOLID BACKGROUND -->
         <div id="mobile-nav">
-            <button class="nav-tab active-tab cursor-pointer w-full text-left mb-2">Giáo trình</button>
-            <button class="nav-tab inactive-tab cursor-pointer w-full text-left mb-2">Hướng dẫn đọc</button>
-            <button class="nav-tab inactive-tab cursor-pointer w-full text-left">Tổng hợp ghi chú</button>
-            <button id="mobile-btn-refresh" class="nav-tab inactive-tab cursor-pointer w-full text-left mt-4 flex items-center">
+            <button class="mobile-tab nav-tab active-tab cursor-pointer w-full mb-3" data-tab="books">
+                <i class="fas fa-book"></i>Giáo trình
+            </button>
+            <button class="mobile-tab nav-tab inactive-tab cursor-pointer w-full mb-3" data-tab="guide">
+                <i class="fas fa-compass"></i>Hướng dẫn đọc
+            </button>
+            <button class="mobile-tab nav-tab inactive-tab cursor-pointer w-full mb-3" data-tab="compiled">
+                <i class="fas fa-sticky-note"></i>Tổng hợp ghi chú
+            </button>
+            <button id="mobile-btn-refresh" class="mobile-tab nav-tab inactive-tab cursor-pointer w-full mt-4 flex items-center justify-center py-3" style="border-top: 1px solid var(--border-subtle); margin-top: 1rem; padding-top: 1rem;">
                 <i class="fas fa-sync-alt mr-2"></i> Làm mới danh sách
+            </button>
+            <button id="mobile-theme-toggle" class="mobile-tab nav-tab inactive-tab cursor-pointer w-full flex items-center justify-center mt-2">
+                <i class="fas fa-moon mr-2"></i> <span>Chế độ sáng/tối</span>
             </button>
         </div>
     </header>
@@ -582,24 +616,36 @@
     <script>
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = themeToggle.querySelector('i');
+        const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
         let isDarkMode = localStorage.getItem('red_theme') === 'dark';
 
         function applyTheme() {
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
                 themeIcon.className = 'fas fa-sun';
+                if (mobileThemeToggle) {
+                    mobileThemeToggle.querySelector('i').className = 'fas fa-sun mr-2';
+                }
             } else {
                 document.body.classList.remove('dark-mode');
                 themeIcon.className = 'fas fa-moon';
+                if (mobileThemeToggle) {
+                    mobileThemeToggle.querySelector('i').className = 'fas fa-moon mr-2';
+                }
             }
         }
         applyTheme();
 
-        themeToggle.addEventListener('click', () => {
+        function toggleTheme() {
             isDarkMode = !isDarkMode;
             localStorage.setItem('red_theme', isDarkMode ? 'dark' : 'light');
             applyTheme();
-        });
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+        if (mobileThemeToggle) {
+            mobileThemeToggle.addEventListener('click', toggleTheme);
+        }
 
         // Mobile menu toggle
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -610,32 +656,33 @@
             mobileMenuOpen = !mobileMenuOpen;
             if (mobileMenuOpen) {
                 mobileNav.classList.add('active');
-                mobileMenuBtn.innerHTML = '<i class="fas fa-times text-xl"></i>';
+                mobileMenuBtn.innerHTML = '<i class="fas fa-times text-lg"></i>';
             } else {
                 mobileNav.classList.remove('active');
-                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
+                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
             }
         });
 
         // Mobile tab switching
-        const mobileTabs = mobileNav.querySelectorAll('.nav-tab');
-        mobileTabs[0].addEventListener('click', () => {
-            switchMainTab('books');
-            mobileMenuOpen = false;
-            mobileNav.classList.remove('active');
-            mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
-        });
-        mobileTabs[1].addEventListener('click', () => {
-            switchMainTab('guide');
-            mobileMenuOpen = false;
-            mobileNav.classList.remove('active');
-            mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
-        });
-        mobileTabs[2].addEventListener('click', () => {
-            switchMainTab('compiled');
-            mobileMenuOpen = false;
-            mobileNav.classList.remove('active');
-            mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
+        const mobileTabs = document.querySelectorAll('.mobile-tab[data-tab]');
+        mobileTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                switchMainTab(tabName);
+                
+                // Update active state
+                mobileTabs.forEach(t => {
+                    t.classList.remove('active-tab');
+                    t.classList.add('inactive-tab');
+                });
+                tab.classList.remove('inactive-tab');
+                tab.classList.add('active-tab');
+                
+                // Close menu
+                mobileMenuOpen = false;
+                mobileNav.classList.remove('active');
+                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
+            });
         });
         
         const mobileRefreshBtn = document.getElementById('mobile-btn-refresh');
@@ -644,7 +691,7 @@
                 document.getElementById('btn-refresh').click();
                 mobileMenuOpen = false;
                 mobileNav.classList.remove('active');
-                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
+                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
             });
         }
 
