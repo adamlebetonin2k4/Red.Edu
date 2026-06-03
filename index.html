@@ -32,7 +32,6 @@
             --text-secondary: #64748b;
             --border-color: rgba(220, 38, 38, 0.12);
             --border-subtle: #e2e8f0;
-            --matrix-opacity: 0.3;
             --grid-opacity: 0.04;
         }
 
@@ -43,7 +42,6 @@
             --text-secondary: #94a3b8;
             --border-color: rgba(239, 68, 68, 0.25);
             --border-subtle: #1e293b;
-            --matrix-opacity: 0.6;
             --grid-opacity: 0.08;
         }
 
@@ -71,10 +69,9 @@
         .font-mono { font-family: 'JetBrains Mono', monospace !important; }
 
         /* ===== INTERACTIVE LAYERS ===== */
-        #holo-canvas, #matrix-canvas {
+        #holo-canvas {
             position: fixed; inset: 0; pointer-events: none; z-index: -2;
         }
-        #matrix-canvas { opacity: var(--matrix-opacity); }
 
         #cursor-glow {
             position: fixed; width: 500px; height: 500px; border-radius: 50%;
@@ -116,7 +113,7 @@
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        #theme-toggle { transition: all 0.3s; color: var(--text-secondary); }
+        #theme-toggle { transition: color 0.2s, transform 0.3s, filter 0.3s; color: var(--text-secondary); }
         #theme-toggle:hover {
             color: var(--neon-purple);
             transform: rotate(15deg) scale(1.1);
@@ -283,7 +280,6 @@
 <body class="flex flex-col">
 
     <canvas id="holo-canvas"></canvas>
-    <canvas id="matrix-canvas"></canvas>
     <div id="cursor-glow"></div>
 
     <div class="tech-corner top-left"></div>
@@ -445,16 +441,10 @@
 
         const holoCanvas = document.getElementById('holo-canvas');
         const holoCtx = holoCanvas.getContext('2d');
-        const matrixCanvas = document.getElementById('matrix-canvas');
-        const matrixCtx = matrixCanvas.getContext('2d');
 
-        function resizeCanvases() {
+        function resizeCanvas() {
             holoCanvas.width = window.innerWidth;
             holoCanvas.height = window.innerHeight;
-            matrixCanvas.width = window.innerWidth;
-            matrixCanvas.height = window.innerHeight;
-            columns = Math.floor(matrixCanvas.width / fontSize);
-            drops = Array(columns).fill(1).map(() => Math.random() * matrixCanvas.height);
         }
 
         const particles = [];
@@ -528,31 +518,8 @@
         }
         animateParticles();
 
-        const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        const fontSize = 12;
-        let columns = 0;
-        let drops = [];
-
-        function drawMatrix() {
-            matrixCtx.fillStyle = isDarkMode ? 'rgba(5, 5, 10, 0.06)' : 'rgba(248, 249, 252, 0.06)';
-            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
-            matrixCtx.font = fontSize + 'px JetBrains Mono';
-            const colors = ['#dc2626', '#8b5cf6', '#06b6d4'];
-            for (let i = 0; i < drops.length; i++) {
-                if (i >= columns) continue;
-                const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-                matrixCtx.fillStyle = colors[i % colors.length];
-                matrixCtx.globalAlpha = isDarkMode ? 0.35 : 0.15;
-                matrixCtx.fillText(char, i * fontSize, drops[i] * fontSize);
-                matrixCtx.globalAlpha = 1;
-                if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.985) drops[i] = 0;
-                drops[i]++;
-            }
-        }
-        setInterval(drawMatrix, 80);
-
-        resizeCanvases();
-        window.addEventListener('resize', resizeCanvases);
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
         let currentFile = '';
         let currentBookId = '';
@@ -734,7 +701,5 @@
             const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `ID_${currentBookId}_notes.txt`; link.click(); URL.revokeObjectURL(url);
         });
     </script>
-
-<script src="https://static.app/js/static.js" type="text/javascript"></script>
 </body>
 </html>
