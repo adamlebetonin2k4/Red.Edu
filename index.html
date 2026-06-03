@@ -48,6 +48,11 @@
         }
 
         /* ===== GLOBAL STYLES ===== */
+        html, body {
+            height: 100vh;
+            overflow: hidden; /* Prevent whole-page scroll */
+        }
+
         * {
             scrollbar-width: thin;
             scrollbar-color: var(--neon-red) var(--border-subtle);
@@ -63,8 +68,9 @@
             font-family: 'Be Vietnam Pro', sans-serif;
             background: var(--bg-main);
             color: var(--text-primary);
-            min-height: 100vh;
             position: relative;
+            display: flex;
+            flex-direction: column;
             overflow-x: hidden;
         }
 
@@ -100,13 +106,15 @@
             0% { background-position: 0 0; } 100% { background-position: 60px 60px; }
         }
 
-        /* ===== HEADER ===== */
+        /* ===== HEADER (fixed, non-scrolling) ===== */
         header {
             background: var(--bg-surface);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid var(--border-color);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            z-index: 40;
         }
         header h1 {
             font-weight: 800;
@@ -220,7 +228,14 @@
         #btn-refresh { transition: all 0.4s; color: var(--text-secondary); }
         #btn-refresh:hover { color: var(--neon-red); transform: rotate(180deg); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
 
-        /* ===== MAIN CONTENT ===== */
+        /* ===== MAIN CONTENT (scrollable area) ===== */
+        main {
+            flex: 1 1 auto;
+            min-height: 0; /* Critical for scroll within flex child */
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+        }
         main h2 {
             font-weight: 700; letter-spacing: 0.05em; color: var(--text-primary) !important;
             border-bottom: 1px solid var(--border-subtle) !important;
@@ -335,10 +350,15 @@
         .note-compilation-item:hover { border-color: var(--neon-red) !important; transform: translateX(4px); }
         .note-compilation-item:hover::before { opacity: 1; }
 
+        /* ===== FOOTER (fixed, non-scrolling) ===== */
         footer {
-            background: var(--bg-surface) !important; backdrop-filter: blur(10px);
+            background: var(--bg-surface) !important; 
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-top: 1px solid var(--border-color);
             position: relative;
+            flex-shrink: 0;
+            z-index: 40;
         }
         footer::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
@@ -444,7 +464,7 @@
         }
     </style>
 </head>
-<body class="flex flex-col">
+<body>
 
     <canvas id="holo-canvas"></canvas>
     <div id="cursor-glow"></div>
@@ -456,10 +476,10 @@
     <div class="data-tag" style="top: 30%; left: 2%;">SYS.ONLINE</div>
     <div class="data-tag" style="top: 60%; right: 2%;">NODE.ACTIVE</div>
 
-    <header class="shadow-md sticky top-0 z-40">
+    <!-- HEADER: cố định, không scroll -->
+    <header>
         <div class="container mx-auto px-6 py-3">
             <div class="flex justify-between items-center">
-                <!-- Logo Section -->
                 <div class="flex items-center space-x-3">
                     <img src="logo.png" alt="Logo" class="h-8 w-auto object-contain rounded p-0.5 bg-white/50" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
                     <i id="logo-fallback" class="fas fa-graduation-cap text-xl rounded p-1 hidden items-center justify-center" style="background: white; color: #dc2626;"></i>
@@ -467,7 +487,6 @@
                     <h1 class="text-lg tracking-wide sm:hidden">RED.</h1>
                 </div>
                 
-                <!-- Desktop Navigation (hidden on mobile) -->
                 <nav class="desktop-nav flex items-center space-x-1">
                     <button id="tab-books" class="nav-tab active-tab cursor-pointer">Giáo trình</button>
                     <button id="tab-guide" class="nav-tab inactive-tab cursor-pointer hidden lg:block">Hướng dẫn</button>
@@ -480,14 +499,12 @@
                     </button>
                 </nav>
                 
-                <!-- Mobile Menu Button (ONLY visible on mobile) -->
                 <button id="mobile-menu-btn" class="md:hidden" title="Menu">
                     <i class="fas fa-bars text-lg"></i>
                 </button>
             </div>
         </div>
         
-        <!-- Mobile Navigation Dropdown - SOLID BACKGROUND -->
         <div id="mobile-nav">
             <button class="mobile-tab nav-tab active-tab cursor-pointer w-full mb-3" data-tab="books">
                 <i class="fas fa-book"></i>Giáo trình
@@ -507,62 +524,66 @@
         </div>
     </header>
 
-    <main class="container mx-auto px-6 py-6 sm:py-10 flex-grow max-w-4xl">
-        
-        <div id="content-books">
-            <h2 class="text-xl sm:text-2xl mb-4 sm:mb-6 pb-2">Các tác phẩm và bài đọc</h2>
-            <div id="pdf-list" class="space-y-3 sm:space-y-4">
-                <div class="flex items-center justify-center p-10 rounded border" style="background: var(--bg-surface); border-color: var(--border-subtle) !important;">
-                    <i class="fas fa-circle-notch fa-spin text-xl mr-3" style="color: var(--neon-red);"></i>
-                    <span class="text-sm font-mono" style="color: var(--text-secondary);">Đang tải danh sách...</span>
+    <!-- MAIN: đây là vùng scroll được -->
+    <main>
+        <div class="container mx-auto max-w-4xl">
+            
+            <div id="content-books" class="py-6 sm:py-10">
+                <h2 class="text-xl sm:text-2xl mb-4 sm:mb-6 pb-2">Các tác phẩm và bài đọc</h2>
+                <div id="pdf-list" class="space-y-3 sm:space-y-4">
+                    <div class="flex items-center justify-center p-10 rounded border" style="background: var(--bg-surface); border-color: var(--border-subtle) !important;">
+                        <i class="fas fa-circle-notch fa-spin text-xl mr-3" style="color: var(--neon-red);"></i>
+                        <span class="text-sm font-mono" style="color: var(--text-secondary);">Đang tải danh sách...</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="content-guide" class="hidden">
-            <h2 class="text-2xl sm:text-3xl mb-6 sm:mb-8 pb-3">Cách đọc và trình tự đọc các tác phẩm</h2>
-            <div class="p-4 sm:p-8 rounded-lg space-y-4 sm:space-y-6 leading-relaxed text-[14px] sm:text-[16px]">
-                <div>
-                    <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-compass mr-2"></i> Điều hướng và Cách đọc</h3>
-                    <p>Chào mừng bạn đến với kho tàng triết học của RED. Education. Website được thiết kế để bạn có thể đọc và ghi chú trực tiếp. Khi mở bất kỳ tác phẩm nào, màn hình sẽ chia làm hai phần: trình đọc PDF bên trái và không gian Ghi chú (Notes) bên phải. Mọi ghi chú của bạn đều được tự động lưu lại theo mã số của tác phẩm đó.</p>
-                </div>
-                <div>
-                    <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-list-ol mr-2"></i> Trình tự đọc</h3>
-                    <p>Các tác phẩm trong danh sách <strong>Giáo trình</strong> được đánh số thứ tự từ thấp đến cao. Bạn <strong>bắt buộc phải đọc theo đúng trình tự này</strong>. Các con số thể hiện mạch tư duy lịch sử và logic phát triển của triết học từ giai đoạn khởi thủy đến hiện đại.</p>
-                </div>
-                <div class="p-4 sm:p-5 rounded-r-lg highlight-box">
-                    <h3 class="text-base sm:text-lg mb-2 flex items-center"><i class="fas fa-lightbulb mr-2"></i> Về phần "Tóm tắt và nhận xét"</h3>
-                    <p class="mb-3">Trong mỗi tác phẩm, ngay sau phần Mục lục, sẽ có một phần <strong>"Tóm tắt và nhận xét"</strong>. Người đọc nên đặc biệt quan tâm đến phần này.</p>
-                    <p>Đây là nơi tôi cung cấp các gợi mở và đánh giá của tác phẩm. Bạn có thể sử dụng công cụ <strong>Ghi chú (Notes)</strong> trên website để ghi lại những suy nghĩ và phân tích của chính bạn.</p>
-                </div>
-                <div class="pt-4" style="border-top: 1px solid var(--border-subtle);">
-                    <p class="mb-4 italic" style="color: var(--text-secondary);">Nếu bạn muốn thảo luận, trao đổi sâu hơn về các tác phẩm hoặc kết nối với cộng đồng, hãy tham gia kênh Discord của chúng tôi:</p>
-                    <a href="https://discord.gg/tMY2uWycda" target="_blank" class="inline-flex items-center text-white font-bold py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg" style="background: linear-gradient(135deg, #5865F2 0%, #4752C4 100%);">
-                        <i class="fab fa-discord text-2xl mr-3"></i><span>Tham gia Discord RED. Education</span>
-                    </a>
+            <div id="content-guide" class="hidden py-6 sm:py-10">
+                <h2 class="text-2xl sm:text-3xl mb-6 sm:mb-8 pb-3">Cách đọc và trình tự đọc các tác phẩm</h2>
+                <div class="p-4 sm:p-8 rounded-lg space-y-4 sm:space-y-6 leading-relaxed text-[14px] sm:text-[16px]">
+                    <div>
+                        <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-compass mr-2"></i> Điều hướng và Cách đọc</h3>
+                        <p>Chào mừng bạn đến với kho tàng triết học của RED. Education. Website được thiết kế để bạn có thể đọc và ghi chú trực tiếp. Khi mở bất kỳ tác phẩm nào, màn hình sẽ chia làm hai phần: trình đọc PDF bên trái và không gian Ghi chú (Notes) bên phải. Mọi ghi chú của bạn đều được tự động lưu lại theo mã số của tác phẩm đó.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-list-ol mr-2"></i> Trình tự đọc</h3>
+                        <p>Các tác phẩm trong danh sách <strong>Giáo trình</strong> được đánh số thứ tự từ thấp đến cao. Bạn <strong>bắt buộc phải đọc theo đúng trình tự này</strong>. Các con số thể hiện mạch tư duy lịch sử và logic phát triển của triết học từ giai đoạn khởi thủy đến hiện đại.</p>
+                    </div>
+                    <div class="p-4 sm:p-5 rounded-r-lg highlight-box">
+                        <h3 class="text-base sm:text-lg mb-2 flex items-center"><i class="fas fa-lightbulb mr-2"></i> Về phần "Tóm tắt và nhận xét"</h3>
+                        <p class="mb-3">Trong mỗi tác phẩm, ngay sau phần Mục lục, sẽ có một phần <strong>"Tóm tắt và nhận xét"</strong>. Người đọc nên đặc biệt quan tâm đến phần này.</p>
+                        <p>Đây là nơi tôi cung cấp các gợi mở và đánh giá của tác phẩm. Bạn có thể sử dụng công cụ <strong>Ghi chú (Notes)</strong> trên website để ghi lại những suy nghĩ và phân tích của chính bạn.</p>
+                    </div>
+                    <div class="pt-4" style="border-top: 1px solid var(--border-subtle);">
+                        <p class="mb-4 italic" style="color: var(--text-secondary);">Nếu bạn muốn thảo luận, trao đổi sâu hơn về các tác phẩm hoặc kết nối với cộng đồng, hãy tham gia kênh Discord của chúng tôi:</p>
+                        <a href="https://discord.gg/tMY2uWycda" target="_blank" class="inline-flex items-center text-white font-bold py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg" style="background: linear-gradient(135deg, #5865F2 0%, #4752C4 100%);">
+                            <i class="fab fa-discord text-2xl mr-3"></i><span>Tham gia Discord RED. Education</span>
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="content-compiled" class="hidden">
-            <h2 class="text-2xl sm:text-3xl mb-4 sm:mb-6 pb-3">Tổng hợp tất cả ghi chú</h2>
-            <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <p style="color: var(--text-secondary);" class="text-sm"><i class="fas fa-info-circle mr-2"></i>Tất cả ghi chú đã lưu của bạn, được tổng hợp theo thứ tự ID sách.</p>
-                <button id="btn-download-all-notes" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center w-full sm:w-auto justify-center" style="background: linear-gradient(135deg, var(--neon-red) 0%, #991b1b 100%); color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
-                    <i class="fas fa-download mr-2"></i> Tải tất cả ghi chú (.txt)
-                </button>
-            </div>
-            <div id="compiled-notes-list" class="space-y-3 sm:space-y-4">
-                <div class="flex items-center justify-center p-10 rounded border" style="background: var(--bg-surface); border-color: var(--border-subtle) !important;">
-                    <i class="fas fa-circle-notch fa-spin text-xl mr-3" style="color: var(--neon-red);"></i>
-                    <span class="text-sm font-mono" style="color: var(--text-secondary);">Đang tải ghi chú...</span>
+            <div id="content-compiled" class="hidden py-6 sm:py-10">
+                <h2 class="text-2xl sm:text-3xl mb-4 sm:mb-6 pb-3">Tổng hợp tất cả ghi chú</h2>
+                <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <p style="color: var(--text-secondary);" class="text-sm"><i class="fas fa-info-circle mr-2"></i>Tất cả ghi chú đã lưu của bạn, được tổng hợp theo thứ tự ID sách.</p>
+                    <button id="btn-download-all-notes" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center w-full sm:w-auto justify-center" style="background: linear-gradient(135deg, var(--neon-red) 0%, #991b1b 100%); color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
+                        <i class="fas fa-download mr-2"></i> Tải tất cả ghi chú (.txt)
+                    </button>
+                </div>
+                <div id="compiled-notes-list" class="space-y-3 sm:space-y-4">
+                    <div class="flex items-center justify-center p-10 rounded border" style="background: var(--bg-surface); border-color: var(--border-subtle) !important;">
+                        <i class="fas fa-circle-notch fa-spin text-xl mr-3" style="color: var(--neon-red);"></i>
+                        <span class="text-sm font-mono" style="color: var(--text-secondary);">Đang tải ghi chú...</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
+        </div>
     </main>
 
-    <footer class="py-6 sm:py-8 mt-auto relative">
+    <!-- FOOTER: cố định, không scroll -->
+    <footer class="py-6 sm:py-8">
         <div class="container mx-auto px-6">
             <div class="flex flex-wrap justify-center gap-4 sm:gap-6 mb-4 sm:mb-6">
                 <a href="https://discord.gg/tMY2uWycda" target="_blank" class="flex items-center space-x-2 transition"><i class="fab fa-discord text-xl"></i><span class="text-sm font-medium">Discord</span></a>
@@ -647,7 +668,6 @@
             mobileThemeToggle.addEventListener('click', toggleTheme);
         }
 
-        // Mobile menu toggle
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileNav = document.getElementById('mobile-nav');
         let mobileMenuOpen = false;
@@ -663,14 +683,12 @@
             }
         });
 
-        // Mobile tab switching
         const mobileTabs = document.querySelectorAll('.mobile-tab[data-tab]');
         mobileTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabName = tab.getAttribute('data-tab');
                 switchMainTab(tabName);
                 
-                // Update active state
                 mobileTabs.forEach(t => {
                     t.classList.remove('active-tab');
                     t.classList.add('inactive-tab');
@@ -678,7 +696,6 @@
                 tab.classList.remove('inactive-tab');
                 tab.classList.add('active-tab');
                 
-                // Close menu
                 mobileMenuOpen = false;
                 mobileNav.classList.remove('active');
                 mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
@@ -812,6 +829,8 @@
                 }
             });
             if (tabName === 'compiled') loadCompiledNotes();
+            // Scroll back to top when switching tabs
+            document.querySelector('main').scrollTop = 0;
         }
 
         tabBooks.addEventListener('click', () => switchMainTab('books'));
@@ -954,10 +973,10 @@
                 const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
                 if (oldNotes) { savedNotes = oldNotes; localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); localStorage.removeItem(`red_notes_${book.filename}`); } else { savedNotes = ''; }
             }
-            noteArea.value = savedNotes; viewerModal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
+            noteArea.value = savedNotes; viewerModal.classList.remove('hidden');
         }
 
-        function closeViewer() { viewerModal.classList.add('hidden'); document.body.style.overflow = ''; pdfFrame.src = ''; }
+        function closeViewer() { viewerModal.classList.add('hidden'); pdfFrame.src = ''; }
         document.getElementById('close-modal').addEventListener('click', closeViewer);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !viewerModal.classList.contains('hidden')) closeViewer(); });
 
