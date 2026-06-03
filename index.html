@@ -163,9 +163,22 @@
             transform: translateY(-4px) !important; border-color: var(--neon-red) !important;
             box-shadow: 0 12px 32px rgba(220, 38, 38, 0.15);
         }
-        .pdf-item h3 { color: var(--text-primary) !important; font-weight: 700; transition: color 0.3s; }
+        .pdf-item .book-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--neon-red);
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+        .pdf-item h3 { color: var(--text-primary) !important; font-weight: 700; transition: color 0.3s; font-size: 1.05rem; }
         .pdf-item:hover h3 { color: var(--neon-red) !important; }
-        .pdf-item p { color: var(--text-secondary) !important; font-family: 'JetBrains Mono', monospace !important; font-size: 0.68rem !important; }
+        .pdf-item .book-author { color: var(--text-secondary) !important; font-size: 0.85rem; font-style: italic; }
+        .pdf-item .book-author i { font-size: 0.75rem; margin-right: 4px; opacity: 0.7; }
+        .pdf-item p.book-hint { color: var(--text-secondary) !important; font-family: 'JetBrains Mono', monospace !important; font-size: 0.68rem !important; opacity: 0.7; }
         .pdf-item i.fa-external-link-alt { color: var(--text-secondary); opacity: 0.5; transition: all 0.3s; }
         .pdf-item:hover i.fa-external-link-alt { opacity: 1; color: var(--neon-red); filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
 
@@ -523,7 +536,7 @@
 
         let currentFile = '';
         let currentBookId = '';
-        let allFilesMap = {};
+        let allBooksMap = {};  // Map: id -> {id, title, author, filename}
         const listContainer = document.getElementById('pdf-list');
         const compiledNotesList = document.getElementById('compiled-notes-list');
         const viewerModal = document.getElementById('viewer-modal');
@@ -562,7 +575,10 @@
         tabGuide.addEventListener('click', () => switchMainTab('guide'));
         tabCompiled.addEventListener('click', () => switchMainTab('compiled'));
 
-        function getBookId(filename) { const match = filename.match(/^\d+/); return match ? match[0] : filename.replace('.pdf', ''); }
+        // Helper: format display name from book object
+        function getBookDisplayName(book) {
+            return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ');
+        }
 
         async function generateThumbnail(pdfUrl, canvasId) {
             try {
@@ -580,13 +596,17 @@
 
         function loadBooksList(bustCache = false) {
             const fetchUrl = bustCache ? `files.json?t=${Date.now()}` : 'files.json';
-            fetch(fetchUrl).then(r => r.json()).then(files => {
+            fetch(fetchUrl).then(r => r.json()).then(books => {
                 listContainer.innerHTML = '';
-                files.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-                allFilesMap = {};
-                files.forEach((file, idx) => {
-                    const bookId = getBookId(file); allFilesMap[bookId] = file;
-                    let displayName = file.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ');
+                // Sort by id (numeric if possible)
+                books.sort((a, b) => {
+                    const numA = parseInt(a.id); const numB = parseInt(b.id);
+                    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                    return String(a.id).localeCompare(String(b.id));
+                });
+                allBooksMap = {};
+                books.forEach((book, idx) => {
+                    allBooksMap[book.id] = book;
                     const item = document.createElement('div');
                     item.className = 'pdf-item flex items-center p-4 rounded cursor-pointer';
                     item.innerHTML = `
@@ -594,11 +614,18 @@
                             <i class="fas fa-circle-notch fa-spin text-white text-xl loading-icon"></i>
                             <canvas id="thumb-${idx}" class="w-full h-full object-cover hidden"></canvas>
                         </div>
-                        <div class="flex-1"><h3 class="truncate">${displayName}</h3><p class="mt-1 font-mono">// Nhấn để mở trình đọc & ghi chú</p></div>
-                        <i class="fas fa-external-link-alt text-xl"></i>`;
-                    item.addEventListener('click', () => openViewer(`Giao_trinh_triet_hoc/${file}`, file));
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <span class="book-id">#${book.id}</span>
+                                <span class="book-author"><i class="fas fa-feather-alt"></i>${book.author || 'Ẩn danh'}</span>
+                            </div>
+                            <h3 class="truncate">${getBookDisplayName(book)}</h3>
+                            <p class="mt-1 book-hint">// Nhấn để mở trình đọc & ghi chú</p>
+                        </div>
+                        <i class="fas fa-external-link-alt text-xl ml-3 flex-shrink-0"></i>`;
+                    item.addEventListener('click', () => openViewer(`Giao_trinh_triet_hoc/${book.filename}`, book));
                     listContainer.appendChild(item);
-                    generateThumbnail(`Giao_trinh_triet_hoc/${file}`, `thumb-${idx}`);
+                    generateThumbnail(`Giao_trinh_triet_hoc/${book.filename}`, `thumb-${idx}`);
                 });
             }).catch(err => {
                 listContainer.innerHTML = `<div class="text-center p-8 rounded" style="background: rgba(220,38,38,0.05); border: 1px solid var(--neon-red);"><p class="font-mono" style="color: var(--neon-red);">// Lỗi tải danh sách.</p></div>`;
@@ -612,10 +639,10 @@
                 if (key.startsWith('red_notes_')) {
                     const bookId = key.replace('red_notes_', '');
                     const noteContent = localStorage.getItem(key);
-                    if (noteContent && noteContent.trim()) notesData.push({ id: bookId, content: noteContent, filename: allFilesMap[bookId] || null });
+                    if (noteContent && noteContent.trim()) notesData.push({ id: bookId, content: noteContent, book: allBooksMap[bookId] || null });
                 }
             }
-            notesData.sort((a, b) => { const numA = parseInt(a.id); const numB = parseInt(b.id); if (!isNaN(numA) && !isNaN(numB)) return numA - numB; return a.id.localeCompare(b.id); });
+            notesData.sort((a, b) => { const numA = parseInt(a.id); const numB = parseInt(b.id); if (!isNaN(numA) && !isNaN(numB)) return numA - numB; return String(a.id).localeCompare(String(b.id)); });
 
             if (notesData.length === 0) {
                 compiledNotesList.innerHTML = `<div class="text-center p-10 rounded" style="background: var(--bg-surface); border: 1px solid var(--border-subtle);">
@@ -625,14 +652,17 @@
                 return;
             }
             notesData.forEach(note => {
-                const displayName = note.filename ? note.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ') : `Tác phẩm ${note.id}`;
+                const displayName = note.book ? getBookDisplayName(note.book) : `Tác phẩm ${note.id}`;
+                const authorName = note.book && note.book.author ? note.book.author : '';
                 const item = document.createElement('div');
                 item.className = 'note-compilation-item p-5 rounded';
-                item.innerHTML = `<div class="mb-3">
+                item.innerHTML = `<div class="mb-3 flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-bold px-2 py-1 rounded font-mono" style="background: rgba(220, 38, 38, 0.1); color: var(--neon-red);">ID ${note.id}</span>
-                    <span class="ml-2 font-semibold" style="color: var(--text-primary);">${displayName}</span></div>
-                    <div class="whitespace-pre-wrap" style="color: var(--text-secondary); line-height: 1.6;">
-                        <span class="font-semibold" style="color: var(--neon-red);">Note:</span> ${note.content}</div>`;
+                    <span class="font-semibold" style="color: var(--text-primary);">${displayName}</span>
+                    ${authorName ? `<span class="text-xs italic" style="color: var(--text-secondary);">— ${authorName}</span>` : ''}
+                </div>
+                <div class="whitespace-pre-wrap" style="color: var(--text-secondary); line-height: 1.6;">
+                    <span class="font-semibold" style="color: var(--neon-red);">Note:</span> ${note.content}</div>`;
                 compiledNotesList.appendChild(item);
             });
         }
@@ -644,8 +674,10 @@
                     const bookId = key.replace('red_notes_', '');
                     const noteContent = localStorage.getItem(key);
                     if (noteContent && noteContent.trim()) {
-                        const displayName = allFilesMap[bookId] ? allFilesMap[bookId].replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ') : `Tác phẩm ${bookId}`;
-                        notesData.push(`${bookId}. ${displayName}\nNote: ${noteContent}\n`);
+                        const book = allBooksMap[bookId];
+                        const displayName = book ? getBookDisplayName(book) : `Tác phẩm ${bookId}`;
+                        const authorName = book && book.author ? book.author : '';
+                        notesData.push(`${bookId}. ${displayName}${authorName ? ' — ' + authorName : ''}\nNote: ${noteContent}\n`);
                     }
                 }
             }
@@ -666,15 +698,17 @@
             setTimeout(() => { loadBooksList(true); setTimeout(() => { icon.classList.remove('fa-spin'); }, 1000); }, 300);
         });
 
-        function openViewer(url, filename) {
-            currentFile = filename; currentBookId = getBookId(filename);
-            modalTitle.textContent = filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ');
+        function openViewer(url, book) {
+            currentFile = book.filename; 
+            currentBookId = book.id;
+            modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
             noteIdDisplay.textContent = `ID: ${currentBookId}`;
             pdfFrame.src = url;
             let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
             if (!savedNotes) {
-                const oldNotes = localStorage.getItem(`red_notes_${filename}`);
-                if (oldNotes) { savedNotes = oldNotes; localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); localStorage.removeItem(`red_notes_${filename}`); } else { savedNotes = ''; }
+                // Migration: try legacy keys (filename-based)
+                const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
+                if (oldNotes) { savedNotes = oldNotes; localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); localStorage.removeItem(`red_notes_${book.filename}`); } else { savedNotes = ''; }
             }
             noteArea.value = savedNotes; viewerModal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
         }
