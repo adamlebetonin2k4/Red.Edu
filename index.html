@@ -165,7 +165,7 @@
         }
         .pdf-item .book-id {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 600;
             color: var(--neon-red);
             background: rgba(220, 38, 38, 0.1);
@@ -174,11 +174,44 @@
             border-radius: 4px;
             letter-spacing: 0.05em;
         }
-        .pdf-item h3 { color: var(--text-primary) !important; font-weight: 700; transition: color 0.3s; font-size: 1.05rem; }
+        .pdf-item h3 { 
+            color: var(--text-primary) !important; 
+            font-weight: 700; 
+            transition: color 0.3s; 
+            font-size: 1.1rem;
+            line-height: 1.3;
+        }
         .pdf-item:hover h3 { color: var(--neon-red) !important; }
-        .pdf-item .book-author { color: var(--text-secondary) !important; font-size: 0.85rem; font-style: italic; }
-        .pdf-item .book-author i { font-size: 0.75rem; margin-right: 4px; opacity: 0.7; }
-        .pdf-item p.book-hint { color: var(--text-secondary) !important; font-family: 'JetBrains Mono', monospace !important; font-size: 0.68rem !important; opacity: 0.7; }
+        .pdf-item .book-author-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            font-size: 0.88rem;
+            color: var(--text-secondary) !important;
+        }
+        .pdf-item .book-author-line .author-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            opacity: 0.85;
+        }
+        .pdf-item .book-author-line .author-name {
+            font-style: italic;
+            color: var(--text-primary);
+            opacity: 0.85;
+            transition: color 0.3s, opacity 0.3s;
+        }
+        .pdf-item:hover .book-author-line .author-name {
+            color: var(--neon-red);
+            opacity: 1;
+        }
+        .pdf-item p.book-hint { 
+            color: var(--text-secondary) !important; 
+            font-family: 'JetBrains Mono', monospace !important; 
+            font-size: 0.68rem !important; 
+            opacity: 0.6;
+            margin-top: 8px;
+        }
         .pdf-item i.fa-external-link-alt { color: var(--text-secondary); opacity: 0.5; transition: all 0.3s; }
         .pdf-item:hover i.fa-external-link-alt { opacity: 1; color: var(--neon-red); filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
 
@@ -536,7 +569,7 @@
 
         let currentFile = '';
         let currentBookId = '';
-        let allBooksMap = {};  // Map: id -> {id, title, author, filename}
+        let allBooksMap = {};
         const listContainer = document.getElementById('pdf-list');
         const compiledNotesList = document.getElementById('compiled-notes-list');
         const viewerModal = document.getElementById('viewer-modal');
@@ -575,7 +608,6 @@
         tabGuide.addEventListener('click', () => switchMainTab('guide'));
         tabCompiled.addEventListener('click', () => switchMainTab('compiled'));
 
-        // Helper: format display name from book object
         function getBookDisplayName(book) {
             return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ');
         }
@@ -598,7 +630,6 @@
             const fetchUrl = bustCache ? `files.json?t=${Date.now()}` : 'files.json';
             fetch(fetchUrl).then(r => r.json()).then(books => {
                 listContainer.innerHTML = '';
-                // Sort by id (numeric if possible)
                 books.sort((a, b) => {
                     const numA = parseInt(a.id); const numB = parseInt(b.id);
                     if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
@@ -609,18 +640,22 @@
                     allBooksMap[book.id] = book;
                     const item = document.createElement('div');
                     item.className = 'pdf-item flex items-center p-4 rounded cursor-pointer';
+                    const authorText = book.author || 'Ẩn danh';
                     item.innerHTML = `
                         <div class="w-16 h-20 flex-shrink-0 mr-5 rounded flex items-center justify-center shadow-sm overflow-hidden relative">
                             <i class="fas fa-circle-notch fa-spin text-white text-xl loading-icon"></i>
                             <canvas id="thumb-${idx}" class="w-full h-full object-cover hidden"></canvas>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                <span class="book-id">#${book.id}</span>
-                                <span class="book-author"><i class="fas fa-feather-alt"></i>${book.author || 'Ẩn danh'}</span>
+                            <div class="flex items-start gap-2 mb-1">
+                                <span class="book-id flex-shrink-0">#${book.id}</span>
+                                <h3 class="truncate">${getBookDisplayName(book)}</h3>
                             </div>
-                            <h3 class="truncate">${getBookDisplayName(book)}</h3>
-                            <p class="mt-1 book-hint">// Nhấn để mở trình đọc & ghi chú</p>
+                            <div class="book-author-line">
+                                <span class="author-label">Tác giả:</span>
+                                <span class="author-name">${authorText}</span>
+                            </div>
+                            <p class="book-hint">// Nhấn để mở trình đọc & ghi chú</p>
                         </div>
                         <i class="fas fa-external-link-alt text-xl ml-3 flex-shrink-0"></i>`;
                     item.addEventListener('click', () => openViewer(`Giao_trinh_triet_hoc/${book.filename}`, book));
@@ -706,7 +741,6 @@
             pdfFrame.src = url;
             let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
             if (!savedNotes) {
-                // Migration: try legacy keys (filename-based)
                 const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
                 if (oldNotes) { savedNotes = oldNotes; localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); localStorage.removeItem(`red_notes_${book.filename}`); } else { savedNotes = ''; }
             }
