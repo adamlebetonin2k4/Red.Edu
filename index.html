@@ -425,8 +425,94 @@
             color: var(--neon-red); opacity: 0.3; pointer-events: none; z-index: 3; letter-spacing: 0.1em;
         }
 
-        /* ===== MOBILE RESPONSIVE ===== */
+        /* ===== MOBILE PDF VIEWER STYLES ===== */
+        #mobile-pdf-container {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: var(--bg-main);
+            position: relative;
+        }
+        
+        #mobile-pdf-canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .pdf-controls {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .pdf-controls button {
+            background: var(--bg-solid);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+        
+        .pdf-controls button:hover:not(:disabled) {
+            border-color: var(--neon-red);
+            color: var(--neon-red);
+        }
+        
+        .pdf-controls button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .page-info {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .pdf-loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        
+        .pdf-loading i {
+            font-size: 2rem;
+            color: var(--neon-red);
+            margin-bottom: 0.5rem;
+        }
+
         @media (max-width: 768px) {
+            #mobile-pdf-container {
+                display: block;
+            }
+            
+            #desktop-pdf-frame {
+                display: none !important;
+            }
+            
+            .pdf-controls {
+                display: flex;
+            }
+            
             header .container {
                 padding-left: 1rem !important;
                 padding-right: 1rem !important;
@@ -456,6 +542,20 @@
             #viewer-modal .flex-1.md\:w-\[400px\] {
                 width: 100% !important;
                 max-width: none !important;
+            }
+        }
+
+        @media (min-width: 769px) {
+            #mobile-pdf-container {
+                display: none !important;
+            }
+            
+            #desktop-pdf-frame {
+                display: block !important;
+            }
+            
+            .pdf-controls {
+                display: none !important;
             }
         }
     </style>
@@ -607,9 +707,31 @@
             </div>
         </div>
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
-            <div class="flex-[2] relative">
+            <!-- Mobile PDF Viewer (PDF.js) -->
+            <div id="mobile-pdf-container">
+                <div class="pdf-controls">
+                    <button id="pdf-prev-page" title="Trang trước">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="page-info">
+                        <span id="pdf-current-page">1</span> / <span id="pdf-total-pages">-</span>
+                    </span>
+                    <button id="pdf-next-page" title="Trang sau">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="pdf-loading" id="pdf-loading">
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    <div>Đang tải PDF...</div>
+                </div>
+                <canvas id="mobile-pdf-canvas"></canvas>
+            </div>
+            
+            <!-- Desktop PDF Viewer (iframe) -->
+            <div class="flex-[2] relative" id="desktop-pdf-frame">
                 <iframe id="pdf-frame" src="" class="w-full h-full border-0"></iframe>
             </div>
+            
             <div class="flex-1 md:w-[400px] lg:w-[450px] flex flex-col flex-shrink-0">
                 <div class="px-3 sm:px-4 py-3 flex justify-between items-center shadow-sm flex-shrink-0">
                     <div class="flex items-center space-x-2">
@@ -809,6 +931,122 @@
         const contentGuide = document.getElementById('content-guide');
         const contentCompiled = document.getElementById('content-compiled');
 
+        // Mobile PDF Viewer variables
+        let pdfDoc = null;
+        let currentPage = 1;
+        let totalPages = 0;
+        let currentPdfUrl = '';
+        const mobilePdfCanvas = document.getElementById('mobile-pdf-canvas');
+        const pdfCtx = mobilePdfCanvas ? mobilePdfCanvas.getContext('2d') : null;
+        const pdfLoading = document.getElementById('pdf-loading');
+        const pdfCurrentPageEl = document.getElementById('pdf-current-page');
+        const pdfTotalPagesEl = document.getElementById('pdf-total-pages');
+        const pdfPrevBtn = document.getElementById('pdf-prev-page');
+        const pdfNextBtn = document.getElementById('pdf-next-page');
+
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
+        async function renderPDFPage(pageNum) {
+            if (!pdfDoc || !pdfCtx) return;
+            
+            pdfLoading.style.display = 'block';
+            
+            try {
+                const page = await pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.5 });
+                
+                mobilePdfCanvas.height = viewport.height;
+                mobilePdfCanvas.width = viewport.width;
+                
+                const renderContext = {
+                    canvasContext: pdfCtx,
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                currentPage = pageNum;
+                pdfCurrentPageEl.textContent = currentPage;
+                
+                // Update button states
+                pdfPrevBtn.disabled = currentPage <= 1;
+                pdfNextBtn.disabled = currentPage >= totalPages;
+                
+            } catch (error) {
+                console.error('Error rendering PDF page:', error);
+            } finally {
+                pdfLoading.style.display = 'none';
+            }
+        }
+
+        async function loadPDFMobile(url) {
+            try {
+                pdfLoading.style.display = 'block';
+                currentPdfUrl = url;
+                
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfDoc = await loadingTask.promise;
+                totalPages = pdfDoc.numPages;
+                pdfTotalPagesEl.textContent = totalPages;
+                currentPage = 1;
+                
+                await renderPDFPage(1);
+                
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                pdfLoading.innerHTML = '<i class="fas fa-exclamation-circle"></i><div>Lỗi tải PDF</div>';
+                pdfLoading.style.display = 'block';
+            }
+        }
+
+        // PDF navigation event listeners
+        if (pdfPrevBtn) {
+            pdfPrevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    renderPDFPage(currentPage - 1);
+                }
+            });
+        }
+
+        if (pdfNextBtn) {
+            pdfNextBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    renderPDFPage(currentPage + 1);
+                }
+            });
+        }
+
+        // Touch gestures for mobile PDF
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        if (mobilePdfCanvas) {
+            mobilePdfCanvas.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            mobilePdfCanvas.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, { passive: true });
+        }
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0 && currentPage < totalPages) {
+                    // Swipe left - next page
+                    renderPDFPage(currentPage + 1);
+                } else if (diff < 0 && currentPage > 1) {
+                    // Swipe right - previous page
+                    renderPDFPage(currentPage - 1);
+                }
+            }
+        }
+
         function switchMainTab(tabName) {
             const tabs = [
                 { btn: tabBooks, content: contentBooks, name: 'books' },
@@ -962,7 +1200,19 @@
             currentBookId = book.id;
             modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
             noteIdDisplay.textContent = `ID: ${currentBookId}`;
-            pdfFrame.src = url;
+            
+            if (isMobile()) {
+                // Use mobile PDF viewer
+                loadPDFMobile(url);
+                pdfFrame.src = ''; // Clear iframe
+            } else {
+                // Use desktop iframe viewer
+                pdfFrame.src = url;
+                // Reset mobile viewer
+                pdfDoc = null;
+                pdfLoading.style.display = 'none';
+            }
+            
             let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
             if (!savedNotes) {
                 const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
@@ -971,7 +1221,12 @@
             noteArea.value = savedNotes; viewerModal.classList.remove('hidden');
         }
 
-        function closeViewer() { viewerModal.classList.add('hidden'); pdfFrame.src = ''; }
+        function closeViewer() { 
+            viewerModal.classList.add('hidden'); 
+            pdfFrame.src = ''; 
+            pdfDoc = null;
+            pdfLoading.style.display = 'none';
+        }
         document.getElementById('close-modal').addEventListener('click', closeViewer);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !viewerModal.classList.contains('hidden')) closeViewer(); });
 
@@ -986,11 +1241,25 @@
             if (confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) { noteArea.value = ''; localStorage.removeItem(`red_notes_${currentBookId}`); }
         });
 
-        document.getElementById('btn-download-pdf').addEventListener('click', () => { const link = document.createElement('a'); link.href = pdfFrame.src; link.download = currentFile; link.click(); });
+        document.getElementById('btn-download-pdf').addEventListener('click', () => { 
+            const link = document.createElement('a'); 
+            link.href = currentPdfUrl || pdfFrame.src; 
+            link.download = currentFile; 
+            link.click(); 
+        });
+        
         document.getElementById('btn-download-notes').addEventListener('click', () => {
             const text = noteArea.value; if (!text.trim()) { alert('Chưa có ghi chú!'); return; }
             const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `ID_${currentBookId}_notes.txt`; link.click(); URL.revokeObjectURL(url);
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!isMobile() && pdfDoc) {
+                // Switched from mobile to desktop
+                pdfDoc = null;
+            }
         });
     </script>
 </body>
