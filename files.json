@@ -1,6 +1,26 @@
 [
-  "26001-Toan_bo_cac_phan_manh-Heraclitus.pdf",
-  "26002-Euthyphro-Plato.pdf",
-  "26003-Loi_bien_ho_cua_Socrates-Plato.pdf",
-  "26004-Crito-Plato.pdf"
+  {
+    "id": "26001",
+    "title": "Toàn bộ các phân mảnh triết học",
+    "author": "Heraclitus",
+    "filename": "26001-Toan_bo_cac_phan_manh-Heraclitus.pdf"
+  },
+  {
+    "id": "26002",
+    "title": "Euthyphro",
+    "author": "Plato",
+    "filename": "26002-Euthyphro-Plato.pdf"
+  },
+  {
+    "id": "26003",
+    "title": "Lời biện hộ của Socrates",
+    "author": "Plato",
+    "filename": "26003-Loi_bien_ho_cua_Socrates-Plato.pdf"
+  },
+  {
+    "id": "26004",
+    "title": "Crito",
+    "author": "Plato",
+    "filename": "26004-Crito-Plato.pdf"
+  }
 ]
