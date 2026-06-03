@@ -120,11 +120,22 @@
             filter: drop-shadow(0 0 8px var(--neon-purple));
         }
 
+        /* ===== MOBILE MENU BUTTON ===== */
+        #mobile-menu-btn {
+            display: none;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+        }
+        #mobile-menu-btn:hover {
+            color: var(--neon-red);
+        }
+
         /* ===== TABS ===== */
         .nav-tab {
             font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
             font-size: 0.72rem !important; transition: all 0.3s;
             padding: 8px 4px !important; color: var(--text-secondary) !important;
+            white-space: nowrap;
         }
         .nav-tab.active-tab {
             color: var(--neon-red) !important; opacity: 1 !important;
@@ -135,6 +146,37 @@
         .nav-tab.inactive-tab:hover {
             color: var(--neon-red) !important; opacity: 1 !important;
             border-bottom: 2px solid rgba(220, 38, 38, 0.5) !important;
+        }
+
+        /* Mobile navigation */
+        #mobile-nav {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            z-index: 50;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        #mobile-nav.active {
+            display: block;
+        }
+        #mobile-nav .nav-tab {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 12px 16px !important;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border-bottom: none !important;
+        }
+        #mobile-nav .nav-tab.active-tab {
+            background: rgba(220, 38, 38, 0.1);
+            border-left: 3px solid var(--neon-red) !important;
         }
 
         #btn-refresh { transition: all 0.4s; color: var(--text-secondary); }
@@ -321,6 +363,55 @@
             position: fixed; font-family: 'JetBrains Mono', monospace !important; font-size: 10px;
             color: var(--neon-red); opacity: 0.3; pointer-events: none; z-index: 3; letter-spacing: 0.1em;
         }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            #mobile-menu-btn {
+                display: block;
+            }
+            
+            .desktop-nav {
+                display: none;
+            }
+            
+            header h1 {
+                font-size: 1.1rem !important;
+                letter-spacing: 0.1em !important;
+            }
+            
+            .container {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            
+            main {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            
+            .pdf-item {
+                padding: 1rem !important;
+            }
+            
+            .pdf-item .w-16 {
+                width: 3.5rem !important;
+                height: 4.5rem !important;
+            }
+            
+            .pdf-item h3 {
+                font-size: 1rem !important;
+            }
+            
+            #mobile-nav .nav-tab {
+                font-size: 0.9rem !important;
+                padding: 14px 16px !important;
+            }
+            
+            #viewer-modal .flex-1.md\:w-\[400px\] {
+                width: 100% !important;
+                max-width: none !important;
+            }
+        }
     </style>
 </head>
 <body class="flex flex-col">
@@ -336,32 +427,57 @@
     <div class="data-tag" style="top: 60%; right: 2%;">NODE.ACTIVE</div>
 
     <header class="shadow-md sticky top-0 z-40">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-4">
-                <img src="logo.png" alt="Logo" class="h-10 w-auto object-contain rounded p-1 bg-white/50" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='block';">
-                <i id="logo-fallback" class="fas fa-graduation-cap text-2xl rounded p-1.5 hidden items-center justify-center" style="background: white; color: #dc2626;"></i>
-                <h1 class="text-xl tracking-wide">RED. EDUCATION</h1>
-            </div>
-            <nav class="flex items-center space-x-3">
-                <button id="tab-books" class="nav-tab active-tab cursor-pointer">Giáo trình</button>
-                <button id="tab-guide" class="nav-tab inactive-tab cursor-pointer">Hướng dẫn đọc</button>
-                <button id="tab-compiled" class="nav-tab inactive-tab cursor-pointer">Tổng hợp ghi chú</button>
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <!-- Logo Section -->
+                <div class="flex items-center space-x-3">
+                    <img src="logo.png" alt="Logo" class="h-8 w-auto object-contain rounded p-0.5 bg-white/50" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+                    <i id="logo-fallback" class="fas fa-graduation-cap text-xl rounded p-1 hidden items-center justify-center" style="background: white; color: #dc2626;"></i>
+                    <h1 class="text-lg tracking-wide hidden sm:block">RED. EDUCATION</h1>
+                    <h1 class="text-lg tracking-wide sm:hidden">RED.</h1>
+                </div>
                 
-                <button id="theme-toggle" class="p-2 ml-2" title="Chế độ sáng/tối">
-                    <i class="fas fa-moon text-lg"></i>
-                </button>
-                <button id="btn-refresh" class="p-2" title="Làm mới danh sách">
-                    <i class="fas fa-sync-alt text-lg"></i>
-                </button>
-            </nav>
+                <!-- Right Side Actions -->
+                <div class="flex items-center space-x-2">
+                    <!-- Desktop Navigation -->
+                    <nav class="desktop-nav flex items-center space-x-1">
+                        <button id="tab-books" class="nav-tab active-tab cursor-pointer">Giáo trình</button>
+                        <button id="tab-guide" class="nav-tab inactive-tab cursor-pointer hidden lg:block">Hướng dẫn</button>
+                        <button id="tab-compiled" class="nav-tab inactive-tab cursor-pointer hidden xl:block">Ghi chú</button>
+                    </nav>
+                    
+                    <!-- Action Buttons -->
+                    <button id="theme-toggle" class="p-2" title="Chế độ sáng/tối">
+                        <i class="fas fa-moon text-lg"></i>
+                    </button>
+                    <button id="btn-refresh" class="p-2 hidden sm:block" title="Làm mới danh sách">
+                        <i class="fas fa-sync-alt text-lg"></i>
+                    </button>
+                    
+                    <!-- Mobile Menu Button -->
+                    <button id="mobile-menu-btn" class="p-2" title="Menu">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Dropdown -->
+        <div id="mobile-nav">
+            <button class="nav-tab active-tab cursor-pointer w-full text-left mb-2">Giáo trình</button>
+            <button class="nav-tab inactive-tab cursor-pointer w-full text-left mb-2">Hướng dẫn đọc</button>
+            <button class="nav-tab inactive-tab cursor-pointer w-full text-left">Tổng hợp ghi chú</button>
+            <button id="mobile-btn-refresh" class="nav-tab inactive-tab cursor-pointer w-full text-left mt-4 flex items-center">
+                <i class="fas fa-sync-alt mr-2"></i> Làm mới danh sách
+            </button>
         </div>
     </header>
 
-    <main class="container mx-auto px-6 py-10 flex-grow max-w-4xl">
+    <main class="container mx-auto px-6 py-6 sm:py-10 flex-grow max-w-4xl">
         
         <div id="content-books">
-            <h2 class="text-2xl mb-6 pb-2">Các tác phẩm và bài đọc</h2>
-            <div id="pdf-list" class="space-y-4">
+            <h2 class="text-xl sm:text-2xl mb-4 sm:mb-6 pb-2">Các tác phẩm và bài đọc</h2>
+            <div id="pdf-list" class="space-y-3 sm:space-y-4">
                 <div class="flex items-center justify-center p-10 rounded border" style="background: var(--bg-surface); border-color: var(--border-subtle) !important;">
                     <i class="fas fa-circle-notch fa-spin text-xl mr-3" style="color: var(--neon-red);"></i>
                     <span class="text-sm font-mono" style="color: var(--text-secondary);">Đang tải danh sách...</span>
@@ -370,18 +486,18 @@
         </div>
 
         <div id="content-guide" class="hidden">
-            <h2 class="text-3xl mb-8 pb-3">Cách đọc và trình tự đọc các tác phẩm</h2>
-            <div class="p-8 rounded-lg space-y-6 leading-relaxed text-[16px]">
+            <h2 class="text-2xl sm:text-3xl mb-6 sm:mb-8 pb-3">Cách đọc và trình tự đọc các tác phẩm</h2>
+            <div class="p-4 sm:p-8 rounded-lg space-y-4 sm:space-y-6 leading-relaxed text-[14px] sm:text-[16px]">
                 <div>
-                    <h3 class="text-xl mb-3 flex items-center"><i class="fas fa-compass mr-2"></i> Điều hướng và Cách đọc</h3>
+                    <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-compass mr-2"></i> Điều hướng và Cách đọc</h3>
                     <p>Chào mừng bạn đến với kho tàng triết học của RED. Education. Website được thiết kế để bạn có thể đọc và ghi chú trực tiếp. Khi mở bất kỳ tác phẩm nào, màn hình sẽ chia làm hai phần: trình đọc PDF bên trái và không gian Ghi chú (Notes) bên phải. Mọi ghi chú của bạn đều được tự động lưu lại theo mã số của tác phẩm đó.</p>
                 </div>
                 <div>
-                    <h3 class="text-xl mb-3 flex items-center"><i class="fas fa-list-ol mr-2"></i> Trình tự đọc</h3>
+                    <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-list-ol mr-2"></i> Trình tự đọc</h3>
                     <p>Các tác phẩm trong danh sách <strong>Giáo trình</strong> được đánh số thứ tự từ thấp đến cao. Bạn <strong>bắt buộc phải đọc theo đúng trình tự này</strong>. Các con số thể hiện mạch tư duy lịch sử và logic phát triển của triết học từ giai đoạn khởi thủy đến hiện đại.</p>
                 </div>
-                <div class="p-5 rounded-r-lg highlight-box">
-                    <h3 class="text-lg mb-2 flex items-center"><i class="fas fa-lightbulb mr-2"></i> Về phần "Tóm tắt và nhận xét"</h3>
+                <div class="p-4 sm:p-5 rounded-r-lg highlight-box">
+                    <h3 class="text-base sm:text-lg mb-2 flex items-center"><i class="fas fa-lightbulb mr-2"></i> Về phần "Tóm tắt và nhận xét"</h3>
                     <p class="mb-3">Trong mỗi tác phẩm, ngay sau phần Mục lục, sẽ có một phần <strong>"Tóm tắt và nhận xét"</strong>. Người đọc nên đặc biệt quan tâm đến phần này.</p>
                     <p>Đây là nơi tôi cung cấp các gợi mở và đánh giá của tác phẩm. Bạn có thể sử dụng công cụ <strong>Ghi chú (Notes)</strong> trên website để ghi lại những suy nghĩ và phân tích của chính bạn.</p>
                 </div>
@@ -395,14 +511,14 @@
         </div>
 
         <div id="content-compiled" class="hidden">
-            <h2 class="text-3xl mb-6 pb-3">Tổng hợp tất cả ghi chú</h2>
-            <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-2xl sm:text-3xl mb-4 sm:mb-6 pb-3">Tổng hợp tất cả ghi chú</h2>
+            <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <p style="color: var(--text-secondary);" class="text-sm"><i class="fas fa-info-circle mr-2"></i>Tất cả ghi chú đã lưu của bạn, được tổng hợp theo thứ tự ID sách.</p>
-                <button id="btn-download-all-notes" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center" style="background: linear-gradient(135deg, var(--neon-red) 0%, #991b1b 100%); color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
+                <button id="btn-download-all-notes" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center w-full sm:w-auto justify-center" style="background: linear-gradient(135deg, var(--neon-red) 0%, #991b1b 100%); color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
                     <i class="fas fa-download mr-2"></i> Tải tất cả ghi chú (.txt)
                 </button>
             </div>
-            <div id="compiled-notes-list" class="space-y-4">
+            <div id="compiled-notes-list" class="space-y-3 sm:space-y-4">
                 <div class="flex items-center justify-center p-10 rounded border" style="background: var(--bg-surface); border-color: var(--border-subtle) !important;">
                     <i class="fas fa-circle-notch fa-spin text-xl mr-3" style="color: var(--neon-red);"></i>
                     <span class="text-sm font-mono" style="color: var(--text-secondary);">Đang tải ghi chú...</span>
@@ -412,9 +528,9 @@
 
     </main>
 
-    <footer class="py-8 mt-auto relative">
+    <footer class="py-6 sm:py-8 mt-auto relative">
         <div class="container mx-auto px-6">
-            <div class="flex flex-wrap justify-center gap-6 mb-6">
+            <div class="flex flex-wrap justify-center gap-4 sm:gap-6 mb-4 sm:mb-6">
                 <a href="https://discord.gg/tMY2uWycda" target="_blank" class="flex items-center space-x-2 transition"><i class="fab fa-discord text-xl"></i><span class="text-sm font-medium">Discord</span></a>
                 <a href="https://redpublications.substack.com" target="_blank" class="flex items-center space-x-2 transition"><i class="fas fa-rss text-xl"></i><span class="text-sm font-medium">Substack</span></a>
                 <a href="https://www.youtube.com/@RedcollectiveVN" target="_blank" class="flex items-center space-x-2 transition"><i class="fab fa-youtube text-xl"></i><span class="text-sm font-medium">YouTube</span></a>
@@ -427,17 +543,17 @@
 
     <div id="viewer-modal" class="fixed inset-0 z-50 hidden flex flex-col h-screen">
         <div class="shadow-lg flex-shrink-0">
-            <div class="px-6 py-3 flex justify-between items-center flex-wrap gap-4">
-                <div class="flex items-center space-x-3">
-                    <button id="close-modal" class="p-2 -ml-2" title="Đóng"><i class="fas fa-arrow-left text-xl"></i></button>
-                    <h3 id="modal-title" class="truncate max-w-md text-lg">Tài liệu</h3>
+            <div class="px-4 sm:px-6 py-3 flex justify-between items-center flex-wrap gap-4">
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                    <button id="close-modal" class="p-2 -ml-2 flex-shrink-0" title="Đóng"><i class="fas fa-arrow-left text-xl"></i></button>
+                    <h3 id="modal-title" class="truncate text-base sm:text-lg">Tài liệu</h3>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <button id="btn-download-notes" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center">
-                        <i class="fas fa-file-alt mr-2"></i> <span class="hidden sm:inline">Tải</span> Notes
+                <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+                    <button id="btn-download-notes" class="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center">
+                        <i class="fas fa-file-alt mr-1 sm:mr-2"></i> <span class="hidden sm:inline">Tải</span> Notes
                     </button>
-                    <button id="btn-download-pdf" class="px-4 py-2 rounded-lg text-sm font-bold transition flex items-center">
-                        <i class="fas fa-file-pdf mr-2"></i> <span class="hidden sm:inline">Tải</span> PDF
+                    <button id="btn-download-pdf" class="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center">
+                        <i class="fas fa-file-pdf mr-1 sm:mr-2"></i> <span class="hidden sm:inline">Tải</span> PDF
                     </button>
                 </div>
             </div>
@@ -447,18 +563,18 @@
                 <iframe id="pdf-frame" src="" class="w-full h-full border-0"></iframe>
             </div>
             <div class="flex-1 md:w-[400px] lg:w-[450px] flex flex-col flex-shrink-0">
-                <div class="px-4 py-3 flex justify-between items-center shadow-sm flex-shrink-0">
+                <div class="px-3 sm:px-4 py-3 flex justify-between items-center shadow-sm flex-shrink-0">
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-sticky-note"></i>
-                        <h4 class="text-sm uppercase tracking-wide">Ghi chú</h4>
+                        <h4 class="text-xs sm:text-sm uppercase tracking-wide">Ghi chú</h4>
                         <span id="note-id-display" class="text-xs px-2 py-0.5 rounded hidden sm:inline-block"></span>
                     </div>
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
                         <span id="save-status" class="text-xs font-medium opacity-0 transition-opacity duration-300"><i class="fas fa-check-circle mr-1"></i>Đã lưu</span>
                         <button id="btn-clear-notes" class="text-xs font-semibold" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>
-                <textarea id="note-area" class="flex-1 w-full p-5 leading-relaxed focus:outline-none resize-none" placeholder="Viết ghi chú của bạn tại đây... (Tự động lưu theo ID sách)"></textarea>
+                <textarea id="note-area" class="flex-1 w-full p-3 sm:p-5 leading-relaxed focus:outline-none resize-none text-sm sm:text-base" placeholder="Viết ghi chú của bạn tại đây... (Tự động lưu theo ID sách)"></textarea>
             </div>
         </div>
     </div>
@@ -484,6 +600,53 @@
             localStorage.setItem('red_theme', isDarkMode ? 'dark' : 'light');
             applyTheme();
         });
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileNav = document.getElementById('mobile-nav');
+        let mobileMenuOpen = false;
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenuOpen = !mobileMenuOpen;
+            if (mobileMenuOpen) {
+                mobileNav.classList.add('active');
+                mobileMenuBtn.innerHTML = '<i class="fas fa-times text-xl"></i>';
+            } else {
+                mobileNav.classList.remove('active');
+                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
+            }
+        });
+
+        // Mobile tab switching
+        const mobileTabs = mobileNav.querySelectorAll('.nav-tab');
+        mobileTabs[0].addEventListener('click', () => {
+            switchMainTab('books');
+            mobileMenuOpen = false;
+            mobileNav.classList.remove('active');
+            mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
+        });
+        mobileTabs[1].addEventListener('click', () => {
+            switchMainTab('guide');
+            mobileMenuOpen = false;
+            mobileNav.classList.remove('active');
+            mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
+        });
+        mobileTabs[2].addEventListener('click', () => {
+            switchMainTab('compiled');
+            mobileMenuOpen = false;
+            mobileNav.classList.remove('active');
+            mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
+        });
+        
+        const mobileRefreshBtn = document.getElementById('mobile-btn-refresh');
+        if (mobileRefreshBtn) {
+            mobileRefreshBtn.addEventListener('click', () => {
+                document.getElementById('btn-refresh').click();
+                mobileMenuOpen = false;
+                mobileNav.classList.remove('active');
+                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-xl"></i>';
+            });
+        }
 
         const holoCanvas = document.getElementById('holo-canvas');
         const holoCtx = holoCanvas.getContext('2d');
@@ -642,7 +805,7 @@
                     item.className = 'pdf-item flex items-center p-4 rounded cursor-pointer';
                     const authorText = book.author || 'Ẩn danh';
                     item.innerHTML = `
-                        <div class="w-16 h-20 flex-shrink-0 mr-5 rounded flex items-center justify-center shadow-sm overflow-hidden relative">
+                        <div class="w-16 h-20 flex-shrink-0 mr-4 sm:mr-5 rounded flex items-center justify-center shadow-sm overflow-hidden relative">
                             <i class="fas fa-circle-notch fa-spin text-white text-xl loading-icon"></i>
                             <canvas id="thumb-${idx}" class="w-full h-full object-cover hidden"></canvas>
                         </div>
