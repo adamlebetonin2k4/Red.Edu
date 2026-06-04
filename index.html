@@ -17,14 +17,11 @@
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
     <style>
-        /* ===== THEME VARIABLES — RED ONLY ===== */
         :root {
             --neon-red: #dc2626;
             --neon-red-light: #ef4444;
             --neon-red-dark: #991b1b;
             --neon-red-glow: rgba(220, 38, 38, 0.4);
-            
-            /* Light mode: pure white + red */
             --bg-main: #ffffff;
             --bg-surface: rgba(250, 250, 250, 0.9);
             --bg-solid: #ffffff;
@@ -36,7 +33,6 @@
         }
 
         body.dark-mode {
-            /* Dark mode: neutral grey + red (no blue tint) */
             --bg-main: #121212;
             --bg-surface: rgba(28, 28, 28, 0.9);
             --bg-solid: #1a1a1a;
@@ -47,7 +43,6 @@
             --grid-opacity: 0.06;
         }
 
-        /* ===== GLOBAL STYLES ===== */
         html, body {
             height: 100vh;
             overflow: hidden;
@@ -76,7 +71,6 @@
 
         .font-mono { font-family: 'JetBrains Mono', monospace !important; }
 
-        /* ===== INTERACTIVE LAYERS ===== */
         #holo-canvas {
             position: fixed; inset: 0; pointer-events: none; z-index: -2;
         }
@@ -93,7 +87,6 @@
             mix-blend-mode: screen;
         }
 
-        /* ===== HOLOGRAPHIC GRID (red only) ===== */
         body::before {
             content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
             background-image: 
@@ -106,7 +99,6 @@
             0% { background-position: 0 0; } 100% { background-position: 60px 60px; }
         }
 
-        /* ===== HEADER ===== */
         header {
             background: var(--bg-surface);
             backdrop-filter: blur(20px) saturate(150%);
@@ -130,7 +122,6 @@
             filter: drop-shadow(0 0 8px var(--neon-red-glow));
         }
 
-        /* ===== MOBILE MENU BUTTON ===== */
         #mobile-menu-btn {
             transition: all 0.3s;
             color: var(--text-secondary);
@@ -155,7 +146,6 @@
             .desktop-nav { display: none !important; }
         }
 
-        /* ===== TABS ===== */
         .nav-tab {
             font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
             font-size: 0.72rem !important; transition: all 0.3s;
@@ -173,7 +163,6 @@
             border-bottom: 2px solid rgba(220, 38, 38, 0.5) !important;
         }
 
-        /* Mobile navigation - solid grey/red */
         #mobile-nav {
             display: none;
             position: absolute;
@@ -220,7 +209,6 @@
         #btn-refresh { transition: all 0.4s; color: var(--text-secondary); }
         #btn-refresh:hover { color: var(--neon-red); transform: rotate(180deg); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
 
-        /* ===== MAIN CONTENT ===== */
         main {
             flex: 1 1 auto;
             min-height: 0;
@@ -302,14 +290,12 @@
         .pdf-item i.fa-external-link-alt { color: var(--text-secondary); opacity: 0.5; transition: all 0.3s; }
         .pdf-item:hover i.fa-external-link-alt { opacity: 1; color: var(--neon-red); filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
 
-        /* Thumbnail container — subtle red tint only */
         .pdf-item > div:first-child {
             background: rgba(220, 38, 38, 0.06) !important;
             border: 1px solid var(--border-color);
         }
 
         #content-guide h2, #content-compiled h2 {
-            /* Red gradient only */
             background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-red) 100%);
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
@@ -320,7 +306,6 @@
         }
         #content-guide > div::before, #content-compiled > div::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            /* Red shimmer only (no rainbow) */
             background: linear-gradient(90deg, transparent 0%, var(--neon-red) 50%, transparent 100%);
             background-size: 200% 100%;
             animation: red-shimmer 3s linear infinite;
@@ -349,7 +334,6 @@
         .note-compilation-item:hover { border-color: var(--neon-red) !important; transform: translateX(4px); }
         .note-compilation-item:hover::before { opacity: 1; }
 
-        /* ===== FOOTER ===== */
         footer {
             background: var(--bg-surface) !important; 
             backdrop-filter: blur(10px);
@@ -361,7 +345,6 @@
         }
         footer::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            /* Red shimmer only */
             background: linear-gradient(90deg, transparent 0%, var(--neon-red) 50%, transparent 100%);
             background-size: 200% 100%;
             animation: red-shimmer 3s linear infinite;
@@ -369,7 +352,6 @@
         footer a { color: var(--text-secondary); transition: all 0.3s; }
         footer a:hover { color: var(--neon-red) !important; text-shadow: 0 0 10px var(--neon-red-glow); }
 
-        /* ===== MODAL ===== */
         #viewer-modal { background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         body.dark-mode #viewer-modal { background: rgba(0,0,0,0.8); }
         
@@ -413,7 +395,6 @@
 
         #viewer-modal .flex-\[2\] { background: var(--border-subtle) !important; border-right: 1px solid var(--border-subtle) !important; }
 
-        /* Tech corners — all red now */
         .tech-corner { position: fixed; width: 60px; height: 60px; pointer-events: none; z-index: 5; opacity: 0.3; }
         .tech-corner.top-left { top: 20px; left: 20px; border-top: 1px solid var(--neon-red); border-left: 1px solid var(--neon-red); }
         .tech-corner.top-right { top: 20px; right: 20px; border-top: 1px solid var(--neon-red); border-right: 1px solid var(--neon-red); }
@@ -425,13 +406,15 @@
             color: var(--neon-red); opacity: 0.3; pointer-events: none; z-index: 3; letter-spacing: 0.1em;
         }
 
-        /* ===== MOBILE PDF VIEWER STYLES ===== */
+        /* ===== MOBILE PDF VIEWER ===== */
         #mobile-pdf-container {
             display: none;
             flex: 1;
+            flex-direction: column;
             overflow: hidden;
             background: var(--bg-main);
             position: relative;
+            min-height: 0;
         }
         
         #mobile-pdf-scroll-wrapper {
@@ -439,45 +422,42 @@
             overflow-y: auto;
             overflow-x: hidden;
             position: relative;
-            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
         }
         
         #mobile-pdf-canvas-wrapper {
-            position: relative;
             display: flex;
             justify-content: center;
-            padding: 1rem;
-            transition: transform 0.3s ease;
+            align-items: flex-start;
+            min-height: 100%;
+            padding: 1rem 0.5rem;
         }
         
         #mobile-pdf-canvas {
             display: block;
+            max-width: 100%;
             box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            touch-action: none;
-            cursor: grab;
-        }
-        
-        #mobile-pdf-canvas:active {
-            cursor: grabbing;
+            transition: opacity 0.25s ease;
+            /* Allow vertical scrolling, prevent pinch zoom */
+            touch-action: pan-y;
+            user-select: none;
+            -webkit-user-select: none;
         }
         
         #mobile-pdf-canvas.flipping {
-            opacity: 0.7;
-            transform: scale(0.98);
+            opacity: 0.6;
         }
         
         .pdf-controls {
             display: none;
             align-items: center;
             justify-content: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
             padding: 0.5rem;
             background: var(--bg-surface);
             border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            flex-shrink: 0;
         }
         
         .pdf-controls button {
@@ -499,11 +479,10 @@
         .pdf-controls button:hover:not(:disabled) {
             border-color: var(--neon-red);
             color: var(--neon-red);
-            transform: translateY(-1px);
         }
         
         .pdf-controls button:active:not(:disabled) {
-            transform: translateY(0);
+            transform: scale(0.95);
         }
         
         .pdf-controls button:disabled {
@@ -523,8 +502,8 @@
         .zoom-controls {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-left: auto;
+            gap: 0.4rem;
+            margin-left: 0.5rem;
             padding-left: 0.75rem;
             border-left: 1px solid var(--border-subtle);
         }
@@ -554,39 +533,98 @@
             margin-bottom: 0.5rem;
         }
 
-        /* Compact notes section for mobile */
+        /* ===== MOBILE NOTES SECTION - Full width, small height ===== */
+        #mobile-notes-section {
+            display: none;
+            width: 100%;
+            flex-shrink: 0;
+            background: var(--bg-surface);
+            border-top: 2px solid var(--border-color);
+        }
+        
+        #mobile-notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0.75rem;
+            background: var(--bg-main);
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-primary);
+        }
+        
+        #mobile-notes-header .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        
+        #mobile-notes-header .header-left i {
+            color: var(--neon-red);
+        }
+        
+        #mobile-notes-header .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        #mobile-notes-header .clear-btn {
+            background: none;
+            border: none;
+            color: var(--neon-red);
+            cursor: pointer;
+            padding: 0.2rem;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        #mobile-notes-header .clear-btn:hover {
+            filter: drop-shadow(0 0 4px var(--neon-red-glow));
+        }
+        
+        #mobile-save-status {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: #10b981;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #mobile-notes-area {
+            width: 100%;
+            height: 110px;
+            padding: 0.6rem 0.75rem;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            border: none;
+            outline: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            resize: none;
+            box-sizing: border-box;
+        }
+        
+        #mobile-notes-area::placeholder {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        #mobile-notes-area:focus {
+            box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.15);
+        }
+
         @media (max-width: 768px) {
             #mobile-pdf-container {
                 display: flex;
-                flex-direction: column;
             }
             
             #mobile-notes-section {
-                flex: 0 0 auto;
-                max-height: 180px;
-                border-top: 2px solid var(--border-color);
-                background: var(--bg-surface);
-            }
-            
-            #mobile-notes-header {
-                padding: 0.5rem 0.75rem;
-                background: var(--bg-main);
-                border-bottom: 1px solid var(--border-subtle);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 0.75rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-            }
-            
-            #mobile-notes-area {
-                height: calc(180px - 45px);
-                padding: 0.75rem;
-                font-size: 0.85rem;
-                line-height: 1.5;
-                resize: none;
+                display: block;
             }
             
             #desktop-pdf-frame {
@@ -793,8 +831,8 @@
                 </div>
             </div>
         </div>
-        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
-            <!-- Mobile PDF Viewer (PDF.js) -->
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+            <!-- Mobile PDF Viewer -->
             <div id="mobile-pdf-container">
                 <div class="pdf-controls">
                     <button id="pdf-prev-page" title="Trang trước">
@@ -825,24 +863,30 @@
                         <canvas id="mobile-pdf-canvas"></canvas>
                     </div>
                 </div>
-                <!-- Compact Notes Section for Mobile -->
+                <!-- Compact Notes Section - Full width, small height -->
                 <div id="mobile-notes-section">
                     <div id="mobile-notes-header">
-                        <span><i class="fas fa-sticky-note mr-2"></i>Ghi chú</span>
-                        <span id="mobile-save-status" style="opacity: 0; transition: opacity 0.3s; color: #10b981;">
-                            <i class="fas fa-check mr-1"></i>Đã lưu
-                        </span>
+                        <div class="header-left">
+                            <i class="fas fa-sticky-note"></i>
+                            <span>Ghi chú</span>
+                        </div>
+                        <div class="header-right">
+                            <span id="mobile-save-status"><i class="fas fa-check mr-1"></i>Đã lưu</span>
+                            <button id="mobile-clear-notes" class="clear-btn" title="Xóa ghi chú">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
                     </div>
-                    <textarea id="mobile-notes-area" placeholder="Viết ghi chú của bạn tại đây..."></textarea>
+                    <textarea id="mobile-notes-area" placeholder="Viết ghi chú của bạn tại đây... (Tự động lưu)"></textarea>
                 </div>
             </div>
             
-            <!-- Desktop PDF Viewer (iframe) -->
+            <!-- Desktop PDF Viewer -->
             <div class="flex-[2] relative" id="desktop-pdf-frame">
                 <iframe id="pdf-frame" src="" class="w-full h-full border-0"></iframe>
             </div>
             
-            <div class="flex-1 md:w-[400px] lg:w-[450px] flex flex-col flex-shrink-0">
+            <div class="flex-1 md:w-[400px] lg:w-[450px] flex flex-col flex-shrink-0 min-h-0">
                 <div class="px-3 sm:px-4 py-3 flex justify-between items-center shadow-sm flex-shrink-0">
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-sticky-note"></i>
@@ -854,7 +898,7 @@
                         <button id="btn-clear-notes" class="text-xs font-semibold" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>
-                <textarea id="note-area" class="flex-1 w-full p-3 sm:p-5 leading-relaxed focus:outline-none resize-none text-sm sm:text-base" placeholder="Viết ghi chú của bạn tại đây... (Tự động lưu theo ID sách)"></textarea>
+                <textarea id="note-area" class="flex-1 w-full p-3 sm:p-5 leading-relaxed focus:outline-none resize-none text-sm sm:text-base min-h-0" placeholder="Viết ghi chú của bạn tại đây... (Tự động lưu theo ID sách)"></textarea>
             </div>
         </div>
     </div>
@@ -869,15 +913,11 @@
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
                 themeIcon.className = 'fas fa-sun';
-                if (mobileThemeToggle) {
-                    mobileThemeToggle.querySelector('i').className = 'fas fa-sun mr-2';
-                }
+                if (mobileThemeToggle) mobileThemeToggle.querySelector('i').className = 'fas fa-sun mr-2';
             } else {
                 document.body.classList.remove('dark-mode');
                 themeIcon.className = 'fas fa-moon';
-                if (mobileThemeToggle) {
-                    mobileThemeToggle.querySelector('i').className = 'fas fa-moon mr-2';
-                }
+                if (mobileThemeToggle) mobileThemeToggle.querySelector('i').className = 'fas fa-moon mr-2';
             }
         }
         applyTheme();
@@ -889,9 +929,7 @@
         }
 
         themeToggle.addEventListener('click', toggleTheme);
-        if (mobileThemeToggle) {
-            mobileThemeToggle.addEventListener('click', toggleTheme);
-        }
+        if (mobileThemeToggle) mobileThemeToggle.addEventListener('click', toggleTheme);
 
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileNav = document.getElementById('mobile-nav');
@@ -911,16 +949,10 @@
         const mobileTabs = document.querySelectorAll('.mobile-tab[data-tab]');
         mobileTabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                const tabName = tab.getAttribute('data-tab');
-                switchMainTab(tabName);
-                
-                mobileTabs.forEach(t => {
-                    t.classList.remove('active-tab');
-                    t.classList.add('inactive-tab');
-                });
+                switchMainTab(tab.getAttribute('data-tab'));
+                mobileTabs.forEach(t => { t.classList.remove('active-tab'); t.classList.add('inactive-tab'); });
                 tab.classList.remove('inactive-tab');
                 tab.classList.add('active-tab');
-                
                 mobileMenuOpen = false;
                 mobileNav.classList.remove('active');
                 mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
@@ -989,7 +1021,6 @@
         function animateParticles() {
             holoCtx.clearRect(0, 0, holoCanvas.width, holoCanvas.height);
             particles.forEach(p => { p.update(mouse); p.draw(); });
-
             for (let i = 0; i < particles.length; i++) {
                 for (let j = i + 1; j < particles.length; j++) {
                     const dx = particles[i].x - particles[j].x; const dy = particles[i].y - particles[j].y;
@@ -1016,7 +1047,6 @@
             requestAnimationFrame(animateParticles);
         }
         animateParticles();
-
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
@@ -1039,15 +1069,17 @@
         const contentGuide = document.getElementById('content-guide');
         const contentCompiled = document.getElementById('content-compiled');
 
-        // Mobile PDF Viewer variables
+        // Mobile PDF Viewer
         let pdfDoc = null;
         let currentPage = 1;
         let totalPages = 0;
         let currentPdfUrl = '';
         let currentScale = 1.0;
-        let minScale = 0.5;
-        let maxScale = 3.0;
-        let scaleStep = 0.25;
+        let pendingRenderScale = null;
+        const minScale = 0.5;
+        const maxScale = 3.0;
+        const scaleStep = 0.25;
+        
         const mobilePdfCanvas = document.getElementById('mobile-pdf-canvas');
         const pdfCtx = mobilePdfCanvas ? mobilePdfCanvas.getContext('2d') : null;
         const pdfLoading = document.getElementById('pdf-loading');
@@ -1063,17 +1095,33 @@
         const mobilePdfScrollWrapper = document.getElementById('mobile-pdf-scroll-wrapper');
         const mobilePdfCanvasWrapper = document.getElementById('mobile-pdf-canvas-wrapper');
 
-        // Mobile notes save functionality
+        // Mobile notes save
         if (mobileNotesArea) {
             let mobileSaveTimeout;
             mobileNotesArea.addEventListener('input', (e) => {
                 if (currentBookId) {
                     localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
+                    // Also sync to desktop textarea
+                    noteArea.value = e.target.value;
                     mobileSaveStatus.style.opacity = '1';
+                    saveStatus.style.opacity = '1';
                     clearTimeout(mobileSaveTimeout);
                     mobileSaveTimeout = setTimeout(() => {
                         mobileSaveStatus.style.opacity = '0';
+                        saveStatus.style.opacity = '0';
                     }, 1500);
+                }
+            });
+        }
+
+        // Mobile clear notes
+        const mobileClearBtn = document.getElementById('mobile-clear-notes');
+        if (mobileClearBtn) {
+            mobileClearBtn.addEventListener('click', () => {
+                if (currentBookId && confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) {
+                    mobileNotesArea.value = '';
+                    noteArea.value = '';
+                    localStorage.removeItem(`red_notes_${currentBookId}`);
                 }
             });
         }
@@ -1083,14 +1131,14 @@
         }
 
         function calculateFitScale(pageWidth, pageHeight) {
-            const containerWidth = mobilePdfScrollWrapper.clientWidth - 32; // padding
-            const containerHeight = mobilePdfScrollWrapper.clientHeight - 32;
+            const containerWidth = mobilePdfScrollWrapper.clientWidth - 16;
+            const containerHeight = mobilePdfScrollWrapper.clientHeight - 16;
             const scaleX = containerWidth / pageWidth;
             const scaleY = containerHeight / pageHeight;
-            return Math.min(scaleX, scaleY, 1.5); // Cap at 1.5x
+            return Math.min(scaleX, scaleY, 1.5);
         }
 
-        async function renderPDFPage(pageNum, scale = null) {
+        async function renderPDFPage(pageNum, scale = null, scrollToTop = true) {
             if (!pdfDoc || !pdfCtx) return;
             
             pdfLoading.style.display = 'block';
@@ -1099,14 +1147,18 @@
             try {
                 const page = await pdfDoc.getPage(pageNum);
                 
-                // Calculate scale if not provided
                 if (scale === null) {
-                    if (currentScale === 1.0) {
-                        // First time or reset - fit to screen
+                    if (currentScale === 1.0 || pendingRenderScale !== null) {
                         const viewport = page.getViewport({ scale: 1 });
                         currentScale = calculateFitScale(viewport.width, viewport.height);
+                        if (pendingRenderScale !== null) {
+                            currentScale = pendingRenderScale;
+                            pendingRenderScale = null;
+                        }
                     }
                     scale = currentScale;
+                } else {
+                    currentScale = scale;
                 }
                 
                 const viewport = page.getViewport({ scale: scale });
@@ -1114,25 +1166,20 @@
                 mobilePdfCanvas.height = viewport.height;
                 mobilePdfCanvas.width = viewport.width;
                 
-                const renderContext = {
-                    canvasContext: pdfCtx,
-                    viewport: viewport
-                };
-                
-                await page.render(renderContext).promise;
+                await page.render({ canvasContext: pdfCtx, viewport: viewport }).promise;
                 currentPage = pageNum;
                 pdfCurrentPageEl.textContent = currentPage;
                 
-                // Update button states
                 pdfPrevBtn.disabled = currentPage <= 1;
                 pdfNextBtn.disabled = currentPage >= totalPages;
-                
-                // Update zoom level display
                 pdfZoomLevelEl.textContent = Math.round(scale * 100) + '%';
-                
-                // Disable zoom in/out at limits
                 pdfZoomInBtn.disabled = scale >= maxScale;
                 pdfZoomOutBtn.disabled = scale <= minScale;
+                
+                // Scroll to top after rendering new page
+                if (scrollToTop && mobilePdfScrollWrapper) {
+                    mobilePdfScrollWrapper.scrollTop = 0;
+                }
                 
             } catch (error) {
                 console.error('Error rendering PDF page:', error);
@@ -1140,7 +1187,7 @@
                 setTimeout(() => {
                     mobilePdfCanvas.classList.remove('flipping');
                     pdfLoading.style.display = 'none';
-                }, 300);
+                }, 250);
             }
         }
 
@@ -1148,7 +1195,8 @@
             try {
                 pdfLoading.style.display = 'block';
                 currentPdfUrl = url;
-                currentScale = 1.0; // Reset scale
+                currentScale = 1.0;
+                pendingRenderScale = null;
                 
                 const loadingTask = pdfjsLib.getDocument(url);
                 pdfDoc = await loadingTask.promise;
@@ -1156,7 +1204,7 @@
                 pdfTotalPagesEl.textContent = totalPages;
                 currentPage = 1;
                 
-                await renderPDFPage(1);
+                await renderPDFPage(1, null, true);
                 
             } catch (error) {
                 console.error('Error loading PDF:', error);
@@ -1165,12 +1213,13 @@
             }
         }
 
-        // Zoom controls
+        // Zoom buttons only (no pinch)
         if (pdfZoomInBtn) {
             pdfZoomInBtn.addEventListener('click', () => {
                 if (currentScale < maxScale) {
-                    currentScale = Math.min(currentScale + scaleStep, maxScale);
-                    renderPDFPage(currentPage, currentScale);
+                    const newScale = Math.min(currentScale + scaleStep, maxScale);
+                    pendingRenderScale = newScale;
+                    renderPDFPage(currentPage, newScale, false); // Don't scroll to top when zooming
                 }
             });
         }
@@ -1178,108 +1227,18 @@
         if (pdfZoomOutBtn) {
             pdfZoomOutBtn.addEventListener('click', () => {
                 if (currentScale > minScale) {
-                    currentScale = Math.max(currentScale - scaleStep, minScale);
-                    renderPDFPage(currentPage, currentScale);
+                    const newScale = Math.max(currentScale - scaleStep, minScale);
+                    pendingRenderScale = newScale;
+                    renderPDFPage(currentPage, newScale, false);
                 }
             });
         }
 
-        // Pinch to zoom
-        let initialPinchDistance = null;
-        let initialPinchScale = null;
-
-        if (mobilePdfCanvas) {
-            mobilePdfCanvas.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    e.preventDefault();
-                    initialPinchDistance = getPinchDistance(e.touches);
-                    initialPinchScale = currentScale;
-                }
-            }, { passive: false });
-
-            mobilePdfCanvas.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2 && initialPinchDistance) {
-                    e.preventDefault();
-                    const currentDistance = getPinchDistance(e.touches);
-                    const scaleFactor = currentDistance / initialPinchDistance;
-                    const newScale = Math.min(Math.max(initialPinchScale * scaleFactor, minScale), maxScale);
-                    
-                    if (newScale !== currentScale) {
-                        currentScale = newScale;
-                        renderPDFPage(currentPage, currentScale);
-                    }
-                }
-            }, { passive: false });
-
-            mobilePdfCanvas.addEventListener('touchend', () => {
-                initialPinchDistance = null;
-                initialPinchScale = null;
-            });
-        }
-
-        function getPinchDistance(touches) {
-            const dx = touches[0].clientX - touches[1].clientX;
-            const dy = touches[0].clientY - touches[1].clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        // Page navigation with swipe prevention
-        let touchStartY = 0;
-        let touchEndY = 0;
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let isScrolling = false;
-        const swipeThreshold = 100;
-        const verticalThreshold = 50;
-
-        if (mobilePdfScrollWrapper) {
-            mobilePdfScrollWrapper.addEventListener('touchstart', (e) => {
-                touchStartY = e.changedTouches[0].screenY;
-                touchStartX = e.changedTouches[0].screenX;
-                isScrolling = false;
-            }, { passive: true });
-
-            mobilePdfScrollWrapper.addEventListener('touchmove', (e) => {
-                const touchY = e.changedTouches[0].screenY;
-                const touchX = e.changedTouches[0].screenX;
-                const diffY = Math.abs(touchY - touchStartY);
-                const diffX = Math.abs(touchX - touchStartX);
-                
-                // Determine if user is scrolling vertically or swiping horizontally
-                if (diffY > verticalThreshold && diffY > diffX) {
-                    isScrolling = true;
-                }
-            }, { passive: true });
-
-            mobilePdfScrollWrapper.addEventListener('touchend', (e) => {
-                touchEndY = e.changedTouches[0].screenY;
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            }, { passive: true });
-        }
-
-        function handleSwipe() {
-            // Only allow page change if not scrolling vertically
-            if (isScrolling) return;
-            
-            const diffX = touchStartX - touchEndX;
-            
-            if (Math.abs(diffX) > swipeThreshold) {
-                if (diffX > 0 && currentPage < totalPages) {
-                    // Swipe left - next page
-                    renderPDFPage(currentPage + 1);
-                } else if (diff < 0 && currentPage > 1) {
-                    // Swipe right - previous page
-                    renderPDFPage(currentPage - 1);
-                }
-            }
-        }
-
-        // PDF navigation event listeners
+        // Page navigation buttons - scroll to top
         if (pdfPrevBtn) {
             pdfPrevBtn.addEventListener('click', () => {
                 if (currentPage > 1) {
-                    renderPDFPage(currentPage - 1);
+                    renderPDFPage(currentPage - 1, null, true);
                 }
             });
         }
@@ -1287,9 +1246,57 @@
         if (pdfNextBtn) {
             pdfNextBtn.addEventListener('click', () => {
                 if (currentPage < totalPages) {
-                    renderPDFPage(currentPage + 1);
+                    renderPDFPage(currentPage + 1, null, true);
                 }
             });
+        }
+
+        // Swipe navigation (horizontal only, no pinch)
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        let isVerticalScroll = false;
+        const swipeThreshold = 80;
+        const verticalThreshold = 30;
+
+        if (mobilePdfScrollWrapper) {
+            mobilePdfScrollWrapper.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].screenX;
+                touchStartY = e.touches[0].screenY;
+                isVerticalScroll = false;
+            }, { passive: true });
+
+            mobilePdfScrollWrapper.addEventListener('touchmove', (e) => {
+                const currentY = e.touches[0].screenY;
+                const currentX = e.touches[0].screenX;
+                const diffY = Math.abs(currentY - touchStartY);
+                const diffX = Math.abs(currentX - touchStartX);
+                
+                if (diffY > verticalThreshold && diffY > diffX) {
+                    isVerticalScroll = true;
+                }
+            }, { passive: true });
+
+            mobilePdfScrollWrapper.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipe();
+            }, { passive: true });
+        }
+
+        function handleSwipe() {
+            if (isVerticalScroll) return;
+            
+            const diffX = touchStartX - touchEndX;
+            
+            if (Math.abs(diffX) > swipeThreshold) {
+                if (diffX > 0 && currentPage < totalPages) {
+                    renderPDFPage(currentPage + 1, null, true);
+                } else if (diffX < 0 && currentPage > 1) {
+                    renderPDFPage(currentPage - 1, null, true);
+                }
+            }
         }
 
         function switchMainTab(tabName) {
@@ -1446,7 +1453,6 @@
             modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
             noteIdDisplay.textContent = `ID: ${currentBookId}`;
             
-            // Load notes for both desktop and mobile
             let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
             if (!savedNotes) {
                 const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
@@ -1459,18 +1465,13 @@
                 }
             }
             noteArea.value = savedNotes;
-            if (mobileNotesArea) {
-                mobileNotesArea.value = savedNotes;
-            }
+            if (mobileNotesArea) mobileNotesArea.value = savedNotes;
             
             if (isMobile()) {
-                // Use mobile PDF viewer
                 loadPDFMobile(url);
-                pdfFrame.src = ''; // Clear iframe
+                pdfFrame.src = '';
             } else {
-                // Use desktop iframe viewer
                 pdfFrame.src = url;
-                // Reset mobile viewer
                 pdfDoc = null;
                 pdfLoading.style.display = 'none';
             }
@@ -1490,8 +1491,14 @@
         let saveTimeout;
         noteArea.addEventListener('input', (e) => {
             localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
-            saveStatus.style.opacity = '1'; clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => { saveStatus.style.opacity = '0'; }, 1500);
+            if (mobileNotesArea) mobileNotesArea.value = e.target.value;
+            saveStatus.style.opacity = '1';
+            mobileSaveStatus.style.opacity = '1';
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => { 
+                saveStatus.style.opacity = '0'; 
+                mobileSaveStatus.style.opacity = '0';
+            }, 1500);
         });
 
         document.getElementById('btn-clear-notes').addEventListener('click', () => {
@@ -1515,16 +1522,13 @@
             const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `ID_${currentBookId}_notes.txt`; link.click(); URL.revokeObjectURL(url);
         });
 
-        // Handle window resize
         window.addEventListener('resize', () => {
             if (!isMobile() && pdfDoc) {
-                // Switched from mobile to desktop
                 pdfDoc = null;
                 currentScale = 1.0;
             } else if (isMobile() && pdfDoc && currentPage > 0) {
-                // Re-render at fit scale when rotating device
                 currentScale = 1.0;
-                renderPDFPage(currentPage);
+                renderPDFPage(currentPage, null, true);
             }
         });
     </script>
