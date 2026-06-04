@@ -278,13 +278,8 @@
         }
         #mobile-pdf-canvas.flipping { opacity: 0.6; }
 
-        /* Page flip animation */
-        .page-flip-enter-right {
-            animation: flipInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .page-flip-enter-left {
-            animation: flipInFromLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .page-flip-enter-right { animation: flipInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .page-flip-enter-left { animation: flipInFromLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
         @keyframes flipInFromRight {
             0% { transform: translateX(100%) rotateY(-15deg); opacity: 0; }
@@ -295,13 +290,9 @@
             100% { transform: translateX(0) rotateY(0); opacity: 1; }
         }
 
-        /* Text layer - PDF.js built-in styling */
         .textLayer {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden;
             opacity: 0.2;
             line-height: 1.0;
@@ -323,13 +314,8 @@
             -webkit-touch-callout: default;
         }
         
-        .textLayer ::selection {
-            background: rgba(220, 38, 38, 0.4);
-        }
-        
-        .textLayer ::-moz-selection {
-            background: rgba(220, 38, 38, 0.4);
-        }
+        .textLayer ::selection { background: rgba(220, 38, 38, 0.4); }
+        .textLayer ::-moz-selection { background: rgba(220, 38, 38, 0.4); }
 
         .pdf-controls { display: none; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.5rem; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); flex-shrink: 0; flex-wrap: wrap; }
         .pdf-controls button {
@@ -514,7 +500,6 @@
             </div>
         </div>
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-            <!-- Mobile PDF Viewer -->
             <div id="mobile-pdf-container">
                 <div class="pdf-controls">
                     <button id="pdf-prev-page" title="Trang trước"><i class="fas fa-chevron-left"></i></button>
@@ -554,7 +539,6 @@
                 </div>
             </div>
             
-            <!-- Desktop PDF Viewer -->
             <div class="flex-[2] relative" id="desktop-pdf-frame">
                 <iframe id="pdf-frame" src="" class="w-full h-full border-0"></iframe>
             </div>
@@ -707,7 +691,6 @@
         }
         animateParticles();
         resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
 
         let currentFile = '';
         let currentBookId = '';
@@ -727,6 +710,62 @@
         const contentBooks = document.getElementById('content-books');
         const contentGuide = document.getElementById('content-guide');
         const contentCompiled = document.getElementById('content-compiled');
+
+        // ===== VIEWER TYPE TRACKING =====
+        let currentViewerType = null; // 'mobile' or 'desktop'
+        let reloadDebounceTimer = null;
+
+        function isMobile() { return window.innerWidth <= 768; }
+
+        // Check if viewer type changed and reload if needed
+        function checkAndReloadViewerType() {
+            const newType = isMobile() ? 'mobile' : 'desktop';
+            
+            // No change, or no PDF open
+            if (newType === currentViewerType || !currentBookId) return;
+            
+            console.log(`Viewer type changed: ${currentViewerType} → ${newType}`);
+            
+            // Save current state
+            const savedPage = currentPage;
+            const savedUrl = currentPdfUrl;
+            const savedBook = allBooksMap[currentBookId];
+            const savedNotes = noteArea.value;
+            
+            // Clear current viewer
+            if (currentViewerType === 'mobile') {
+                pdfDoc = null;
+                textLayerContainer.innerHTML = '';
+            } else {
+                pdfFrame.src = '';
+            }
+            
+            // Switch type
+            currentViewerType = newType;
+            
+            // Re-open with saved book
+            if (savedBook && savedUrl) {
+                // Restore notes first
+                noteArea.value = savedNotes;
+                if (mobileNotesArea) mobileNotesArea.value = savedNotes;
+                
+                openViewer(savedUrl, savedBook, { restorePage: savedPage });
+            }
+        }
+
+        // Debounced reload for resize
+        function debouncedCheckViewerType() {
+            clearTimeout(reloadDebounceTimer);
+            reloadDebounceTimer = setTimeout(() => {
+                checkAndReloadViewerType();
+                
+                // If still mobile and PDF is loaded, reset scale
+                if (isMobile() && pdfDoc && currentPage > 0) {
+                    currentScale = 1.0;
+                    renderPDFPage(currentPage, null, true, 'next');
+                }
+            }, 400);
+        }
 
         // Mobile PDF Viewer
         let pdfDoc = null;
@@ -786,8 +825,6 @@
             });
         }
 
-        function isMobile() { return window.innerWidth <= 768; }
-
         // Smart invert
         function applySmartInvert(canvas) {
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -819,17 +856,14 @@
             ctx.putImageData(imageData, 0, 0);
         }
 
-        // Render text layer using PDF.js built-in renderer
+        // Render text layer
         async function renderTextLayer(page, viewport) {
-            // Clear existing text layer
             textLayerContainer.innerHTML = '';
             textLayerContainer.style.width = viewport.width + 'px';
             textLayerContainer.style.height = viewport.height + 'px';
             
             try {
                 const textContent = await page.getTextContent();
-                
-                // Use PDF.js's renderTextLayer
                 if (pdfjsLib.renderTextLayer) {
                     pdfjsLib.renderTextLayer({
                         textContent: textContent,
@@ -850,7 +884,6 @@
             pdfLoading.style.display = 'block';
             pdfLoadingText.textContent = 'Đang tải trang...';
             
-            // Page flip animation
             const wrapper = mobilePdfCanvasWrapper;
             const animClass = direction === 'next' ? 'page-flip-enter-right' : 'page-flip-enter-left';
             wrapper.classList.remove('page-flip-enter-right', 'page-flip-enter-left');
@@ -901,7 +934,6 @@
                 pdfZoomInBtn.disabled = scale >= maxScale;
                 pdfZoomOutBtn.disabled = scale <= minScale;
                 
-                // Render text layer for selection
                 await renderTextLayer(page, viewport);
                 
                 if (scrollToTop && mobilePdfScrollWrapper) {
@@ -986,28 +1018,18 @@
             });
         }
 
-        // Fullscreen functionality
+        // ===== FULLSCREEN =====
         function toggleFullscreen() {
             if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
-                if (viewerModal.requestFullscreen) {
-                    viewerModal.requestFullscreen();
-                } else if (viewerModal.webkitRequestFullscreen) {
-                    viewerModal.webkitRequestFullscreen();
-                } else if (viewerModal.mozRequestFullScreen) {
-                    viewerModal.mozRequestFullScreen();
-                } else if (viewerModal.msRequestFullscreen) {
-                    viewerModal.msRequestFullscreen();
-                }
+                if (viewerModal.requestFullscreen) viewerModal.requestFullscreen();
+                else if (viewerModal.webkitRequestFullscreen) viewerModal.webkitRequestFullscreen();
+                else if (viewerModal.mozRequestFullScreen) viewerModal.mozRequestFullScreen();
+                else if (viewerModal.msRequestFullscreen) viewerModal.msRequestFullscreen();
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
             }
         }
 
@@ -1027,13 +1049,28 @@
             }
         }
 
-        document.addEventListener('fullscreenchange', updateFullscreenButton);
-        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
-        document.addEventListener('mozfullscreenchange', updateFullscreenButton);
-        document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+        // Fullscreen change → re-evaluate viewer type after layout settles
+        function onFullscreenChange() {
+            updateFullscreenButton();
+            // Delay to let browser finish fullscreen transition and update viewport
+            setTimeout(() => {
+                debouncedCheckViewerType();
+            }, 500);
+        }
+
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+        document.addEventListener('mozfullscreenchange', onFullscreenChange);
+        document.addEventListener('MSFullscreenChange', onFullscreenChange);
 
         if (btnFullscreen) btnFullscreen.addEventListener('click', toggleFullscreen);
         if (btnFullscreenMobile) btnFullscreenMobile.addEventListener('click', toggleFullscreen);
+
+        // ===== RESIZE → re-evaluate viewer type =====
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            debouncedCheckViewerType();
+        });
 
         // Swipe navigation
         let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
@@ -1206,7 +1243,7 @@
             setTimeout(() => { loadBooksList(true); setTimeout(() => { icon.classList.remove('fa-spin'); }, 1000); }, 300);
         });
 
-        function openViewer(url, book) {
+        function openViewer(url, book, options = {}) {
             currentFile = book.filename; 
             currentBookId = book.id;
             modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
@@ -1221,13 +1258,32 @@
             noteArea.value = savedNotes;
             if (mobileNotesArea) mobileNotesArea.value = savedNotes;
             
-            if (isMobile()) {
+            // Determine viewer type
+            const viewerType = isMobile() ? 'mobile' : 'desktop';
+            currentViewerType = viewerType;
+            
+            if (viewerType === 'mobile') {
                 loadPDFMobile(url);
                 pdfFrame.src = '';
+                
+                // Restore page if requested (after PDF loads)
+                if (options.restorePage && options.restorePage > 1) {
+                    const checkLoad = setInterval(() => {
+                        if (pdfDoc && totalPages > 0) {
+                            clearInterval(checkLoad);
+                            if (options.restorePage <= totalPages) {
+                                renderPDFPage(options.restorePage, null, true, 'next');
+                            }
+                        }
+                    }, 100);
+                    // Safety timeout
+                    setTimeout(() => clearInterval(checkLoad), 8000);
+                }
             } else {
                 pdfFrame.src = url;
                 pdfDoc = null;
                 pdfLoading.style.display = 'none';
+                textLayerContainer.innerHTML = '';
             }
             viewerModal.classList.remove('hidden');
         }
@@ -1237,6 +1293,8 @@
             pdfFrame.src = ''; 
             pdfDoc = null;
             pdfLoading.style.display = 'none';
+            textLayerContainer.innerHTML = '';
+            currentViewerType = null;
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 if (document.exitFullscreen) document.exitFullscreen();
                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -1274,11 +1332,6 @@
             const text = noteArea.value; if (!text.trim()) { alert('Chưa có ghi chú!'); return; }
             const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `ID_${currentBookId}_notes.txt`; link.click(); URL.revokeObjectURL(url);
-        });
-
-        window.addEventListener('resize', () => {
-            if (!isMobile() && pdfDoc) { pdfDoc = null; currentScale = 1.0; }
-            else if (isMobile() && pdfDoc && currentPage > 0) { currentScale = 1.0; renderPDFPage(currentPage, null, true, 'next'); }
         });
     </script>
 </body>
