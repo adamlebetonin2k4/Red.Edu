@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>RED. Education</title>
     
     <link rel="icon" type="image/png" href="logo.png">
@@ -429,25 +429,50 @@
         #mobile-pdf-container {
             display: none;
             flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: hidden;
             background: var(--bg-main);
             position: relative;
         }
         
+        #mobile-pdf-scroll-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            touch-action: pan-y;
+        }
+        
+        #mobile-pdf-canvas-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+            transition: transform 0.3s ease;
+        }
+        
         #mobile-pdf-canvas {
             display: block;
-            margin: 0 auto;
-            max-width: 100%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            touch-action: none;
+            cursor: grab;
+        }
+        
+        #mobile-pdf-canvas:active {
+            cursor: grabbing;
+        }
+        
+        #mobile-pdf-canvas.flipping {
+            opacity: 0.7;
+            transform: scale(0.98);
         }
         
         .pdf-controls {
             display: none;
             align-items: center;
             justify-content: center;
-            gap: 1rem;
-            padding: 0.75rem;
+            gap: 0.75rem;
+            padding: 0.5rem;
             background: var(--bg-surface);
             border-bottom: 1px solid var(--border-color);
             position: sticky;
@@ -459,28 +484,56 @@
             background: var(--bg-solid);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.75rem;
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.875rem;
             transition: all 0.2s;
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .pdf-controls button:hover:not(:disabled) {
             border-color: var(--neon-red);
             color: var(--neon-red);
+            transform: translateY(-1px);
+        }
+        
+        .pdf-controls button:active:not(:disabled) {
+            transform: translateY(0);
         }
         
         .pdf-controls button:disabled {
-            opacity: 0.4;
+            opacity: 0.3;
             cursor: not-allowed;
         }
         
         .page-info {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             color: var(--text-secondary);
-            min-width: 80px;
+            min-width: 70px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+            padding-left: 0.75rem;
+            border-left: 1px solid var(--border-subtle);
+        }
+        
+        .zoom-level {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 45px;
             text-align: center;
         }
         
@@ -492,6 +545,7 @@
             transform: translate(-50%, -50%);
             text-align: center;
             color: var(--text-secondary);
+            z-index: 20;
         }
         
         .pdf-loading i {
@@ -500,9 +554,39 @@
             margin-bottom: 0.5rem;
         }
 
+        /* Compact notes section for mobile */
         @media (max-width: 768px) {
             #mobile-pdf-container {
-                display: block;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            #mobile-notes-section {
+                flex: 0 0 auto;
+                max-height: 180px;
+                border-top: 2px solid var(--border-color);
+                background: var(--bg-surface);
+            }
+            
+            #mobile-notes-header {
+                padding: 0.5rem 0.75rem;
+                background: var(--bg-main);
+                border-bottom: 1px solid var(--border-subtle);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+            
+            #mobile-notes-area {
+                height: calc(180px - 45px);
+                padding: 0.75rem;
+                font-size: 0.85rem;
+                line-height: 1.5;
+                resize: none;
             }
             
             #desktop-pdf-frame {
@@ -540,8 +624,7 @@
                 font-size: 1rem !important;
             }
             #viewer-modal .flex-1.md\:w-\[400px\] {
-                width: 100% !important;
-                max-width: none !important;
+                display: none !important;
             }
         }
 
@@ -555,6 +638,10 @@
             }
             
             .pdf-controls {
+                display: none !important;
+            }
+            
+            #mobile-notes-section {
                 display: none !important;
             }
         }
@@ -719,12 +806,35 @@
                     <button id="pdf-next-page" title="Trang sau">
                         <i class="fas fa-chevron-right"></i>
                     </button>
+                    <div class="zoom-controls">
+                        <button id="pdf-zoom-out" title="Thu nhỏ">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span class="zoom-level" id="pdf-zoom-level">100%</span>
+                        <button id="pdf-zoom-in" title="Phóng to">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="pdf-loading" id="pdf-loading">
-                    <i class="fas fa-circle-notch fa-spin"></i>
-                    <div>Đang tải PDF...</div>
+                <div id="mobile-pdf-scroll-wrapper">
+                    <div class="pdf-loading" id="pdf-loading">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                        <div>Đang tải PDF...</div>
+                    </div>
+                    <div id="mobile-pdf-canvas-wrapper">
+                        <canvas id="mobile-pdf-canvas"></canvas>
+                    </div>
                 </div>
-                <canvas id="mobile-pdf-canvas"></canvas>
+                <!-- Compact Notes Section for Mobile -->
+                <div id="mobile-notes-section">
+                    <div id="mobile-notes-header">
+                        <span><i class="fas fa-sticky-note mr-2"></i>Ghi chú</span>
+                        <span id="mobile-save-status" style="opacity: 0; transition: opacity 0.3s; color: #10b981;">
+                            <i class="fas fa-check mr-1"></i>Đã lưu
+                        </span>
+                    </div>
+                    <textarea id="mobile-notes-area" placeholder="Viết ghi chú của bạn tại đây..."></textarea>
+                </div>
             </div>
             
             <!-- Desktop PDF Viewer (iframe) -->
@@ -838,7 +948,6 @@
         const particles = [];
         const PARTICLE_COUNT = 50;
         const CONNECTION_DIST = 150;
-        // Red shades only - no purple/cyan/pink
         const particleColors = ['#dc2626', '#ef4444', '#b91c1c', '#f87171', '#991b1b'];
 
         class Particle {
@@ -887,7 +996,6 @@
                     const dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist < CONNECTION_DIST) {
                         holoCtx.beginPath(); holoCtx.moveTo(particles[i].x, particles[i].y); holoCtx.lineTo(particles[j].x, particles[j].y);
-                        // Red only gradient (was red-to-purple)
                         const gradient = holoCtx.createLinearGradient(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
                         const alpha = (1 - dist/CONNECTION_DIST) * (isDarkMode ? 0.35 : 0.15);
                         gradient.addColorStop(0, `rgba(220, 38, 38, ${alpha})`);
@@ -936,6 +1044,10 @@
         let currentPage = 1;
         let totalPages = 0;
         let currentPdfUrl = '';
+        let currentScale = 1.0;
+        let minScale = 0.5;
+        let maxScale = 3.0;
+        let scaleStep = 0.25;
         const mobilePdfCanvas = document.getElementById('mobile-pdf-canvas');
         const pdfCtx = mobilePdfCanvas ? mobilePdfCanvas.getContext('2d') : null;
         const pdfLoading = document.getElementById('pdf-loading');
@@ -943,19 +1055,61 @@
         const pdfTotalPagesEl = document.getElementById('pdf-total-pages');
         const pdfPrevBtn = document.getElementById('pdf-prev-page');
         const pdfNextBtn = document.getElementById('pdf-next-page');
+        const pdfZoomInBtn = document.getElementById('pdf-zoom-in');
+        const pdfZoomOutBtn = document.getElementById('pdf-zoom-out');
+        const pdfZoomLevelEl = document.getElementById('pdf-zoom-level');
+        const mobileNotesArea = document.getElementById('mobile-notes-area');
+        const mobileSaveStatus = document.getElementById('mobile-save-status');
+        const mobilePdfScrollWrapper = document.getElementById('mobile-pdf-scroll-wrapper');
+        const mobilePdfCanvasWrapper = document.getElementById('mobile-pdf-canvas-wrapper');
+
+        // Mobile notes save functionality
+        if (mobileNotesArea) {
+            let mobileSaveTimeout;
+            mobileNotesArea.addEventListener('input', (e) => {
+                if (currentBookId) {
+                    localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
+                    mobileSaveStatus.style.opacity = '1';
+                    clearTimeout(mobileSaveTimeout);
+                    mobileSaveTimeout = setTimeout(() => {
+                        mobileSaveStatus.style.opacity = '0';
+                    }, 1500);
+                }
+            });
+        }
 
         function isMobile() {
             return window.innerWidth <= 768;
         }
 
-        async function renderPDFPage(pageNum) {
+        function calculateFitScale(pageWidth, pageHeight) {
+            const containerWidth = mobilePdfScrollWrapper.clientWidth - 32; // padding
+            const containerHeight = mobilePdfScrollWrapper.clientHeight - 32;
+            const scaleX = containerWidth / pageWidth;
+            const scaleY = containerHeight / pageHeight;
+            return Math.min(scaleX, scaleY, 1.5); // Cap at 1.5x
+        }
+
+        async function renderPDFPage(pageNum, scale = null) {
             if (!pdfDoc || !pdfCtx) return;
             
             pdfLoading.style.display = 'block';
+            mobilePdfCanvas.classList.add('flipping');
             
             try {
                 const page = await pdfDoc.getPage(pageNum);
-                const viewport = page.getViewport({ scale: 1.5 });
+                
+                // Calculate scale if not provided
+                if (scale === null) {
+                    if (currentScale === 1.0) {
+                        // First time or reset - fit to screen
+                        const viewport = page.getViewport({ scale: 1 });
+                        currentScale = calculateFitScale(viewport.width, viewport.height);
+                    }
+                    scale = currentScale;
+                }
+                
+                const viewport = page.getViewport({ scale: scale });
                 
                 mobilePdfCanvas.height = viewport.height;
                 mobilePdfCanvas.width = viewport.width;
@@ -973,10 +1127,20 @@
                 pdfPrevBtn.disabled = currentPage <= 1;
                 pdfNextBtn.disabled = currentPage >= totalPages;
                 
+                // Update zoom level display
+                pdfZoomLevelEl.textContent = Math.round(scale * 100) + '%';
+                
+                // Disable zoom in/out at limits
+                pdfZoomInBtn.disabled = scale >= maxScale;
+                pdfZoomOutBtn.disabled = scale <= minScale;
+                
             } catch (error) {
                 console.error('Error rendering PDF page:', error);
             } finally {
-                pdfLoading.style.display = 'none';
+                setTimeout(() => {
+                    mobilePdfCanvas.classList.remove('flipping');
+                    pdfLoading.style.display = 'none';
+                }, 300);
             }
         }
 
@@ -984,6 +1148,7 @@
             try {
                 pdfLoading.style.display = 'block';
                 currentPdfUrl = url;
+                currentScale = 1.0; // Reset scale
                 
                 const loadingTask = pdfjsLib.getDocument(url);
                 pdfDoc = await loadingTask.promise;
@@ -997,6 +1162,116 @@
                 console.error('Error loading PDF:', error);
                 pdfLoading.innerHTML = '<i class="fas fa-exclamation-circle"></i><div>Lỗi tải PDF</div>';
                 pdfLoading.style.display = 'block';
+            }
+        }
+
+        // Zoom controls
+        if (pdfZoomInBtn) {
+            pdfZoomInBtn.addEventListener('click', () => {
+                if (currentScale < maxScale) {
+                    currentScale = Math.min(currentScale + scaleStep, maxScale);
+                    renderPDFPage(currentPage, currentScale);
+                }
+            });
+        }
+
+        if (pdfZoomOutBtn) {
+            pdfZoomOutBtn.addEventListener('click', () => {
+                if (currentScale > minScale) {
+                    currentScale = Math.max(currentScale - scaleStep, minScale);
+                    renderPDFPage(currentPage, currentScale);
+                }
+            });
+        }
+
+        // Pinch to zoom
+        let initialPinchDistance = null;
+        let initialPinchScale = null;
+
+        if (mobilePdfCanvas) {
+            mobilePdfCanvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+                    initialPinchDistance = getPinchDistance(e.touches);
+                    initialPinchScale = currentScale;
+                }
+            }, { passive: false });
+
+            mobilePdfCanvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinchDistance) {
+                    e.preventDefault();
+                    const currentDistance = getPinchDistance(e.touches);
+                    const scaleFactor = currentDistance / initialPinchDistance;
+                    const newScale = Math.min(Math.max(initialPinchScale * scaleFactor, minScale), maxScale);
+                    
+                    if (newScale !== currentScale) {
+                        currentScale = newScale;
+                        renderPDFPage(currentPage, currentScale);
+                    }
+                }
+            }, { passive: false });
+
+            mobilePdfCanvas.addEventListener('touchend', () => {
+                initialPinchDistance = null;
+                initialPinchScale = null;
+            });
+        }
+
+        function getPinchDistance(touches) {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // Page navigation with swipe prevention
+        let touchStartY = 0;
+        let touchEndY = 0;
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let isScrolling = false;
+        const swipeThreshold = 100;
+        const verticalThreshold = 50;
+
+        if (mobilePdfScrollWrapper) {
+            mobilePdfScrollWrapper.addEventListener('touchstart', (e) => {
+                touchStartY = e.changedTouches[0].screenY;
+                touchStartX = e.changedTouches[0].screenX;
+                isScrolling = false;
+            }, { passive: true });
+
+            mobilePdfScrollWrapper.addEventListener('touchmove', (e) => {
+                const touchY = e.changedTouches[0].screenY;
+                const touchX = e.changedTouches[0].screenX;
+                const diffY = Math.abs(touchY - touchStartY);
+                const diffX = Math.abs(touchX - touchStartX);
+                
+                // Determine if user is scrolling vertically or swiping horizontally
+                if (diffY > verticalThreshold && diffY > diffX) {
+                    isScrolling = true;
+                }
+            }, { passive: true });
+
+            mobilePdfScrollWrapper.addEventListener('touchend', (e) => {
+                touchEndY = e.changedTouches[0].screenY;
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, { passive: true });
+        }
+
+        function handleSwipe() {
+            // Only allow page change if not scrolling vertically
+            if (isScrolling) return;
+            
+            const diffX = touchStartX - touchEndX;
+            
+            if (Math.abs(diffX) > swipeThreshold) {
+                if (diffX > 0 && currentPage < totalPages) {
+                    // Swipe left - next page
+                    renderPDFPage(currentPage + 1);
+                } else if (diff < 0 && currentPage > 1) {
+                    // Swipe right - previous page
+                    renderPDFPage(currentPage - 1);
+                }
             }
         }
 
@@ -1015,36 +1290,6 @@
                     renderPDFPage(currentPage + 1);
                 }
             });
-        }
-
-        // Touch gestures for mobile PDF
-        let touchStartX = 0;
-        let touchEndX = 0;
-
-        if (mobilePdfCanvas) {
-            mobilePdfCanvas.addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-            }, { passive: true });
-
-            mobilePdfCanvas.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            }, { passive: true });
-        }
-
-        function handleSwipe() {
-            const swipeThreshold = 50;
-            const diff = touchStartX - touchEndX;
-            
-            if (Math.abs(diff) > swipeThreshold) {
-                if (diff > 0 && currentPage < totalPages) {
-                    // Swipe left - next page
-                    renderPDFPage(currentPage + 1);
-                } else if (diff < 0 && currentPage > 1) {
-                    // Swipe right - previous page
-                    renderPDFPage(currentPage - 1);
-                }
-            }
         }
 
         function switchMainTab(tabName) {
@@ -1201,6 +1446,23 @@
             modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
             noteIdDisplay.textContent = `ID: ${currentBookId}`;
             
+            // Load notes for both desktop and mobile
+            let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
+            if (!savedNotes) {
+                const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
+                if (oldNotes) { 
+                    savedNotes = oldNotes; 
+                    localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); 
+                    localStorage.removeItem(`red_notes_${book.filename}`); 
+                } else { 
+                    savedNotes = ''; 
+                }
+            }
+            noteArea.value = savedNotes;
+            if (mobileNotesArea) {
+                mobileNotesArea.value = savedNotes;
+            }
+            
             if (isMobile()) {
                 // Use mobile PDF viewer
                 loadPDFMobile(url);
@@ -1213,12 +1475,7 @@
                 pdfLoading.style.display = 'none';
             }
             
-            let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
-            if (!savedNotes) {
-                const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
-                if (oldNotes) { savedNotes = oldNotes; localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); localStorage.removeItem(`red_notes_${book.filename}`); } else { savedNotes = ''; }
-            }
-            noteArea.value = savedNotes; viewerModal.classList.remove('hidden');
+            viewerModal.classList.remove('hidden');
         }
 
         function closeViewer() { 
@@ -1238,7 +1495,11 @@
         });
 
         document.getElementById('btn-clear-notes').addEventListener('click', () => {
-            if (confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) { noteArea.value = ''; localStorage.removeItem(`red_notes_${currentBookId}`); }
+            if (confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) { 
+                noteArea.value = ''; 
+                if (mobileNotesArea) mobileNotesArea.value = '';
+                localStorage.removeItem(`red_notes_${currentBookId}`); 
+            }
         });
 
         document.getElementById('btn-download-pdf').addEventListener('click', () => { 
@@ -1259,6 +1520,11 @@
             if (!isMobile() && pdfDoc) {
                 // Switched from mobile to desktop
                 pdfDoc = null;
+                currentScale = 1.0;
+            } else if (isMobile() && pdfDoc && currentPage > 0) {
+                // Re-render at fit scale when rotating device
+                currentScale = 1.0;
+                renderPDFPage(currentPage);
             }
         });
     </script>
