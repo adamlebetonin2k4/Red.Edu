@@ -245,20 +245,17 @@
         .fullscreen-btn:hover { color: var(--neon-red); }
         .fullscreen-btn.active { color: var(--neon-red); }
 
-        /* ===== PDF VIEWER VISIBILITY — controlled by JS class, NOT screen width ===== */
-        /* Default: desktop iframe viewer */
+        /* ===== PDF VIEWER VISIBILITY — controlled by JS class only ===== */
+        /* Default: iframe (browser) viewer */
         #mobile-pdf-container { display: none !important; }
         #desktop-pdf-frame { display: block !important; }
-        #mobile-pdf-canvas-wrapper .pdf-controls { display: none !important; }
 
-        /* When JS adds .viewer-mobile class: switch to canvas viewer */
-        #viewer-modal.viewer-mobile #mobile-pdf-container { display: flex !important; }
-        #viewer-modal.viewer-mobile #desktop-pdf-frame { display: none !important; }
-        #viewer-modal.viewer-mobile #mobile-pdf-canvas-wrapper .pdf-controls { display: flex !important; }
-        /* Hide desktop notes panel when using mobile viewer (takes full width) */
-        #viewer-modal.viewer-mobile .flex-1.md\:w-\[400px\] { display: none !important; }
+        /* When .viewer-canvas is added: switch to canvas viewer */
+        #viewer-modal.viewer-canvas #mobile-pdf-container { display: flex !important; }
+        #viewer-modal.viewer-canvas #desktop-pdf-frame { display: none !important; }
+        #viewer-modal.viewer-canvas .flex-1.md\:w-\[400px\] { display: none !important; }
 
-        /* ===== MOBILE PDF VIEWER STYLES ===== */
+        /* ===== MOBILE PDF VIEWER ===== */
         #mobile-pdf-container { 
             flex: 1; 
             flex-direction: column; 
@@ -289,12 +286,12 @@
             -webkit-user-select: none;
         }
         
-        /* Simple dark mode via CSS filter */
         #mobile-pdf-canvas.pdf-dark {
             filter: invert(1) hue-rotate(180deg);
         }
 
         .pdf-controls { 
+            display: none;
             align-items: center; 
             justify-content: center; 
             gap: 0.5rem; 
@@ -304,6 +301,8 @@
             flex-shrink: 0; 
             flex-wrap: wrap; 
         }
+        #viewer-modal.viewer-canvas .pdf-controls { display: flex; }
+        
         .pdf-controls button {
             background: var(--bg-solid); border: 1px solid var(--border-color); color: var(--text-primary);
             padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem;
@@ -322,7 +321,7 @@
         .pdf-loading { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-secondary); z-index: 20; }
         .pdf-loading i { font-size: 2rem; color: var(--neon-red); margin-bottom: 0.5rem; }
 
-        /* ===== MOBILE NOTES — controlled by SCREEN WIDTH (as you requested) ===== */
+        /* ===== MOBILE NOTES — screen width controlled ===== */
         #mobile-notes-section { display: none; width: 100%; flex-shrink: 0; background: var(--bg-surface); border-top: 2px solid var(--border-color); }
         #mobile-notes-header { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.75rem; background: var(--bg-main); border-bottom: 1px solid var(--border-subtle); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); }
         #mobile-notes-header .header-left { display: flex; align-items: center; gap: 0.4rem; }
@@ -338,16 +337,11 @@
         /* Desktop iframe dark mode */
         #pdf-frame.pdf-dark-iframe { filter: invert(1) hue-rotate(180deg); }
 
-        /* ===== SCREEN-WIDTH MEDIA QUERIES — ONLY for burger menu, notes, and layout tweaks ===== */
+        /* ===== SCREEN-WIDTH MEDIA QUERIES — ONLY for burger menu, notes, layout ===== */
         @media (max-width: 768px) {
-            /* Burger menu */
             .desktop-nav { display: none !important; }
-            
-            /* Notes: show compact mobile notes, hide desktop notes panel */
             #mobile-notes-section { display: block; }
             #viewer-modal .flex-1.md\:w-\[400px\] { display: none !important; }
-            
-            /* Layout tweaks */
             header .container { padding-left: 1rem !important; padding-right: 1rem !important; }
             header h1 { font-size: 1.1rem !important; letter-spacing: 0.1em !important; }
             .container { padding-left: 1rem !important; padding-right: 1rem !important; }
@@ -358,7 +352,6 @@
         }
 
         @media (min-width: 769px) {
-            /* Notes: hide mobile notes, show desktop notes panel */
             #mobile-notes-section { display: none !important; }
         }
     </style>
@@ -476,7 +469,11 @@
                     <button id="close-modal" class="p-2 -ml-2 flex-shrink-0" title="Đóng"><i class="fas fa-arrow-left text-xl"></i></button>
                     <h3 id="modal-title" class="truncate text-base sm:text-lg">Tài liệu</h3>
                 </div>
-                <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+                <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0 flex-wrap gap-2">
+                    <!-- PDF Viewer Toggle Button -->
+                    <button id="btn-toggle-viewer" class="fullscreen-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);" title="Chuyển đổi trình đọc PDF">
+                        <i class="fas fa-window-restore mr-1 sm:mr-2"></i> <span class="hidden sm:inline" id="viewer-mode-label">Browser</span>
+                    </button>
                     <button id="btn-fullscreen" class="fullscreen-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);" title="Toàn màn hình">
                         <i class="fas fa-expand mr-1 sm:mr-2"></i> <span class="hidden sm:inline">Fullscreen</span>
                     </button>
@@ -490,7 +487,7 @@
             </div>
         </div>
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-            <!-- Mobile PDF Viewer (shown only when JS adds .viewer-mobile class) -->
+            <!-- Canvas (built-in) PDF Viewer -->
             <div id="mobile-pdf-container">
                 <div class="pdf-controls">
                     <button id="pdf-prev-page" title="Trang trước"><i class="fas fa-chevron-left"></i></button>
@@ -529,7 +526,7 @@
                 </div>
             </div>
             
-            <!-- Desktop PDF Viewer (iframe) — default, shown unless .viewer-mobile is added -->
+            <!-- Iframe (browser) PDF Viewer -->
             <div class="flex-[2] relative" id="desktop-pdf-frame">
                 <iframe id="pdf-frame" src="" class="w-full h-full border-0"></iframe>
             </div>
@@ -702,77 +699,76 @@
         const contentGuide = document.getElementById('content-guide');
         const contentCompiled = document.getElementById('content-compiled');
 
-        // ===== BROWSER CAPABILITY DETECTION (not screen size) =====
-        function supportsInlinePDF() {
-            const ua = navigator.userAgent || '';
-            // iOS devices — Safari, Chrome iOS, Firefox iOS all lack iframe PDF support
-            if (/iPad|iPhone|iPod/.test(ua)) return false;
-            // Known mobile browsers without PDF support
-            if (/CriOS|FxiOS|OPiOS|Mercury/.test(ua)) return false;
-            return true;
+        // ===== PDF VIEWER TOGGLE (manual, no auto-detection) =====
+        // Default: false = use iframe (browser viewer)
+        let useCanvasViewer = localStorage.getItem('red_use_canvas_viewer') === 'true';
+        const btnToggleViewer = document.getElementById('btn-toggle-viewer');
+        const viewerModeLabel = document.getElementById('viewer-mode-label');
+
+        function applyViewerMode() {
+            if (useCanvasViewer) {
+                viewerModal.classList.add('viewer-canvas');
+                btnToggleViewer.querySelector('i').className = 'fas fa-book-reader mr-1 sm:mr-2';
+                if (viewerModeLabel) viewerModeLabel.textContent = 'Reader';
+            } else {
+                viewerModal.classList.remove('viewer-canvas');
+                btnToggleViewer.querySelector('i').className = 'fas fa-window-restore mr-1 sm:mr-2';
+                if (viewerModeLabel) viewerModeLabel.textContent = 'Browser';
+            }
         }
 
-        // ===== VIEWER TYPE TRACKING =====
-        let currentViewerType = null; // 'mobile' or 'desktop'
-        let reloadDebounceTimer = null;
-
-        // Apply the .viewer-mobile class based on browser capability
-        function applyViewerType(useMobile) {
-            const newType = useMobile ? 'mobile' : 'desktop';
-            if (newType === currentViewerType) return;
-            currentViewerType = newType;
-            if (useMobile) {
-                viewerModal.classList.add('viewer-mobile');
-            } else {
-                viewerModal.classList.remove('viewer-mobile');
-            }
-            console.log(`Viewer type set to: ${newType}`);
-        }
-
-        function checkAndReloadViewerType() {
-            const needsMobileViewer = !supportsInlinePDF();
-            const newType = needsMobileViewer ? 'mobile' : 'desktop';
+        function toggleViewerMode() {
+            useCanvasViewer = !useCanvasViewer;
+            localStorage.setItem('red_use_canvas_viewer', useCanvasViewer);
+            applyViewerMode();
             
-            // Only reload if type actually changed AND a PDF is open
-            if (newType === currentViewerType || !currentBookId) {
-                // Still ensure class is correct (in case of initial load)
-                applyViewerType(needsMobileViewer);
-                return;
-            }
-            
-            console.log(`Viewer type changed: ${currentViewerType} → ${newType}`);
-            
-            const savedPage = currentPage;
-            const savedUrl = currentPdfUrl;
-            const savedBook = allBooksMap[currentBookId];
-            const savedNotes = noteArea.value;
-            
-            // Clear current viewer
-            if (currentViewerType === 'mobile') {
-                pdfDoc = null;
-            } else {
-                pdfFrame.src = '';
-            }
-            
-            applyViewerType(needsMobileViewer);
-            
-            if (savedBook && savedUrl) {
+            // If a PDF is currently open, reload it with the new viewer
+            if (currentBookId && allBooksMap[currentBookId]) {
+                const savedPage = currentPage;
+                const savedUrl = currentPdfUrl;
+                const savedBook = allBooksMap[currentBookId];
+                const savedNotes = noteArea.value;
+                
+                // Clear current viewer
+                if (!useCanvasViewer) {
+                    pdfDoc = null;
+                } else {
+                    pdfFrame.src = '';
+                }
+                
+                // Re-open with new viewer
                 noteArea.value = savedNotes;
                 if (mobileNotesArea) mobileNotesArea.value = savedNotes;
-                openViewer(savedUrl, savedBook, { restorePage: savedPage });
+                
+                if (useCanvasViewer) {
+                    loadPDFMobile(savedUrl);
+                    pdfFrame.src = '';
+                    // Restore page after PDF loads
+                    if (savedPage > 1) {
+                        const checkLoad = setInterval(() => {
+                            if (pdfDoc && totalPages > 0) {
+                                clearInterval(checkLoad);
+                                if (savedPage <= totalPages) {
+                                    renderPDFPage(savedPage, null, true);
+                                }
+                            }
+                        }, 100);
+                        setTimeout(() => clearInterval(checkLoad), 8000);
+                    }
+                } else {
+                    pdfFrame.src = savedUrl;
+                    pdfDoc = null;
+                    pdfLoading.style.display = 'none';
+                }
             }
         }
 
-        function debouncedCheckViewerType() {
-            clearTimeout(reloadDebounceTimer);
-            reloadDebounceTimer = setTimeout(() => {
-                checkAndReloadViewerType();
-                if (currentViewerType === 'mobile' && pdfDoc && currentPage > 0) {
-                    currentScale = 1.0;
-                    renderPDFPage(currentPage, null, true);
-                }
-            }, 400);
+        if (btnToggleViewer) {
+            btnToggleViewer.addEventListener('click', toggleViewerMode);
         }
+
+        // Apply viewer mode on load (before modal opens)
+        applyViewerMode();
 
         // ===== SIMPLE MOBILE PDF VIEWER =====
         let pdfDoc = null;
@@ -977,23 +973,16 @@
             }
         }
 
-        function onFullscreenChange() {
-            updateFullscreenButton();
-            setTimeout(() => {
-                debouncedCheckViewerType();
-            }, 500);
-        }
-
-        document.addEventListener('fullscreenchange', onFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
 
         if (btnFullscreen) btnFullscreen.addEventListener('click', toggleFullscreen);
         if (btnFullscreenMobile) btnFullscreenMobile.addEventListener('click', toggleFullscreen);
 
-        // ===== RESIZE — only rechecks viewer type, doesn't force mobile based on width =====
+        // Resize: only update canvas size and fullscreen button, no viewer switching
         window.addEventListener('resize', () => {
             resizeCanvas();
-            debouncedCheckViewerType();
+            updateFullscreenButton();
         });
 
         // Swipe navigation
@@ -1158,7 +1147,7 @@
             setTimeout(() => { loadBooksList(true); setTimeout(() => { icon.classList.remove('fa-spin'); }, 1000); }, 300);
         });
 
-        function openViewer(url, book, options = {}) {
+        function openViewer(url, book) {
             currentFile = book.filename; 
             currentBookId = book.id;
             modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
@@ -1173,25 +1162,10 @@
             noteArea.value = savedNotes;
             if (mobileNotesArea) mobileNotesArea.value = savedNotes;
             
-            // Decide based on BROWSER CAPABILITY, not screen width
-            const useMobileViewer = !supportsInlinePDF();
-            applyViewerType(useMobileViewer);
-            
-            if (useMobileViewer) {
+            // Use the user's chosen viewer mode (no auto-detection)
+            if (useCanvasViewer) {
                 loadPDFMobile(url);
                 pdfFrame.src = '';
-                
-                if (options.restorePage && options.restorePage > 1) {
-                    const checkLoad = setInterval(() => {
-                        if (pdfDoc && totalPages > 0) {
-                            clearInterval(checkLoad);
-                            if (options.restorePage <= totalPages) {
-                                renderPDFPage(options.restorePage, null, true);
-                            }
-                        }
-                    }, 100);
-                    setTimeout(() => clearInterval(checkLoad), 8000);
-                }
             } else {
                 pdfFrame.src = url;
                 pdfDoc = null;
@@ -1205,7 +1179,6 @@
             pdfFrame.src = ''; 
             pdfDoc = null;
             pdfLoading.style.display = 'none';
-            currentViewerType = null;
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 if (document.exitFullscreen) document.exitFullscreen();
                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
