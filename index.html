@@ -109,7 +109,6 @@
         #mobile-menu-btn:hover { color: var(--neon-red); border-color: var(--neon-red); box-shadow: 0 0 12px var(--neon-red-glow); }
 
         .desktop-nav { display: flex; }
-        @media (max-width: 768px) { .desktop-nav { display: none !important; } }
 
         .nav-tab {
             font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
@@ -246,9 +245,21 @@
         .fullscreen-btn:hover { color: var(--neon-red); }
         .fullscreen-btn.active { color: var(--neon-red); }
 
-        /* ===== SIMPLE MOBILE PDF VIEWER ===== */
+        /* ===== PDF VIEWER VISIBILITY — controlled by JS class, NOT screen width ===== */
+        /* Default: desktop iframe viewer */
+        #mobile-pdf-container { display: none !important; }
+        #desktop-pdf-frame { display: block !important; }
+        #mobile-pdf-canvas-wrapper .pdf-controls { display: none !important; }
+
+        /* When JS adds .viewer-mobile class: switch to canvas viewer */
+        #viewer-modal.viewer-mobile #mobile-pdf-container { display: flex !important; }
+        #viewer-modal.viewer-mobile #desktop-pdf-frame { display: none !important; }
+        #viewer-modal.viewer-mobile #mobile-pdf-canvas-wrapper .pdf-controls { display: flex !important; }
+        /* Hide desktop notes panel when using mobile viewer (takes full width) */
+        #viewer-modal.viewer-mobile .flex-1.md\:w-\[400px\] { display: none !important; }
+
+        /* ===== MOBILE PDF VIEWER STYLES ===== */
         #mobile-pdf-container { 
-            display: none; 
             flex: 1; 
             flex-direction: column; 
             overflow: hidden; 
@@ -284,7 +295,6 @@
         }
 
         .pdf-controls { 
-            display: none; 
             align-items: center; 
             justify-content: center; 
             gap: 0.5rem; 
@@ -312,6 +322,7 @@
         .pdf-loading { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-secondary); z-index: 20; }
         .pdf-loading i { font-size: 2rem; color: var(--neon-red); margin-bottom: 0.5rem; }
 
+        /* ===== MOBILE NOTES — controlled by SCREEN WIDTH (as you requested) ===== */
         #mobile-notes-section { display: none; width: 100%; flex-shrink: 0; background: var(--bg-surface); border-top: 2px solid var(--border-color); }
         #mobile-notes-header { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.75rem; background: var(--bg-main); border-bottom: 1px solid var(--border-subtle); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); }
         #mobile-notes-header .header-left { display: flex; align-items: center; gap: 0.4rem; }
@@ -327,11 +338,16 @@
         /* Desktop iframe dark mode */
         #pdf-frame.pdf-dark-iframe { filter: invert(1) hue-rotate(180deg); }
 
+        /* ===== SCREEN-WIDTH MEDIA QUERIES — ONLY for burger menu, notes, and layout tweaks ===== */
         @media (max-width: 768px) {
-            #mobile-pdf-container { display: flex; }
+            /* Burger menu */
+            .desktop-nav { display: none !important; }
+            
+            /* Notes: show compact mobile notes, hide desktop notes panel */
             #mobile-notes-section { display: block; }
-            #desktop-pdf-frame { display: none !important; }
-            .pdf-controls { display: flex; }
+            #viewer-modal .flex-1.md\:w-\[400px\] { display: none !important; }
+            
+            /* Layout tweaks */
             header .container { padding-left: 1rem !important; padding-right: 1rem !important; }
             header h1 { font-size: 1.1rem !important; letter-spacing: 0.1em !important; }
             .container { padding-left: 1rem !important; padding-right: 1rem !important; }
@@ -339,13 +355,10 @@
             .pdf-item { padding: 1rem !important; }
             .pdf-item .w-16 { width: 3.5rem !important; height: 4.5rem !important; }
             .pdf-item h3 { font-size: 1rem !important; }
-            #viewer-modal .flex-1.md\:w-\[400px\] { display: none !important; }
         }
 
         @media (min-width: 769px) {
-            #mobile-pdf-container { display: none !important; }
-            #desktop-pdf-frame { display: block !important; }
-            .pdf-controls { display: none !important; }
+            /* Notes: hide mobile notes, show desktop notes panel */
             #mobile-notes-section { display: none !important; }
         }
     </style>
@@ -477,7 +490,7 @@
             </div>
         </div>
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-            <!-- Simple Mobile PDF Viewer (only for browsers that can't show PDF inline) -->
+            <!-- Mobile PDF Viewer (shown only when JS adds .viewer-mobile class) -->
             <div id="mobile-pdf-container">
                 <div class="pdf-controls">
                     <button id="pdf-prev-page" title="Trang trước"><i class="fas fa-chevron-left"></i></button>
@@ -516,7 +529,7 @@
                 </div>
             </div>
             
-            <!-- Desktop PDF Viewer (iframe) -->
+            <!-- Desktop PDF Viewer (iframe) — default, shown unless .viewer-mobile is added -->
             <div class="flex-[2] relative" id="desktop-pdf-frame">
                 <iframe id="pdf-frame" src="" class="w-full h-full border-0"></iframe>
             </div>
@@ -689,32 +702,43 @@
         const contentGuide = document.getElementById('content-guide');
         const contentCompiled = document.getElementById('content-compiled');
 
-        // ===== INLINE PDF SUPPORT DETECTION =====
-        // iOS (iPhone/iPad) browsers cannot display PDFs in iframes
-        // Most desktop browsers and Android Chrome can
+        // ===== BROWSER CAPABILITY DETECTION (not screen size) =====
         function supportsInlinePDF() {
             const ua = navigator.userAgent || '';
-            // iOS devices (Safari, Chrome iOS, Firefox iOS all use WebKit)
+            // iOS devices — Safari, Chrome iOS, Firefox iOS all lack iframe PDF support
             if (/iPad|iPhone|iPod/.test(ua)) return false;
-            // Some known mobile browsers without PDF support
+            // Known mobile browsers without PDF support
             if (/CriOS|FxiOS|OPiOS|Mercury/.test(ua)) return false;
             return true;
         }
 
         // ===== VIEWER TYPE TRACKING =====
-        let currentViewerType = null;
+        let currentViewerType = null; // 'mobile' or 'desktop'
         let reloadDebounceTimer = null;
 
-        function isMobileForViewer() { 
-            // Use inline PDF support check, not just screen width
-            return !supportsInlinePDF(); 
+        // Apply the .viewer-mobile class based on browser capability
+        function applyViewerType(useMobile) {
+            const newType = useMobile ? 'mobile' : 'desktop';
+            if (newType === currentViewerType) return;
+            currentViewerType = newType;
+            if (useMobile) {
+                viewerModal.classList.add('viewer-mobile');
+            } else {
+                viewerModal.classList.remove('viewer-mobile');
+            }
+            console.log(`Viewer type set to: ${newType}`);
         }
 
         function checkAndReloadViewerType() {
-            const needsMobileViewer = isMobileForViewer();
+            const needsMobileViewer = !supportsInlinePDF();
             const newType = needsMobileViewer ? 'mobile' : 'desktop';
             
-            if (newType === currentViewerType || !currentBookId) return;
+            // Only reload if type actually changed AND a PDF is open
+            if (newType === currentViewerType || !currentBookId) {
+                // Still ensure class is correct (in case of initial load)
+                applyViewerType(needsMobileViewer);
+                return;
+            }
             
             console.log(`Viewer type changed: ${currentViewerType} → ${newType}`);
             
@@ -730,7 +754,7 @@
                 pdfFrame.src = '';
             }
             
-            currentViewerType = newType;
+            applyViewerType(needsMobileViewer);
             
             if (savedBook && savedUrl) {
                 noteArea.value = savedNotes;
@@ -805,7 +829,6 @@
             });
         }
 
-        // Simple page render — no text layer, no animation, just canvas
         async function renderPDFPage(pageNum, scale = null, scrollToTop = true) {
             if (!pdfDoc || !pdfCtx) return;
             
@@ -911,7 +934,6 @@
             });
         }
 
-        // Simple dark mode via CSS filter on canvas
         if (pdfDarkToggleBtn) {
             pdfDarkToggleBtn.addEventListener('click', () => {
                 mobilePdfCanvas.classList.toggle('pdf-dark');
@@ -968,34 +990,23 @@
         if (btnFullscreen) btnFullscreen.addEventListener('click', toggleFullscreen);
         if (btnFullscreenMobile) btnFullscreenMobile.addEventListener('click', toggleFullscreen);
 
-        // ===== RESIZE =====
+        // ===== RESIZE — only rechecks viewer type, doesn't force mobile based on width =====
         window.addEventListener('resize', () => {
             resizeCanvas();
             debouncedCheckViewerType();
         });
 
-        // Swipe navigation (simple)
-        let touchStartX = 0, touchEndX = 0;
-        let isVerticalScroll = false;
-        const swipeThreshold = 80;
-        const verticalThreshold = 30;
-
+        // Swipe navigation
         if (mobilePdfScrollWrapper) {
+            let touchStartX = 0, touchStartY = 0;
+            let isVerticalScroll = false;
+            const swipeThreshold = 80;
+            const verticalThreshold = 30;
+
             mobilePdfScrollWrapper.addEventListener('touchstart', (e) => {
                 touchStartX = e.touches[0].screenX;
-                isVerticalScroll = false;
-            }, { passive: true });
-            mobilePdfScrollWrapper.addEventListener('touchmove', (e) => {
-                const currentY = e.touches[0].screenY;
-                const currentX = e.touches[0].screenX;
-                const diffY = Math.abs(currentY - (e.touches[0].screenY - (e.touches[0].screenY - touchStartX + currentX - touchStartX)));
-                // Simpler: track start Y separately
-            }, { passive: true });
-            
-            // Cleaner swipe detection
-            let touchStartY = 0;
-            mobilePdfScrollWrapper.addEventListener('touchstart', (e) => {
                 touchStartY = e.touches[0].screenY;
+                isVerticalScroll = false;
             }, { passive: true });
             mobilePdfScrollWrapper.addEventListener('touchmove', (e) => {
                 const diffY = Math.abs(e.touches[0].screenY - touchStartY);
@@ -1003,8 +1014,7 @@
                 if (diffY > verticalThreshold && diffY > diffX) isVerticalScroll = true;
             }, { passive: true });
             mobilePdfScrollWrapper.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                const diffX = touchStartX - touchEndX;
+                const diffX = touchStartX - e.changedTouches[0].screenX;
                 if (!isVerticalScroll && Math.abs(diffX) > swipeThreshold) {
                     if (diffX > 0 && currentPage < totalPages) renderPDFPage(currentPage + 1, null, true);
                     else if (diffX < 0 && currentPage > 1) renderPDFPage(currentPage - 1, null, true);
@@ -1163,9 +1173,9 @@
             noteArea.value = savedNotes;
             if (mobileNotesArea) mobileNotesArea.value = savedNotes;
             
-            // Decide viewer type based on browser capability, not screen size
-            const useMobileViewer = isMobileForViewer();
-            currentViewerType = useMobileViewer ? 'mobile' : 'desktop';
+            // Decide based on BROWSER CAPABILITY, not screen width
+            const useMobileViewer = !supportsInlinePDF();
+            applyViewerType(useMobileViewer);
             
             if (useMobileViewer) {
                 loadPDFMobile(url);
