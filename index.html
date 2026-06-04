@@ -261,7 +261,11 @@
         /* ===== MOBILE PDF VIEWER ===== */
         #mobile-pdf-container { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--bg-main); position: relative; min-height: 0; }
         #mobile-pdf-scroll-wrapper { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; -webkit-overflow-scrolling: touch; }
-        #mobile-pdf-canvas-wrapper { position: relative; display: flex; justify-content: center; align-items: flex-start; min-height: 100%; padding: 1rem 0.5rem; }
+        #mobile-pdf-canvas-wrapper { 
+            position: relative; 
+            display: inline-block;
+            margin: 1rem auto;
+        }
         
         #mobile-pdf-canvas {
             display: block;
@@ -269,6 +273,8 @@
             touch-action: pan-y;
             user-select: none;
             -webkit-user-select: none;
+            position: relative;
+            z-index: 1;
         }
         #mobile-pdf-canvas.flipping { opacity: 0.6; }
 
@@ -279,12 +285,6 @@
         .page-flip-enter-left {
             animation: flipInFromLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .page-flip-exit-left {
-            animation: flipOutToLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .page-flip-exit-right {
-            animation: flipOutToRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
 
         @keyframes flipInFromRight {
             0% { transform: translateX(100%) rotateY(-15deg); opacity: 0; }
@@ -294,46 +294,41 @@
             0% { transform: translateX(-100%) rotateY(15deg); opacity: 0; }
             100% { transform: translateX(0) rotateY(0); opacity: 1; }
         }
-        @keyframes flipOutToLeft {
-            0% { transform: translateX(0) rotateY(0); opacity: 1; }
-            100% { transform: translateX(-100%) rotateY(15deg); opacity: 0; }
-        }
-        @keyframes flipOutToRight {
-            0% { transform: translateX(0) rotateY(0); opacity: 1; }
-            100% { transform: translateX(100%) rotateY(-15deg); opacity: 0; }
-        }
 
-        /* Text layer for selection - improved */
-        .text-layer {
+        /* Text layer - PDF.js built-in styling */
+        .textLayer {
             position: absolute;
-            top: 0; left: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             overflow: hidden;
+            opacity: 0.2;
             line-height: 1.0;
-            pointer-events: none;
-            z-index: 5;
+            z-index: 2;
+            pointer-events: auto;
         }
-        .text-layer span {
+        
+        .textLayer span,
+        .textLayer br {
+            color: transparent;
             position: absolute;
             white-space: pre;
-            color: transparent;
+            cursor: text;
+            transform-origin: 0% 0%;
             user-select: text;
             -webkit-user-select: text;
             -ms-user-select: text;
-            cursor: text;
-            pointer-events: auto;
-            transform-origin: 0% 0%;
             touch-action: none;
             -webkit-touch-callout: default;
-            background: rgba(0, 0, 0, 0.02);
-            border-radius: 1px;
-            padding: 1px 0;
         }
-        .text-layer span::selection,
-        .text-layer span::-moz-selection {
-            background: rgba(220, 38, 38, 0.35);
+        
+        .textLayer ::selection {
+            background: rgba(220, 38, 38, 0.4);
         }
-        .text-layer span::-webkit-selection {
-            background: rgba(220, 38, 38, 0.35);
+        
+        .textLayer ::-moz-selection {
+            background: rgba(220, 38, 38, 0.4);
         }
 
         .pdf-controls { display: none; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.5rem; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); flex-shrink: 0; flex-wrap: wrap; }
@@ -544,6 +539,7 @@
                     </div>
                     <div id="mobile-pdf-canvas-wrapper">
                         <canvas id="mobile-pdf-canvas"></canvas>
+                        <div id="text-layer-container" class="textLayer"></div>
                     </div>
                 </div>
                 <div id="mobile-notes-section">
@@ -761,6 +757,7 @@
         const mobileSaveStatus = document.getElementById('mobile-save-status');
         const mobilePdfScrollWrapper = document.getElementById('mobile-pdf-scroll-wrapper');
         const mobilePdfCanvasWrapper = document.getElementById('mobile-pdf-canvas-wrapper');
+        const textLayerContainer = document.getElementById('text-layer-container');
         const btnFullscreen = document.getElementById('btn-fullscreen');
         const btnFullscreenMobile = document.getElementById('pdf-fullscreen-mobile');
 
@@ -822,49 +819,29 @@
             ctx.putImageData(imageData, 0, 0);
         }
 
-        // Improved text layer
-        async function renderTextLayer(page, viewport, container) {
-            const existing = container.querySelector('.text-layer');
-            if (existing) existing.remove();
-
-            const textLayer = document.createElement('div');
-            textLayer.className = 'text-layer';
-            textLayer.style.width = viewport.width + 'px';
-            textLayer.style.height = viewport.height + 'px';
-
-            let textContent;
+        // Render text layer using PDF.js built-in renderer
+        async function renderTextLayer(page, viewport) {
+            // Clear existing text layer
+            textLayerContainer.innerHTML = '';
+            textLayerContainer.style.width = viewport.width + 'px';
+            textLayerContainer.style.height = viewport.height + 'px';
+            
             try {
-                textContent = await page.getTextContent();
-            } catch (e) { return; }
-
-            textContent.items.forEach(item => {
-                if (!item.str || !item.transform) return;
-                const tx = item.transform;
-                const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]) || (viewport.height / 30);
-                const x = tx[4];
-                const y = tx[5];
-
-                const span = document.createElement('span');
-                span.textContent = item.str;
+                const textContent = await page.getTextContent();
                 
-                const cssX = x;
-                const cssY = viewport.height - y - fontSize;
-                
-                span.style.left = cssX + 'px';
-                span.style.top = cssY + 'px';
-                span.style.fontSize = fontSize + 'px';
-                span.style.fontFamily = item.fontName || 'serif';
-                span.style.lineHeight = '1.2';
-                
-                const angle = Math.atan2(tx[1], tx[0]);
-                if (Math.abs(angle) > 0.01) {
-                    span.style.transform = `rotate(${-angle}rad)`;
+                // Use PDF.js's renderTextLayer
+                if (pdfjsLib.renderTextLayer) {
+                    pdfjsLib.renderTextLayer({
+                        textContent: textContent,
+                        container: textLayerContainer,
+                        viewport: viewport,
+                        textDivs: [],
+                        timeout: 0
+                    });
                 }
-                
-                textLayer.appendChild(span);
-            });
-
-            container.appendChild(textLayer);
+            } catch (e) {
+                console.error('Error rendering text layer:', e);
+            }
         }
 
         async function renderPDFPage(pageNum, scale = null, scrollToTop = true, direction = 'next') {
@@ -876,8 +853,8 @@
             // Page flip animation
             const wrapper = mobilePdfCanvasWrapper;
             const animClass = direction === 'next' ? 'page-flip-enter-right' : 'page-flip-enter-left';
-            wrapper.classList.remove('page-flip-enter-right', 'page-flip-enter-left', 'page-flip-exit-left', 'page-flip-exit-right');
-            void wrapper.offsetWidth; // Force reflow
+            wrapper.classList.remove('page-flip-enter-right', 'page-flip-enter-left');
+            void wrapper.offsetWidth;
             wrapper.classList.add(animClass);
             
             try {
@@ -924,7 +901,8 @@
                 pdfZoomInBtn.disabled = scale >= maxScale;
                 pdfZoomOutBtn.disabled = scale <= minScale;
                 
-                await renderTextLayer(page, viewport, mobilePdfCanvasWrapper);
+                // Render text layer for selection
+                await renderTextLayer(page, viewport);
                 
                 if (scrollToTop && mobilePdfScrollWrapper) {
                     mobilePdfScrollWrapper.scrollTop = 0;
@@ -1259,7 +1237,6 @@
             pdfFrame.src = ''; 
             pdfDoc = null;
             pdfLoading.style.display = 'none';
-            // Exit fullscreen if active
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 if (document.exitFullscreen) document.exitFullscreen();
                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
