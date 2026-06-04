@@ -43,21 +43,12 @@
             --grid-opacity: 0.06;
         }
 
-        html, body {
-            height: 100vh;
-            overflow: hidden;
-        }
+        html, body { height: 100vh; overflow: hidden; }
 
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: var(--neon-red) var(--border-subtle);
-        }
+        * { scrollbar-width: thin; scrollbar-color: var(--neon-red) var(--border-subtle); }
         *::-webkit-scrollbar { width: 8px; height: 8px; }
         *::-webkit-scrollbar-track { background: var(--bg-main); }
-        *::-webkit-scrollbar-thumb { 
-            background: linear-gradient(180deg, var(--neon-red), var(--neon-red-dark)); 
-            border-radius: 4px;
-        }
+        *::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--neon-red), var(--neon-red-dark)); border-radius: 4px; }
 
         body { 
             font-family: 'Be Vietnam Pro', sans-serif;
@@ -71,17 +62,11 @@
 
         .font-mono { font-family: 'JetBrains Mono', monospace !important; }
 
-        #holo-canvas {
-            position: fixed; inset: 0; pointer-events: none; z-index: -2;
-        }
-
+        #holo-canvas { position: fixed; inset: 0; pointer-events: none; z-index: -2; }
         #cursor-glow {
             position: fixed; width: 500px; height: 500px; border-radius: 50%;
             pointer-events: none; z-index: -1;
-            background: radial-gradient(circle, 
-                rgba(220, 38, 38, 0.12) 0%, 
-                rgba(220, 38, 38, 0.04) 30%, 
-                transparent 70%);
+            background: radial-gradient(circle, rgba(220, 38, 38, 0.12) 0%, rgba(220, 38, 38, 0.04) 30%, transparent 70%);
             transform: translate(-50%, -50%);
             transition: all 0.15s ease;
             mix-blend-mode: screen;
@@ -95,9 +80,7 @@
             background-size: 60px 60px;
             animation: grid-shift 20s linear infinite;
         }
-        @keyframes grid-shift {
-            0% { background-position: 0 0; } 100% { background-position: 60px 60px; }
-        }
+        @keyframes grid-shift { 0% { background-position: 0 0; } 100% { background-position: 60px 60px; } }
 
         header {
             background: var(--bg-surface);
@@ -105,46 +88,28 @@
             -webkit-backdrop-filter: blur(20px) saturate(150%);
             border-bottom: 1px solid var(--border-color);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            flex-shrink: 0;
-            z-index: 40;
+            flex-shrink: 0; z-index: 40;
         }
         header h1 {
-            font-weight: 800;
-            letter-spacing: 0.15em;
+            font-weight: 800; letter-spacing: 0.15em;
             background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-red) 100%);
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
 
         #theme-toggle { transition: color 0.2s, transform 0.3s, filter 0.3s; color: var(--text-secondary); }
-        #theme-toggle:hover {
-            color: var(--neon-red) !important;
-            transform: rotate(15deg) scale(1.1);
-            filter: drop-shadow(0 0 8px var(--neon-red-glow));
-        }
+        #theme-toggle:hover { color: var(--neon-red) !important; transform: rotate(15deg) scale(1.1); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
 
         #mobile-menu-btn {
-            transition: all 0.3s;
-            color: var(--text-secondary);
-            background: var(--bg-solid);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transition: all 0.3s; color: var(--text-secondary);
+            background: var(--bg-solid); border: 2px solid var(--border-color);
+            border-radius: 8px; width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        #mobile-menu-btn:hover {
-            color: var(--neon-red);
-            border-color: var(--neon-red);
-            box-shadow: 0 0 12px var(--neon-red-glow);
-        }
+        #mobile-menu-btn:hover { color: var(--neon-red); border-color: var(--neon-red); box-shadow: 0 0 12px var(--neon-red-glow); }
 
         .desktop-nav { display: flex; }
-        @media (max-width: 768px) {
-            .desktop-nav { display: none !important; }
-        }
+        @media (max-width: 768px) { .desktop-nav { display: none !important; } }
 
         .nav-tab {
             font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
@@ -164,62 +129,34 @@
         }
 
         #mobile-nav {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+            display: none; position: absolute; top: 100%; left: 0; right: 0;
             background: var(--bg-solid) !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
             border-bottom: 2px solid var(--border-color);
-            padding: 1.5rem 1rem;
-            z-index: 50;
+            padding: 1.5rem 1rem; z-index: 50;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
         }
         #mobile-nav.active { display: block; }
         #mobile-nav .nav-tab {
-            display: block;
-            width: 100%;
-            text-align: left;
-            padding: 16px 20px !important;
-            margin-bottom: 12px;
-            border-radius: 12px;
-            border-bottom: none !important;
-            background: var(--bg-main);
-            border: 1px solid var(--border-subtle);
-            font-size: 0.95rem !important;
-            transition: all 0.3s;
+            display: block; width: 100%; text-align: left;
+            padding: 16px 20px !important; margin-bottom: 12px;
+            border-radius: 12px; border-bottom: none !important;
+            background: var(--bg-main); border: 1px solid var(--border-subtle);
+            font-size: 0.95rem !important; transition: all 0.3s;
         }
-        #mobile-nav .nav-tab:hover {
-            border-color: var(--neon-red);
-            transform: translateX(4px);
-        }
+        #mobile-nav .nav-tab:hover { border-color: var(--neon-red); transform: translateX(4px); }
         #mobile-nav .nav-tab.active-tab {
             background: rgba(220, 38, 38, 0.1);
             border: 2px solid var(--neon-red) !important;
             color: var(--neon-red) !important;
         }
-        #mobile-nav .nav-tab i {
-            width: 24px;
-            margin-right: 12px;
-            color: var(--neon-red);
-        }
+        #mobile-nav .nav-tab i { width: 24px; margin-right: 12px; color: var(--neon-red); }
 
         #btn-refresh { transition: all 0.4s; color: var(--text-secondary); }
         #btn-refresh:hover { color: var(--neon-red); transform: rotate(180deg); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
 
-        main {
-            flex: 1 1 auto;
-            min-height: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-            position: relative;
-        }
-        main h2 {
-            font-weight: 700; letter-spacing: 0.05em; color: var(--text-primary) !important;
-            border-bottom: 1px solid var(--border-subtle) !important;
-        }
+        main { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; position: relative; }
+        main h2 { font-weight: 700; letter-spacing: 0.05em; color: var(--text-primary) !important; border-bottom: 1px solid var(--border-subtle) !important; }
 
         .pdf-item {
             background: var(--bg-surface); backdrop-filter: blur(12px);
@@ -234,165 +171,65 @@
             transition: all 0.6s ease; pointer-events: none;
         }
         .pdf-item:hover::before { top: -50%; left: -50%; }
-        .pdf-item:hover {
-            transform: translateY(-4px) !important; border-color: var(--neon-red) !important;
-            box-shadow: 0 12px 32px rgba(220, 38, 38, 0.15);
-        }
+        .pdf-item:hover { transform: translateY(-4px) !important; border-color: var(--neon-red) !important; box-shadow: 0 12px 32px rgba(220, 38, 38, 0.15); }
         .pdf-item .book-id {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.68rem;
-            font-weight: 600;
-            color: var(--neon-red);
-            background: rgba(220, 38, 38, 0.1);
-            border: 1px solid rgba(220, 38, 38, 0.2);
-            padding: 2px 8px;
-            border-radius: 4px;
-            letter-spacing: 0.05em;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 600;
+            color: var(--neon-red); background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.2); padding: 2px 8px;
+            border-radius: 4px; letter-spacing: 0.05em;
         }
-        .pdf-item h3 { 
-            color: var(--text-primary) !important; 
-            font-weight: 700; 
-            transition: color 0.3s; 
-            font-size: 1.1rem;
-            line-height: 1.3;
-        }
+        .pdf-item h3 { color: var(--text-primary) !important; font-weight: 700; transition: color 0.3s; font-size: 1.1rem; line-height: 1.3; }
         .pdf-item:hover h3 { color: var(--neon-red) !important; }
-        .pdf-item .book-author-line {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 6px;
-            font-size: 0.88rem;
-            color: var(--text-secondary) !important;
-        }
-        .pdf-item .book-author-line .author-label {
-            font-weight: 600;
-            color: var(--text-secondary);
-            opacity: 0.85;
-        }
-        .pdf-item .book-author-line .author-name {
-            font-style: italic;
-            color: var(--text-primary);
-            opacity: 0.85;
-            transition: color 0.3s, opacity 0.3s;
-        }
-        .pdf-item:hover .book-author-line .author-name {
-            color: var(--neon-red);
-            opacity: 1;
-        }
-        .pdf-item p.book-hint { 
-            color: var(--text-secondary) !important; 
-            font-family: 'JetBrains Mono', monospace !important; 
-            font-size: 0.68rem !important; 
-            opacity: 0.6;
-            margin-top: 8px;
-        }
+        .pdf-item .book-author-line { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 0.88rem; color: var(--text-secondary) !important; }
+        .pdf-item .book-author-line .author-label { font-weight: 600; color: var(--text-secondary); opacity: 0.85; }
+        .pdf-item .book-author-line .author-name { font-style: italic; color: var(--text-primary); opacity: 0.85; transition: color 0.3s, opacity 0.3s; }
+        .pdf-item:hover .book-author-line .author-name { color: var(--neon-red); opacity: 1; }
+        .pdf-item p.book-hint { color: var(--text-secondary) !important; font-family: 'JetBrains Mono', monospace !important; font-size: 0.68rem !important; opacity: 0.6; margin-top: 8px; }
         .pdf-item i.fa-external-link-alt { color: var(--text-secondary); opacity: 0.5; transition: all 0.3s; }
         .pdf-item:hover i.fa-external-link-alt { opacity: 1; color: var(--neon-red); filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
+        .pdf-item > div:first-child { background: rgba(220, 38, 38, 0.06) !important; border: 1px solid var(--border-color); }
 
-        .pdf-item > div:first-child {
-            background: rgba(220, 38, 38, 0.06) !important;
-            border: 1px solid var(--border-color);
-        }
-
-        #content-guide h2, #content-compiled h2 {
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-red) 100%);
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        #content-guide > div, #content-compiled > div {
-            background: var(--bg-surface) !important; backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color) !important; color: var(--text-primary) !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); position: relative; overflow: hidden;
-        }
-        #content-guide > div::before, #content-compiled > div::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, transparent 0%, var(--neon-red) 50%, transparent 100%);
-            background-size: 200% 100%;
-            animation: red-shimmer 3s linear infinite;
-        }
-        @keyframes red-shimmer { 
-            0% { background-position: -200% 0; } 
-            100% { background-position: 200% 0; } 
-        }
-
+        #content-guide h2, #content-compiled h2 { background: linear-gradient(135deg, var(--text-primary) 0%, var(--neon-red) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        #content-guide > div, #content-compiled > div { background: var(--bg-surface) !important; backdrop-filter: blur(20px); border: 1px solid var(--border-color) !important; color: var(--text-primary) !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); position: relative; overflow: hidden; }
+        #content-guide > div::before, #content-compiled > div::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent 0%, var(--neon-red) 50%, transparent 100%); background-size: 200% 100%; animation: red-shimmer 3s linear infinite; }
+        @keyframes red-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         #content-guide h3 { color: var(--neon-red) !important; font-weight: 700; letter-spacing: 0.05em; }
-        .highlight-box {
-            background: rgba(220, 38, 38, 0.08) !important;
-            border-left: 4px solid var(--neon-red) !important;
-        }
+        .highlight-box { background: rgba(220, 38, 38, 0.08) !important; border-left: 4px solid var(--neon-red) !important; }
         #content-guide strong { color: var(--neon-red); }
 
-        .note-compilation-item {
-            background: var(--bg-surface); backdrop-filter: blur(10px);
-            border: 1px solid var(--border-subtle) !important;
-            transition: all 0.4s; position: relative; overflow: hidden;
-        }
-        .note-compilation-item::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-            background: var(--neon-red); opacity: 0; transition: opacity 0.3s;
-        }
+        .note-compilation-item { background: var(--bg-surface); backdrop-filter: blur(10px); border: 1px solid var(--border-subtle) !important; transition: all 0.4s; position: relative; overflow: hidden; }
+        .note-compilation-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--neon-red); opacity: 0; transition: opacity 0.3s; }
         .note-compilation-item:hover { border-color: var(--neon-red) !important; transform: translateX(4px); }
         .note-compilation-item:hover::before { opacity: 1; }
 
-        footer {
-            background: var(--bg-surface) !important; 
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border-color);
-            position: relative;
-            flex-shrink: 0;
-            z-index: 40;
-        }
-        footer::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent 0%, var(--neon-red) 50%, transparent 100%);
-            background-size: 200% 100%;
-            animation: red-shimmer 3s linear infinite;
-        }
+        footer { background: var(--bg-surface) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid var(--border-color); position: relative; flex-shrink: 0; z-index: 40; }
+        footer::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent 0%, var(--neon-red) 50%, transparent 100%); background-size: 200% 100%; animation: red-shimmer 3s linear infinite; }
         footer a { color: var(--text-secondary); transition: all 0.3s; }
         footer a:hover { color: var(--neon-red) !important; text-shadow: 0 0 10px var(--neon-red-glow); }
 
         #viewer-modal { background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
         body.dark-mode #viewer-modal { background: rgba(0,0,0,0.8); }
-        
-        #viewer-modal > div:first-child {
-            background: var(--bg-surface) !important;
-            border-bottom: 2px solid var(--neon-red) !important;
-            box-shadow: 0 4px 20px rgba(220, 38, 38, 0.15);
-        }
+        #viewer-modal > div:first-child { background: var(--bg-surface) !important; border-bottom: 2px solid var(--neon-red) !important; box-shadow: 0 4px 20px rgba(220, 38, 38, 0.15); }
         #modal-title { font-weight: 700; letter-spacing: 0.08em; color: var(--text-primary) !important; }
         #close-modal { transition: all 0.3s; color: var(--text-secondary); }
         #close-modal:hover { color: var(--neon-red) !important; transform: translateX(-3px); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
 
-        #btn-download-pdf {
-            background: linear-gradient(135deg, var(--neon-red) 0%, var(--neon-red-dark) 100%) !important; color: #fff !important;
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); transition: all 0.3s;
-        }
+        #btn-download-pdf { background: linear-gradient(135deg, var(--neon-red) 0%, var(--neon-red-dark) 100%) !important; color: #fff !important; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); transition: all 0.3s; }
         #btn-download-pdf:hover { box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5); transform: translateY(-1px); }
-        
-        #btn-download-notes {
-            background: transparent !important; border: 2px solid var(--neon-red) !important; color: var(--neon-red) !important; transition: all 0.3s;
-        }
+        #btn-download-notes { background: transparent !important; border: 2px solid var(--neon-red) !important; color: var(--neon-red) !important; transition: all 0.3s; }
         #btn-download-notes:hover { background: rgba(220, 38, 38, 0.1) !important; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
 
         #viewer-modal .flex-1.md\:w-\[400px\] { background: var(--bg-surface) !important; border-left: 1px solid var(--border-subtle); }
         #viewer-modal .flex-1.md\:w-\[400px\] > div:first-child { background: var(--bg-main) !important; border-bottom: 1px solid var(--border-subtle) !important; }
         #viewer-modal .flex-1.md\:w-\[400px\] h4 { color: var(--text-primary) !important; font-weight: 700; letter-spacing: 0.15em; }
         #viewer-modal .flex-1.md\:w-\[400px\] .fa-sticky-note { color: var(--neon-red) !important; filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
-        
         #note-id-display { background: rgba(220, 38, 38, 0.1) !important; color: var(--neon-red) !important; border: 1px solid rgba(220, 38, 38, 0.3); font-family: 'JetBrains Mono', monospace !important; }
         #save-status { color: #10b981 !important; }
         #btn-clear-notes { color: var(--neon-red) !important; transition: all 0.3s; }
         #btn-clear-notes:hover { filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
-
-        #note-area {
-            background: var(--bg-main) !important; color: var(--text-primary) !important;
-            font-family: 'JetBrains Mono', monospace !important; font-size: 14px !important;
-            caret-color: var(--neon-red); border: none;
-        }
+        #note-area { background: var(--bg-main) !important; color: var(--text-primary) !important; font-family: 'JetBrains Mono', monospace !important; font-size: 14px !important; caret-color: var(--neon-red); border: none; }
         #note-area::placeholder { color: var(--text-secondary) !important; font-style: italic; }
         #note-area:focus { box-shadow: inset 0 0 0 2px rgba(220, 38, 38, 0.2); }
-
         #viewer-modal .flex-\[2\] { background: var(--border-subtle) !important; border-right: 1px solid var(--border-subtle) !important; }
 
         .tech-corner { position: fixed; width: 60px; height: 60px; pointer-events: none; z-index: 5; opacity: 0.3; }
@@ -400,288 +237,102 @@
         .tech-corner.top-right { top: 20px; right: 20px; border-top: 1px solid var(--neon-red); border-right: 1px solid var(--neon-red); }
         .tech-corner.bottom-left { bottom: 20px; left: 20px; border-bottom: 1px solid var(--neon-red); border-left: 1px solid var(--neon-red); }
         .tech-corner.bottom-right { bottom: 20px; right: 20px; border-bottom: 1px solid var(--neon-red); border-right: 1px solid var(--neon-red); }
-
-        .data-tag {
-            position: fixed; font-family: 'JetBrains Mono', monospace !important; font-size: 10px;
-            color: var(--neon-red); opacity: 0.3; pointer-events: none; z-index: 3; letter-spacing: 0.1em;
-        }
+        .data-tag { position: fixed; font-family: 'JetBrains Mono', monospace !important; font-size: 10px; color: var(--neon-red); opacity: 0.3; pointer-events: none; z-index: 3; letter-spacing: 0.1em; }
 
         /* ===== MOBILE PDF VIEWER ===== */
-        #mobile-pdf-container {
-            display: none;
-            flex: 1;
-            flex-direction: column;
-            overflow: hidden;
-            background: var(--bg-main);
-            position: relative;
-            min-height: 0;
-        }
-        
-        #mobile-pdf-scroll-wrapper {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            position: relative;
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-        }
-        
-        #mobile-pdf-canvas-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100%;
-            padding: 1rem 0.5rem;
-        }
+        #mobile-pdf-container { display: none; flex: 1; flex-direction: column; overflow: hidden; background: var(--bg-main); position: relative; min-height: 0; }
+        #mobile-pdf-scroll-wrapper { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+        #mobile-pdf-canvas-wrapper { position: relative; display: flex; justify-content: center; align-items: flex-start; min-height: 100%; padding: 1rem 0.5rem; }
         
         #mobile-pdf-canvas {
             display: block;
-            max-width: 100%;
             box-shadow: 0 2px 12px rgba(0,0,0,0.15);
             transition: opacity 0.25s ease;
-            /* Allow vertical scrolling, prevent pinch zoom */
             touch-action: pan-y;
             user-select: none;
             -webkit-user-select: none;
         }
-        
-        #mobile-pdf-canvas.flipping {
-            opacity: 0.6;
-        }
-        
-        .pdf-controls {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-        }
-        
-        .pdf-controls button {
-            background: var(--bg-solid);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 0.4rem 0.75rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-            min-width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .pdf-controls button:hover:not(:disabled) {
-            border-color: var(--neon-red);
-            color: var(--neon-red);
-        }
-        
-        .pdf-controls button:active:not(:disabled) {
-            transform: scale(0.95);
-        }
-        
-        .pdf-controls button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-        
-        .page-info {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            min-width: 70px;
-            text-align: center;
-            font-weight: 500;
-        }
-        
-        .zoom-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            margin-left: 0.5rem;
-            padding-left: 0.75rem;
-            border-left: 1px solid var(--border-subtle);
-        }
-        
-        .zoom-level {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            min-width: 45px;
-            text-align: center;
-        }
-        
-        .pdf-loading {
-            display: none;
+        #mobile-pdf-canvas.flipping { opacity: 0.6; }
+
+        /* Text layer overlay for selection */
+        .text-layer {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            color: var(--text-secondary);
-            z-index: 20;
+            top: 0; left: 0;
+            pointer-events: none;
+            overflow: hidden;
+            line-height: 1.0;
         }
-        
-        .pdf-loading i {
-            font-size: 2rem;
-            color: var(--neon-red);
-            margin-bottom: 0.5rem;
+        .text-layer span {
+            position: absolute;
+            white-space: pre;
+            color: transparent;
+            user-select: text;
+            -webkit-user-select: text;
+            cursor: text;
+            pointer-events: auto;
+            transform-origin: 0% 0%;
+        }
+        .text-layer span::selection,
+        .text-layer span::-moz-selection {
+            background: rgba(220, 38, 38, 0.35);
         }
 
-        /* ===== MOBILE NOTES SECTION - Full width, small height ===== */
-        #mobile-notes-section {
-            display: none;
-            width: 100%;
-            flex-shrink: 0;
-            background: var(--bg-surface);
-            border-top: 2px solid var(--border-color);
+        .pdf-controls { display: none; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.5rem; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); flex-shrink: 0; flex-wrap: wrap; }
+        .pdf-controls button {
+            background: var(--bg-solid); border: 1px solid var(--border-color); color: var(--text-primary);
+            padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem;
+            transition: all 0.2s; min-width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
         }
+        .pdf-controls button:hover:not(:disabled) { border-color: var(--neon-red); color: var(--neon-red); }
+        .pdf-controls button:active:not(:disabled) { transform: scale(0.95); }
+        .pdf-controls button:disabled { opacity: 0.3; cursor: not-allowed; }
+        .pdf-controls button.active-toggle { background: var(--neon-red); color: white; border-color: var(--neon-red); }
         
-        #mobile-notes-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.4rem 0.75rem;
-            background: var(--bg-main);
-            border-bottom: 1px solid var(--border-subtle);
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-primary);
-        }
+        .page-info { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary); min-width: 70px; text-align: center; font-weight: 500; }
+        .zoom-controls { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle); }
+        .zoom-level { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); min-width: 45px; text-align: center; }
         
-        #mobile-notes-header .header-left {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        
-        #mobile-notes-header .header-left i {
-            color: var(--neon-red);
-        }
-        
-        #mobile-notes-header .header-right {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        #mobile-notes-header .clear-btn {
-            background: none;
-            border: none;
-            color: var(--neon-red);
-            cursor: pointer;
-            padding: 0.2rem;
-            font-size: 0.75rem;
-            transition: all 0.2s;
-        }
-        
-        #mobile-notes-header .clear-btn:hover {
-            filter: drop-shadow(0 0 4px var(--neon-red-glow));
-        }
-        
-        #mobile-save-status {
-            font-size: 0.65rem;
-            font-weight: 500;
-            color: #10b981;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        #mobile-notes-area {
-            width: 100%;
-            height: 110px;
-            padding: 0.6rem 0.75rem;
-            background: var(--bg-main);
-            color: var(--text-primary);
-            border: none;
-            outline: none;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            line-height: 1.5;
-            resize: none;
-            box-sizing: border-box;
-        }
-        
-        #mobile-notes-area::placeholder {
-            color: var(--text-secondary);
-            font-style: italic;
-        }
-        
-        #mobile-notes-area:focus {
-            box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.15);
+        .pdf-loading { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-secondary); z-index: 20; }
+        .pdf-loading i { font-size: 2rem; color: var(--neon-red); margin-bottom: 0.5rem; }
+
+        #mobile-notes-section { display: none; width: 100%; flex-shrink: 0; background: var(--bg-surface); border-top: 2px solid var(--border-color); }
+        #mobile-notes-header { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.75rem; background: var(--bg-main); border-bottom: 1px solid var(--border-subtle); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); }
+        #mobile-notes-header .header-left { display: flex; align-items: center; gap: 0.4rem; }
+        #mobile-notes-header .header-left i { color: var(--neon-red); }
+        #mobile-notes-header .header-right { display: flex; align-items: center; gap: 0.5rem; }
+        #mobile-notes-header .clear-btn { background: none; border: none; color: var(--neon-red); cursor: pointer; padding: 0.2rem; font-size: 0.75rem; transition: all 0.2s; }
+        #mobile-notes-header .clear-btn:hover { filter: drop-shadow(0 0 4px var(--neon-red-glow)); }
+        #mobile-save-status { font-size: 0.65rem; font-weight: 500; color: #10b981; opacity: 0; transition: opacity 0.3s; }
+        #mobile-notes-area { width: 100%; height: 110px; padding: 0.6rem 0.75rem; background: var(--bg-main); color: var(--text-primary); border: none; outline: none; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.5; resize: none; box-sizing: border-box; }
+        #mobile-notes-area::placeholder { color: var(--text-secondary); font-style: italic; }
+        #mobile-notes-area:focus { box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.15); }
+
+        /* Desktop iframe dark mode */
+        #pdf-frame.pdf-dark-iframe {
+            filter: invert(1) hue-rotate(180deg);
         }
 
         @media (max-width: 768px) {
-            #mobile-pdf-container {
-                display: flex;
-            }
-            
-            #mobile-notes-section {
-                display: block;
-            }
-            
-            #desktop-pdf-frame {
-                display: none !important;
-            }
-            
-            .pdf-controls {
-                display: flex;
-            }
-            
-            header .container {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-            header h1 {
-                font-size: 1.1rem !important;
-                letter-spacing: 0.1em !important;
-            }
-            .container {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-            main {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-            .pdf-item {
-                padding: 1rem !important;
-            }
-            .pdf-item .w-16 {
-                width: 3.5rem !important;
-                height: 4.5rem !important;
-            }
-            .pdf-item h3 {
-                font-size: 1rem !important;
-            }
-            #viewer-modal .flex-1.md\:w-\[400px\] {
-                display: none !important;
-            }
+            #mobile-pdf-container { display: flex; }
+            #mobile-notes-section { display: block; }
+            #desktop-pdf-frame { display: none !important; }
+            .pdf-controls { display: flex; }
+            header .container { padding-left: 1rem !important; padding-right: 1rem !important; }
+            header h1 { font-size: 1.1rem !important; letter-spacing: 0.1em !important; }
+            .container { padding-left: 1rem !important; padding-right: 1rem !important; }
+            main { padding-left: 1rem !important; padding-right: 1rem !important; }
+            .pdf-item { padding: 1rem !important; }
+            .pdf-item .w-16 { width: 3.5rem !important; height: 4.5rem !important; }
+            .pdf-item h3 { font-size: 1rem !important; }
+            #viewer-modal .flex-1.md\:w-\[400px\] { display: none !important; }
         }
 
         @media (min-width: 769px) {
-            #mobile-pdf-container {
-                display: none !important;
-            }
-            
-            #desktop-pdf-frame {
-                display: block !important;
-            }
-            
-            .pdf-controls {
-                display: none !important;
-            }
-            
-            #mobile-notes-section {
-                display: none !important;
-            }
+            #mobile-pdf-container { display: none !important; }
+            #desktop-pdf-frame { display: block !important; }
+            .pdf-controls { display: none !important; }
+            #mobile-notes-section { display: none !important; }
         }
     </style>
 </head>
@@ -706,47 +357,27 @@
                     <h1 class="text-lg tracking-wide hidden sm:block">RED. EDUCATION</h1>
                     <h1 class="text-lg tracking-wide sm:hidden">RED.</h1>
                 </div>
-                
                 <nav class="desktop-nav flex items-center space-x-1">
                     <button id="tab-books" class="nav-tab active-tab cursor-pointer">Giáo trình</button>
                     <button id="tab-guide" class="nav-tab inactive-tab cursor-pointer hidden lg:block">Hướng dẫn</button>
                     <button id="tab-compiled" class="nav-tab inactive-tab cursor-pointer hidden xl:block">Ghi chú</button>
-                    <button id="theme-toggle" class="p-2 ml-2" title="Chế độ sáng/tối">
-                        <i class="fas fa-moon text-lg"></i>
-                    </button>
-                    <button id="btn-refresh" class="p-2" title="Làm mới danh sách">
-                        <i class="fas fa-sync-alt text-lg"></i>
-                    </button>
+                    <button id="theme-toggle" class="p-2 ml-2" title="Chế độ sáng/tối"><i class="fas fa-moon text-lg"></i></button>
+                    <button id="btn-refresh" class="p-2" title="Làm mới danh sách"><i class="fas fa-sync-alt text-lg"></i></button>
                 </nav>
-                
-                <button id="mobile-menu-btn" class="md:hidden" title="Menu">
-                    <i class="fas fa-bars text-lg"></i>
-                </button>
+                <button id="mobile-menu-btn" class="md:hidden" title="Menu"><i class="fas fa-bars text-lg"></i></button>
             </div>
         </div>
-        
         <div id="mobile-nav">
-            <button class="mobile-tab nav-tab active-tab cursor-pointer w-full mb-3" data-tab="books">
-                <i class="fas fa-book"></i>Giáo trình
-            </button>
-            <button class="mobile-tab nav-tab inactive-tab cursor-pointer w-full mb-3" data-tab="guide">
-                <i class="fas fa-compass"></i>Hướng dẫn đọc
-            </button>
-            <button class="mobile-tab nav-tab inactive-tab cursor-pointer w-full mb-3" data-tab="compiled">
-                <i class="fas fa-sticky-note"></i>Tổng hợp ghi chú
-            </button>
-            <button id="mobile-btn-refresh" class="mobile-tab nav-tab inactive-tab cursor-pointer w-full mt-4 flex items-center justify-center py-3" style="border-top: 1px solid var(--border-subtle); margin-top: 1rem; padding-top: 1rem;">
-                <i class="fas fa-sync-alt mr-2"></i> Làm mới danh sách
-            </button>
-            <button id="mobile-theme-toggle" class="mobile-tab nav-tab inactive-tab cursor-pointer w-full flex items-center justify-center mt-2">
-                <i class="fas fa-moon mr-2"></i> <span>Chế độ sáng/tối</span>
-            </button>
+            <button class="mobile-tab nav-tab active-tab cursor-pointer w-full mb-3" data-tab="books"><i class="fas fa-book"></i>Giáo trình</button>
+            <button class="mobile-tab nav-tab inactive-tab cursor-pointer w-full mb-3" data-tab="guide"><i class="fas fa-compass"></i>Hướng dẫn đọc</button>
+            <button class="mobile-tab nav-tab inactive-tab cursor-pointer w-full mb-3" data-tab="compiled"><i class="fas fa-sticky-note"></i>Tổng hợp ghi chú</button>
+            <button id="mobile-btn-refresh" class="mobile-tab nav-tab inactive-tab cursor-pointer w-full mt-4 flex items-center justify-center py-3" style="border-top: 1px solid var(--border-subtle); margin-top: 1rem; padding-top: 1rem;"><i class="fas fa-sync-alt mr-2"></i> Làm mới danh sách</button>
+            <button id="mobile-theme-toggle" class="mobile-tab nav-tab inactive-tab cursor-pointer w-full flex items-center justify-center mt-2"><i class="fas fa-moon mr-2"></i> <span>Chế độ sáng/tối</span></button>
         </div>
     </header>
 
     <main>
         <div class="container mx-auto max-w-4xl">
-            
             <div id="content-books" class="py-6 sm:py-10">
                 <h2 class="text-xl sm:text-2xl mb-4 sm:mb-6 pb-2">Các tác phẩm và bài đọc</h2>
                 <div id="pdf-list" class="space-y-3 sm:space-y-4">
@@ -756,7 +387,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="content-guide" class="hidden py-6 sm:py-10">
                 <h2 class="text-2xl sm:text-3xl mb-6 sm:mb-8 pb-3">Cách đọc và trình tự đọc các tác phẩm</h2>
                 <div class="p-4 sm:p-8 rounded-lg space-y-4 sm:space-y-6 leading-relaxed text-[14px] sm:text-[16px]">
@@ -781,7 +411,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="content-compiled" class="hidden py-6 sm:py-10">
                 <h2 class="text-2xl sm:text-3xl mb-4 sm:mb-6 pb-3">Tổng hợp tất cả ghi chú</h2>
                 <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -797,7 +426,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
 
@@ -835,46 +463,33 @@
             <!-- Mobile PDF Viewer -->
             <div id="mobile-pdf-container">
                 <div class="pdf-controls">
-                    <button id="pdf-prev-page" title="Trang trước">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <span class="page-info">
-                        <span id="pdf-current-page">1</span> / <span id="pdf-total-pages">-</span>
-                    </span>
-                    <button id="pdf-next-page" title="Trang sau">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
+                    <button id="pdf-prev-page" title="Trang trước"><i class="fas fa-chevron-left"></i></button>
+                    <span class="page-info"><span id="pdf-current-page">1</span> / <span id="pdf-total-pages">-</span></span>
+                    <button id="pdf-next-page" title="Trang sau"><i class="fas fa-chevron-right"></i></button>
                     <div class="zoom-controls">
-                        <button id="pdf-zoom-out" title="Thu nhỏ">
-                            <i class="fas fa-minus"></i>
-                        </button>
+                        <button id="pdf-zoom-out" title="Thu nhỏ"><i class="fas fa-minus"></i></button>
                         <span class="zoom-level" id="pdf-zoom-level">100%</span>
-                        <button id="pdf-zoom-in" title="Phóng to">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                        <button id="pdf-zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
                     </div>
+                    <button id="pdf-dark-toggle" title="Chế độ tối cho PDF" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
+                        <i class="fas fa-moon"></i>
+                    </button>
                 </div>
                 <div id="mobile-pdf-scroll-wrapper">
                     <div class="pdf-loading" id="pdf-loading">
                         <i class="fas fa-circle-notch fa-spin"></i>
-                        <div>Đang tải PDF...</div>
+                        <div id="pdf-loading-text">Đang tải PDF...</div>
                     </div>
                     <div id="mobile-pdf-canvas-wrapper">
                         <canvas id="mobile-pdf-canvas"></canvas>
                     </div>
                 </div>
-                <!-- Compact Notes Section - Full width, small height -->
                 <div id="mobile-notes-section">
                     <div id="mobile-notes-header">
-                        <div class="header-left">
-                            <i class="fas fa-sticky-note"></i>
-                            <span>Ghi chú</span>
-                        </div>
+                        <div class="header-left"><i class="fas fa-sticky-note"></i><span>Ghi chú</span></div>
                         <div class="header-right">
                             <span id="mobile-save-status"><i class="fas fa-check mr-1"></i>Đã lưu</span>
-                            <button id="mobile-clear-notes" class="clear-btn" title="Xóa ghi chú">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
+                            <button id="mobile-clear-notes" class="clear-btn" title="Xóa ghi chú"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
                     <textarea id="mobile-notes-area" placeholder="Viết ghi chú của bạn tại đây... (Tự động lưu)"></textarea>
@@ -894,6 +509,9 @@
                         <span id="note-id-display" class="text-xs px-2 py-0.5 rounded hidden sm:inline-block"></span>
                     </div>
                     <div class="flex items-center space-x-2 sm:space-x-3">
+                        <button id="pdf-dark-toggle-desktop" class="text-xs font-semibold px-2 py-1 rounded transition" style="background: var(--bg-main); border: 1px solid var(--border-subtle); color: var(--text-secondary);" title="Chế độ tối cho PDF">
+                            <i class="fas fa-moon mr-1"></i>Dark PDF
+                        </button>
                         <span id="save-status" class="text-xs font-medium opacity-0 transition-opacity duration-300"><i class="fas fa-check-circle mr-1"></i>Đã lưu</span>
                         <button id="btn-clear-notes" class="text-xs font-semibold" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                     </div>
@@ -927,23 +545,16 @@
             localStorage.setItem('red_theme', isDarkMode ? 'dark' : 'light');
             applyTheme();
         }
-
         themeToggle.addEventListener('click', toggleTheme);
         if (mobileThemeToggle) mobileThemeToggle.addEventListener('click', toggleTheme);
 
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileNav = document.getElementById('mobile-nav');
         let mobileMenuOpen = false;
-        
         mobileMenuBtn.addEventListener('click', () => {
             mobileMenuOpen = !mobileMenuOpen;
-            if (mobileMenuOpen) {
-                mobileNav.classList.add('active');
-                mobileMenuBtn.innerHTML = '<i class="fas fa-times text-lg"></i>';
-            } else {
-                mobileNav.classList.remove('active');
-                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
-            }
+            if (mobileMenuOpen) { mobileNav.classList.add('active'); mobileMenuBtn.innerHTML = '<i class="fas fa-times text-lg"></i>'; }
+            else { mobileNav.classList.remove('active'); mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>'; }
         });
 
         const mobileTabs = document.querySelectorAll('.mobile-tab[data-tab]');
@@ -951,31 +562,21 @@
             tab.addEventListener('click', () => {
                 switchMainTab(tab.getAttribute('data-tab'));
                 mobileTabs.forEach(t => { t.classList.remove('active-tab'); t.classList.add('inactive-tab'); });
-                tab.classList.remove('inactive-tab');
-                tab.classList.add('active-tab');
-                mobileMenuOpen = false;
-                mobileNav.classList.remove('active');
-                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
+                tab.classList.remove('inactive-tab'); tab.classList.add('active-tab');
+                mobileMenuOpen = false; mobileNav.classList.remove('active'); mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
             });
         });
-        
         const mobileRefreshBtn = document.getElementById('mobile-btn-refresh');
         if (mobileRefreshBtn) {
             mobileRefreshBtn.addEventListener('click', () => {
                 document.getElementById('btn-refresh').click();
-                mobileMenuOpen = false;
-                mobileNav.classList.remove('active');
-                mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
+                mobileMenuOpen = false; mobileNav.classList.remove('active'); mobileMenuBtn.innerHTML = '<i class="fas fa-bars text-lg"></i>';
             });
         }
 
         const holoCanvas = document.getElementById('holo-canvas');
         const holoCtx = holoCanvas.getContext('2d');
-
-        function resizeCanvas() {
-            holoCanvas.width = window.innerWidth;
-            holoCanvas.height = window.innerHeight;
-        }
+        function resizeCanvas() { holoCanvas.width = window.innerWidth; holoCanvas.height = window.innerHeight; }
 
         const particles = [];
         const PARTICLE_COUNT = 50;
@@ -1076,13 +677,15 @@
         let currentPdfUrl = '';
         let currentScale = 1.0;
         let pendingRenderScale = null;
+        let isPdfDarkMode = false;
         const minScale = 0.5;
         const maxScale = 3.0;
         const scaleStep = 0.25;
         
         const mobilePdfCanvas = document.getElementById('mobile-pdf-canvas');
-        const pdfCtx = mobilePdfCanvas ? mobilePdfCanvas.getContext('2d') : null;
+        const pdfCtx = mobilePdfCanvas ? mobilePdfCanvas.getContext('2d', { willReadFrequently: true }) : null;
         const pdfLoading = document.getElementById('pdf-loading');
+        const pdfLoadingText = document.getElementById('pdf-loading-text');
         const pdfCurrentPageEl = document.getElementById('pdf-current-page');
         const pdfTotalPagesEl = document.getElementById('pdf-total-pages');
         const pdfPrevBtn = document.getElementById('pdf-prev-page');
@@ -1090,6 +693,8 @@
         const pdfZoomInBtn = document.getElementById('pdf-zoom-in');
         const pdfZoomOutBtn = document.getElementById('pdf-zoom-out');
         const pdfZoomLevelEl = document.getElementById('pdf-zoom-level');
+        const pdfDarkToggleBtn = document.getElementById('pdf-dark-toggle');
+        const pdfDarkToggleDesktopBtn = document.getElementById('pdf-dark-toggle-desktop');
         const mobileNotesArea = document.getElementById('mobile-notes-area');
         const mobileSaveStatus = document.getElementById('mobile-save-status');
         const mobilePdfScrollWrapper = document.getElementById('mobile-pdf-scroll-wrapper');
@@ -1101,47 +706,117 @@
             mobileNotesArea.addEventListener('input', (e) => {
                 if (currentBookId) {
                     localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
-                    // Also sync to desktop textarea
                     noteArea.value = e.target.value;
                     mobileSaveStatus.style.opacity = '1';
                     saveStatus.style.opacity = '1';
                     clearTimeout(mobileSaveTimeout);
-                    mobileSaveTimeout = setTimeout(() => {
-                        mobileSaveStatus.style.opacity = '0';
-                        saveStatus.style.opacity = '0';
-                    }, 1500);
+                    mobileSaveTimeout = setTimeout(() => { mobileSaveStatus.style.opacity = '0'; saveStatus.style.opacity = '0'; }, 1500);
                 }
             });
         }
 
-        // Mobile clear notes
         const mobileClearBtn = document.getElementById('mobile-clear-notes');
         if (mobileClearBtn) {
             mobileClearBtn.addEventListener('click', () => {
                 if (currentBookId && confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) {
-                    mobileNotesArea.value = '';
-                    noteArea.value = '';
+                    mobileNotesArea.value = ''; noteArea.value = '';
                     localStorage.removeItem(`red_notes_${currentBookId}`);
                 }
             });
         }
 
-        function isMobile() {
-            return window.innerWidth <= 768;
+        function isMobile() { return window.innerWidth <= 768; }
+
+        // Smart invert: inverts near-white/near-black pixels, preserves colored/image pixels
+        function applySmartInvert(canvas) {
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const len = data.length;
+            
+            for (let i = 0; i < len; i += 4) {
+                const r = data[i], g = data[i+1], b = data[i+2];
+                const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                const max = Math.max(r, g, b);
+                const min = Math.min(r, g, b);
+                const sat = max === 0 ? 0 : (max - min) / max;
+                
+                // Only invert low-saturation (grayscale) pixels — text and background
+                // Preserve colored pixels (images, diagrams)
+                if (sat < 0.18) {
+                    if (lum > 200) {
+                        // Near white → dark gray
+                        const factor = 30 / lum;
+                        data[i] = Math.round(r * factor);
+                        data[i+1] = Math.round(g * factor);
+                        data[i+2] = Math.round(b * factor);
+                    } else if (lum < 60) {
+                        // Near black → light gray
+                        const boost = (220 - lum) / (255 - lum + 1);
+                        data[i] = Math.min(255, Math.round(r + (255 - r) * boost * 0.85));
+                        data[i+1] = Math.min(255, Math.round(g + (255 - g) * boost * 0.85));
+                        data[i+2] = Math.min(255, Math.round(b + (255 - b) * boost * 0.85));
+                    }
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
         }
 
-        function calculateFitScale(pageWidth, pageHeight) {
-            const containerWidth = mobilePdfScrollWrapper.clientWidth - 16;
-            const containerHeight = mobilePdfScrollWrapper.clientHeight - 16;
-            const scaleX = containerWidth / pageWidth;
-            const scaleY = containerHeight / pageHeight;
-            return Math.min(scaleX, scaleY, 1.5);
+        // Render text layer for selection
+        async function renderTextLayer(page, viewport, container) {
+            // Remove existing
+            const existing = container.querySelector('.text-layer');
+            if (existing) existing.remove();
+
+            const textLayer = document.createElement('div');
+            textLayer.className = 'text-layer';
+            textLayer.style.width = viewport.width + 'px';
+            textLayer.style.height = viewport.height + 'px';
+
+            let textContent;
+            try {
+                textContent = await page.getTextContent();
+            } catch (e) { return; }
+
+            const defaultFontHeight = viewport.height / 30;
+
+            textContent.items.forEach(item => {
+                if (!item.str || !item.transform) return;
+                const tx = item.transform;
+                // tx = [scaleX, skewY, skewX, scaleY, translateX, translateY]
+                const fontSize = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]) || defaultFontHeight;
+                const x = tx[4];
+                const y = tx[5]; // PDF y (from bottom)
+
+                const span = document.createElement('span');
+                span.textContent = item.str;
+                
+                // Position in CSS coords (top-left origin)
+                const cssX = x;
+                const cssY = viewport.height - y;
+                
+                span.style.left = cssX + 'px';
+                span.style.top = cssY + 'px';
+                span.style.fontSize = fontSize + 'px';
+                span.style.fontFamily = 'serif';
+                
+                // Handle rotation/skew via transform
+                const angle = Math.atan2(tx[1], tx[0]);
+                if (Math.abs(angle) > 0.01) {
+                    span.style.transform = `rotate(${-angle}rad)`;
+                }
+                
+                textLayer.appendChild(span);
+            });
+
+            container.appendChild(textLayer);
         }
 
         async function renderPDFPage(pageNum, scale = null, scrollToTop = true) {
             if (!pdfDoc || !pdfCtx) return;
             
             pdfLoading.style.display = 'block';
+            pdfLoadingText.textContent = 'Đang tải trang...';
             mobilePdfCanvas.classList.add('flipping');
             
             try {
@@ -1149,12 +824,11 @@
                 
                 if (scale === null) {
                     if (currentScale === 1.0 || pendingRenderScale !== null) {
-                        const viewport = page.getViewport({ scale: 1 });
-                        currentScale = calculateFitScale(viewport.width, viewport.height);
-                        if (pendingRenderScale !== null) {
-                            currentScale = pendingRenderScale;
-                            pendingRenderScale = null;
-                        }
+                        const viewport1 = page.getViewport({ scale: 1 });
+                        const containerWidth = mobilePdfScrollWrapper.clientWidth - 16;
+                        const fitScale = containerWidth / viewport1.width;
+                        currentScale = Math.min(fitScale, 1.5);
+                        if (pendingRenderScale !== null) { currentScale = pendingRenderScale; pendingRenderScale = null; }
                     }
                     scale = currentScale;
                 } else {
@@ -1162,21 +836,43 @@
                 }
                 
                 const viewport = page.getViewport({ scale: scale });
+                const dpr = window.devicePixelRatio || 1;
                 
-                mobilePdfCanvas.height = viewport.height;
-                mobilePdfCanvas.width = viewport.width;
+                // High-DPI rendering: canvas internal resolution = CSS size * DPR
+                const cssWidth = viewport.width;
+                const cssHeight = viewport.height;
+                mobilePdfCanvas.width = Math.round(cssWidth * dpr);
+                mobilePdfCanvas.height = Math.round(cssHeight * dpr);
+                mobilePdfCanvas.style.width = cssWidth + 'px';
+                mobilePdfCanvas.style.height = cssHeight + 'px';
                 
+                // Scale context for DPR
+                pdfCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                
+                // Render PDF at full resolution
                 await page.render({ canvasContext: pdfCtx, viewport: viewport }).promise;
+                
+                // Reset transform
+                pdfCtx.setTransform(1, 0, 0, 1, 0, 0);
+                
+                // Apply smart invert for dark mode (preserves images)
+                if (isPdfDarkMode) {
+                    pdfLoadingText.textContent = 'Áp dụng chế độ tối...';
+                    await new Promise(r => setTimeout(r, 10)); // Let UI update
+                    applySmartInvert(mobilePdfCanvas);
+                }
+                
                 currentPage = pageNum;
                 pdfCurrentPageEl.textContent = currentPage;
-                
                 pdfPrevBtn.disabled = currentPage <= 1;
                 pdfNextBtn.disabled = currentPage >= totalPages;
                 pdfZoomLevelEl.textContent = Math.round(scale * 100) + '%';
                 pdfZoomInBtn.disabled = scale >= maxScale;
                 pdfZoomOutBtn.disabled = scale <= minScale;
                 
-                // Scroll to top after rendering new page
+                // Render text layer for selection
+                await renderTextLayer(page, viewport, mobilePdfCanvasWrapper);
+                
                 if (scrollToTop && mobilePdfScrollWrapper) {
                     mobilePdfScrollWrapper.scrollTop = 0;
                 }
@@ -1194,6 +890,7 @@
         async function loadPDFMobile(url) {
             try {
                 pdfLoading.style.display = 'block';
+                pdfLoadingText.textContent = 'Đang tải PDF...';
                 currentPdfUrl = url;
                 currentScale = 1.0;
                 pendingRenderScale = null;
@@ -1205,7 +902,6 @@
                 currentPage = 1;
                 
                 await renderPDFPage(1, null, true);
-                
             } catch (error) {
                 console.error('Error loading PDF:', error);
                 pdfLoading.innerHTML = '<i class="fas fa-exclamation-circle"></i><div>Lỗi tải PDF</div>';
@@ -1213,49 +909,59 @@
             }
         }
 
-        // Zoom buttons only (no pinch)
+        // Zoom buttons
         if (pdfZoomInBtn) {
             pdfZoomInBtn.addEventListener('click', () => {
                 if (currentScale < maxScale) {
-                    const newScale = Math.min(currentScale + scaleStep, maxScale);
-                    pendingRenderScale = newScale;
-                    renderPDFPage(currentPage, newScale, false); // Don't scroll to top when zooming
+                    pendingRenderScale = Math.min(currentScale + scaleStep, maxScale);
+                    renderPDFPage(currentPage, pendingRenderScale, false);
                 }
             });
         }
-
         if (pdfZoomOutBtn) {
             pdfZoomOutBtn.addEventListener('click', () => {
                 if (currentScale > minScale) {
-                    const newScale = Math.max(currentScale - scaleStep, minScale);
-                    pendingRenderScale = newScale;
-                    renderPDFPage(currentPage, newScale, false);
+                    pendingRenderScale = Math.max(currentScale - scaleStep, minScale);
+                    renderPDFPage(currentPage, pendingRenderScale, false);
                 }
             });
         }
 
-        // Page navigation buttons - scroll to top
+        // Page navigation
         if (pdfPrevBtn) {
             pdfPrevBtn.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    renderPDFPage(currentPage - 1, null, true);
-                }
+                if (currentPage > 1) renderPDFPage(currentPage - 1, null, true);
             });
         }
-
         if (pdfNextBtn) {
             pdfNextBtn.addEventListener('click', () => {
-                if (currentPage < totalPages) {
-                    renderPDFPage(currentPage + 1, null, true);
-                }
+                if (currentPage < totalPages) renderPDFPage(currentPage + 1, null, true);
             });
         }
 
-        // Swipe navigation (horizontal only, no pinch)
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchEndX = 0;
-        let touchEndY = 0;
+        // PDF Dark mode toggle (mobile)
+        if (pdfDarkToggleBtn) {
+            pdfDarkToggleBtn.addEventListener('click', () => {
+                isPdfDarkMode = !isPdfDarkMode;
+                pdfDarkToggleBtn.classList.toggle('active-toggle', isPdfDarkMode);
+                // Re-render current page to apply/remove invert
+                if (pdfDoc) renderPDFPage(currentPage, currentScale, false);
+            });
+        }
+
+        // PDF Dark mode toggle (desktop)
+        if (pdfDarkToggleDesktopBtn) {
+            pdfDarkToggleDesktopBtn.addEventListener('click', () => {
+                isPdfDarkMode = !isPdfDarkMode;
+                pdfFrame.classList.toggle('pdf-dark-iframe', isPdfDarkMode);
+                pdfDarkToggleDesktopBtn.innerHTML = isPdfDarkMode 
+                    ? '<i class="fas fa-sun mr-1"></i>Light PDF' 
+                    : '<i class="fas fa-moon mr-1"></i>Dark PDF';
+            });
+        }
+
+        // Swipe navigation
+        let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
         let isVerticalScroll = false;
         const swipeThreshold = 80;
         const verticalThreshold = 30;
@@ -1266,18 +972,13 @@
                 touchStartY = e.touches[0].screenY;
                 isVerticalScroll = false;
             }, { passive: true });
-
             mobilePdfScrollWrapper.addEventListener('touchmove', (e) => {
                 const currentY = e.touches[0].screenY;
                 const currentX = e.touches[0].screenX;
                 const diffY = Math.abs(currentY - touchStartY);
                 const diffX = Math.abs(currentX - touchStartX);
-                
-                if (diffY > verticalThreshold && diffY > diffX) {
-                    isVerticalScroll = true;
-                }
+                if (diffY > verticalThreshold && diffY > diffX) isVerticalScroll = true;
             }, { passive: true });
-
             mobilePdfScrollWrapper.addEventListener('touchend', (e) => {
                 touchEndX = e.changedTouches[0].screenX;
                 touchEndY = e.changedTouches[0].screenY;
@@ -1287,15 +988,10 @@
 
         function handleSwipe() {
             if (isVerticalScroll) return;
-            
             const diffX = touchStartX - touchEndX;
-            
             if (Math.abs(diffX) > swipeThreshold) {
-                if (diffX > 0 && currentPage < totalPages) {
-                    renderPDFPage(currentPage + 1, null, true);
-                } else if (diffX < 0 && currentPage > 1) {
-                    renderPDFPage(currentPage - 1, null, true);
-                }
+                if (diffX > 0 && currentPage < totalPages) renderPDFPage(currentPage + 1, null, true);
+                else if (diffX < 0 && currentPage > 1) renderPDFPage(currentPage - 1, null, true);
             }
         }
 
@@ -1306,13 +1002,8 @@
                 { btn: tabCompiled, content: contentCompiled, name: 'compiled' }
             ];
             tabs.forEach(t => {
-                if (t.name === tabName) {
-                    t.content.classList.remove('hidden');
-                    t.btn.className = 'nav-tab active-tab cursor-pointer';
-                } else {
-                    t.content.classList.add('hidden');
-                    t.btn.className = 'nav-tab inactive-tab cursor-pointer';
-                }
+                if (t.name === tabName) { t.content.classList.remove('hidden'); t.btn.className = 'nav-tab active-tab cursor-pointer'; }
+                else { t.content.classList.add('hidden'); t.btn.className = 'nav-tab inactive-tab cursor-pointer'; }
             });
             if (tabName === 'compiled') loadCompiledNotes();
             document.querySelector('main').scrollTop = 0;
@@ -1322,9 +1013,7 @@
         tabGuide.addEventListener('click', () => switchMainTab('guide'));
         tabCompiled.addEventListener('click', () => switchMainTab('compiled'));
 
-        function getBookDisplayName(book) {
-            return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - ');
-        }
+        function getBookDisplayName(book) { return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - '); }
 
         async function generateThumbnail(pdfUrl, canvasId) {
             try {
@@ -1344,11 +1033,7 @@
             const fetchUrl = bustCache ? `files.json?t=${Date.now()}` : 'files.json';
             fetch(fetchUrl).then(r => r.json()).then(books => {
                 listContainer.innerHTML = '';
-                books.sort((a, b) => {
-                    const numA = parseInt(a.id); const numB = parseInt(b.id);
-                    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-                    return String(a.id).localeCompare(String(b.id));
-                });
+                books.sort((a, b) => { const numA = parseInt(a.id); const numB = parseInt(b.id); if (!isNaN(numA) && !isNaN(numB)) return numA - numB; return String(a.id).localeCompare(String(b.id)); });
                 allBooksMap = {};
                 books.forEach((book, idx) => {
                     allBooksMap[book.id] = book;
@@ -1392,7 +1077,6 @@
                 }
             }
             notesData.sort((a, b) => { const numA = parseInt(a.id); const numB = parseInt(b.id); if (!isNaN(numA) && !isNaN(numB)) return numA - numB; return String(a.id).localeCompare(String(b.id)); });
-
             if (notesData.length === 0) {
                 compiledNotesList.innerHTML = `<div class="text-center p-10 rounded" style="background: var(--bg-surface); border: 1px solid var(--border-subtle);">
                     <i class="fas fa-inbox text-4xl mb-4" style="color: var(--text-secondary); opacity:0.3;"></i>
@@ -1456,13 +1140,8 @@
             let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
             if (!savedNotes) {
                 const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
-                if (oldNotes) { 
-                    savedNotes = oldNotes; 
-                    localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); 
-                    localStorage.removeItem(`red_notes_${book.filename}`); 
-                } else { 
-                    savedNotes = ''; 
-                }
+                if (oldNotes) { savedNotes = oldNotes; localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); localStorage.removeItem(`red_notes_${book.filename}`); }
+                else { savedNotes = ''; }
             }
             noteArea.value = savedNotes;
             if (mobileNotesArea) mobileNotesArea.value = savedNotes;
@@ -1475,7 +1154,6 @@
                 pdfDoc = null;
                 pdfLoading.style.display = 'none';
             }
-            
             viewerModal.classList.remove('hidden');
         }
 
@@ -1495,10 +1173,7 @@
             saveStatus.style.opacity = '1';
             mobileSaveStatus.style.opacity = '1';
             clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => { 
-                saveStatus.style.opacity = '0'; 
-                mobileSaveStatus.style.opacity = '0';
-            }, 1500);
+            saveTimeout = setTimeout(() => { saveStatus.style.opacity = '0'; mobileSaveStatus.style.opacity = '0'; }, 1500);
         });
 
         document.getElementById('btn-clear-notes').addEventListener('click', () => {
@@ -1523,13 +1198,8 @@
         });
 
         window.addEventListener('resize', () => {
-            if (!isMobile() && pdfDoc) {
-                pdfDoc = null;
-                currentScale = 1.0;
-            } else if (isMobile() && pdfDoc && currentPage > 0) {
-                currentScale = 1.0;
-                renderPDFPage(currentPage, null, true);
-            }
+            if (!isMobile() && pdfDoc) { pdfDoc = null; currentScale = 1.0; }
+            else if (isMobile() && pdfDoc && currentPage > 0) { currentScale = 1.0; renderPDFPage(currentPage, null, true); }
         });
     </script>
 </body>
