@@ -14,9 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
     <style>
         :root {
@@ -220,7 +218,7 @@
         #btn-download-notes { background: transparent !important; border: 2px solid var(--neon-red) !important; color: var(--neon-red) !important; transition: all 0.3s; }
         #btn-download-notes:hover { background: rgba(220, 38, 38, 0.1) !important; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
 
-        /* ===== NOTES PANEL ===== */
+        /* ===== NOTES PANEL (Smaller Size) ===== */
         #notes-panel {
             background: var(--bg-surface) !important;
             border-left: 1px solid var(--border-subtle);
@@ -262,8 +260,8 @@
         .fullscreen-btn:hover { color: var(--neon-red); }
         .fullscreen-btn.active { color: var(--neon-red); }
 
-        /* ===== BULLETPROOF PDF VIEWER LAYOUT ===== */
-        #pdf-viewer-native {
+        /* ===== CANVAS VIEWER LAYOUT ===== */
+        #pdf-viewer-canvas {
             flex: 1;
             flex-direction: column;
             min-height: 0;
@@ -272,7 +270,7 @@
             display: flex;
         }
         
-        #native-controls-bar {
+        #canvas-controls-bar {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -282,10 +280,9 @@
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
             flex-wrap: wrap;
-            z-index: 10;
         }
         
-        #native-controls-bar button {
+        #canvas-controls-bar button {
             background: var(--bg-solid);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
@@ -300,90 +297,86 @@
             align-items: center;
             justify-content: center;
         }
-        #native-controls-bar button:hover:not(:disabled) { border-color: var(--neon-red); color: var(--neon-red); }
-        #native-controls-bar button:active:not(:disabled) { transform: scale(0.95); }
-        #native-controls-bar button:disabled { opacity: 0.3; cursor: not-allowed; }
+        #canvas-controls-bar button:hover:not(:disabled) { border-color: var(--neon-red); color: var(--neon-red); }
+        #canvas-controls-bar button:active:not(:disabled) { transform: scale(0.95); }
+        #canvas-controls-bar button:disabled { opacity: 0.3; cursor: not-allowed; }
         
-        #native-page-info { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary); min-width: 70px; text-align: center; font-weight: 500; }
-        #native-zoom-controls { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle); }
-        #native-zoom-level { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); min-width: 45px; text-align: center; }
+        #canvas-page-info { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary); min-width: 70px; text-align: center; font-weight: 500; }
+        #canvas-zoom-controls { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle); }
+        #canvas-zoom-level { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); min-width: 45px; text-align: center; }
         
-        #native-scroll-area {
+        #canvas-scroll-area {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: auto;
             position: relative;
             -webkit-overflow-scrolling: touch;
-            background: var(--bg-main);
-            scroll-behavior: smooth;
+            pointer-events: auto;
         }
-
-        #pdf-pages-container {
+        
+        #canvas-wrapper {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem 1rem;
+            justify-content: center;
+            padding: 1rem 0.5rem;
             min-height: 100%;
+            perspective: 2500px;
+            pointer-events: auto;
         }
-
-        /* Individual Page Wrapper */
-        .pdf-page {
+        
+        /* Container for 3D flip */
+        #pdf-canvas-container {
             position: relative;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            background: white;
+            display: inline-block;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            pointer-events: auto;
         }
-
-        /* === LAYER 1: VISUAL CANVAS (Non-interactive) === */
-        .pdf-page canvas {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            z-index: 1 !important;
-            pointer-events: none !important; /* CRITICAL: Lets clicks pass through to text layer */
-            user-select: none !important;
+        
+        #pdf-canvas {
+            display: block;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+            z-index: 1;
         }
-
-        /* Dark mode filter applied ONLY to canvas to preserve text layer hit-testing */
-        body.dark-mode .pdf-page canvas {
-            filter: invert(1) hue-rotate(180deg);
-        }
-
-        /* === LAYER 2: INTERACTIVE TEXT (Selectable) === */
-        .textLayer {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            z-index: 9999 !important; /* ABOVE the canvas */
+        
+        /* ===== TEXT SELECTION LAYER (Bulletproof) ===== */
+        #text-layer, #text-layer * {
             pointer-events: auto !important;
             user-select: text !important;
             -webkit-user-select: text !important;
-            opacity: 0.3 !important; /* Visible for debugging. Change to 0 when working! */
-            line-height: 1.0 !important;
-        }
-
-        .textLayer span {
-            position: absolute !important;
-            color: transparent !important; /* Invisible text, but selectable */
-            white-space: pre !important;
             cursor: text !important;
-            transform-origin: 0% 0% !important;
-            pointer-events: auto !important;
-            user-select: text !important;
-            -webkit-user-select: text !important;
-            z-index: 9999 !important;
+            z-index: 100 !important;
         }
 
-        .textLayer ::selection {
-            background: rgba(220, 38, 38, 0.6) !important; /* BRIGHT RED HIGHLIGHT */
+        #text-layer {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+            line-height: 1.0 !important;
+            touch-action: auto !important;
+            transform: translateZ(2px) !important; /* Pushes it physically in front of canvas in 3D space */
+        }
+
+        #text-layer span, #text-layer div {
+            color: transparent !important;
+            position: absolute !important;
+            white-space: pre !important;
+            transform-origin: 0% 0% !important;
+        }
+
+        #text-layer ::selection {
+            background: rgba(220, 38, 38, 0.6) !important;
             color: transparent !important;
         }
         
-        #native-loading-overlay {
+        body.dark-mode #pdf-canvas {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        #canvas-loading-overlay {
             display: none;
             position: absolute;
             top: 50%;
@@ -397,7 +390,8 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        #native-loading-overlay i { font-size: 2rem; color: var(--neon-red); margin-bottom: 0.5rem; }
+        #canvas-loading-overlay i { font-size: 2rem; color: var(--neon-red); margin-bottom: 0.5rem; }
+        #canvas-loading-overlay .error-icon { color: var(--neon-red); }
 
         /* ===== MOBILE NOTES ===== */
         #mobile-notes-section { display: none; width: 100%; flex-shrink: 0; background: var(--bg-surface); border-top: 2px solid var(--border-color); }
@@ -412,6 +406,7 @@
         #mobile-notes-area::placeholder { color: var(--text-secondary); font-style: italic; }
         #mobile-notes-area:focus { box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.15); }
 
+        /* ===== SCREEN-WIDTH MEDIA QUERIES ===== */
         @media (max-width: 768px) {
             .desktop-nav { display: none !important; }
             #mobile-notes-section { display: block; }
@@ -562,28 +557,31 @@
         </div>
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
             
-            <!-- ===== BULLETPROOF PDF VIEWER ===== -->
-            <div id="pdf-viewer-native">
-                <div id="native-controls-bar">
-                    <button id="btn-native-prev" title="Trang trước"><i class="fas fa-chevron-up"></i></button>
-                    <span id="native-page-info"><span id="native-current-page">1</span> / <span id="native-total-pages">-</span></span>
-                    <button id="btn-native-next" title="Trang sau"><i class="fas fa-chevron-down"></i></button>
-                    <div id="native-zoom-controls">
-                        <button id="btn-native-zoom-out" title="Thu nhỏ"><i class="fas fa-minus"></i></button>
-                        <span id="native-zoom-level">100%</span>
-                        <button id="btn-native-zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
+            <!-- ===== CANVAS PDF VIEWER ===== -->
+            <div id="pdf-viewer-canvas">
+                <div id="canvas-controls-bar">
+                    <button id="btn-canvas-prev" title="Trang trước"><i class="fas fa-chevron-left"></i></button>
+                    <span id="canvas-page-info"><span id="canvas-current-page">1</span> / <span id="canvas-total-pages">-</span></span>
+                    <button id="btn-canvas-next" title="Trang sau"><i class="fas fa-chevron-right"></i></button>
+                    <div id="canvas-zoom-controls">
+                        <button id="btn-canvas-zoom-out" title="Thu nhỏ"><i class="fas fa-minus"></i></button>
+                        <span id="canvas-zoom-level">100%</span>
+                        <button id="btn-canvas-zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
                     </div>
-                    <button id="btn-native-fullscreen" class="fullscreen-btn" title="Toàn màn hình" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
+                    <button id="btn-canvas-fullscreen" class="fullscreen-btn" title="Toàn màn hình" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
-                <div id="native-scroll-area">
-                    <div id="native-loading-overlay">
-                        <i class="fas fa-circle-notch fa-spin" id="native-loading-icon"></i>
-                        <div id="native-loading-text">Đang tải PDF...</div>
+                <div id="canvas-scroll-area">
+                    <div id="canvas-loading-overlay">
+                        <i class="fas fa-circle-notch fa-spin" id="canvas-loading-icon"></i>
+                        <div id="canvas-loading-text">Đang tải PDF...</div>
                     </div>
-                    <div id="pdf-pages-container">
-                        <!-- Pages injected here -->
+                    <div id="canvas-wrapper">
+                        <div id="pdf-canvas-container">
+                            <canvas id="pdf-canvas"></canvas>
+                            <div id="text-layer"></div>
+                        </div>
                     </div>
                 </div>
                 <div id="mobile-notes-section">
@@ -754,7 +752,6 @@
         // ===== APP STATE =====
         let currentFile = '';
         let currentBookId = '';
-        let currentTotalPages = 1;
         let allBooksMap = {};
         const listContainer = document.getElementById('pdf-list');
         const compiledNotesList = document.getElementById('compiled-notes-list');
@@ -771,12 +768,16 @@
         const contentGuide = document.getElementById('content-guide');
         const contentCompiled = document.getElementById('content-compiled');
 
+        // =================================================================
+        // ===== POSITION CACHE =====
+        // =================================================================
+        
         const POSITION_KEY_PREFIX = 'red_position_';
         
         function savePosition(bookId, page, mode) {
             if (!bookId || !page) return;
             try {
-                const data = { page: parseInt(page) || 1, mode: mode || 'native', timestamp: Date.now() };
+                const data = { page: parseInt(page) || 1, mode: mode || 'canvas', timestamp: Date.now() };
                 localStorage.setItem(POSITION_KEY_PREFIX + bookId, JSON.stringify(data));
             } catch (e) { console.warn('Failed to save position:', e); }
         }
@@ -792,11 +793,19 @@
             } catch (e) { return null; }
         }
 
+        let positionSaveTimer = null;
+        function schedulePositionSave(bookId, page, mode) {
+            clearTimeout(positionSaveTimer);
+            positionSaveTimer = setTimeout(() => {
+                savePosition(bookId, page, mode);
+            }, 400);
+        }
+
         // =================================================================
-        // ===== BULLETPROOF PDF RENDERER =====
+        // ===== CANVAS PDF VIEWER =====
         // =================================================================
         
-        const pdfViewer = {
+        const canvasViewer = {
             pdfDoc: null,
             currentPage: 1,
             totalPages: 0,
@@ -804,231 +813,303 @@
             isLoading: false,
             currentUrl: null,
             MIN_SCALE: 0.5,
-            MAX_SCALE: 2.5,
-            SCALE_STEP: 0.25,
-            renderedPages: new Set()
+            MAX_SCALE: 3.0,
+            SCALE_STEP: 0.25
         };
 
-        const pv = {
-            container: document.getElementById('pdf-pages-container'),
-            scrollArea: document.getElementById('native-scroll-area'),
-            loadingOverlay: document.getElementById('native-loading-overlay'),
-            loadingIcon: document.getElementById('native-loading-icon'),
-            loadingText: document.getElementById('native-loading-text'),
-            currentPageEl: document.getElementById('native-current-page'),
-            totalPagesEl: document.getElementById('native-total-pages'),
-            zoomLevelEl: document.getElementById('native-zoom-level'),
-            btnPrev: document.getElementById('btn-native-prev'),
-            btnNext: document.getElementById('btn-native-next'),
-            btnZoomIn: document.getElementById('btn-native-zoom-in'),
-            btnZoomOut: document.getElementById('btn-native-zoom-out'),
-            btnFullscreen: document.getElementById('btn-native-fullscreen')
+        const pdfCanvas = document.getElementById('pdf-canvas');
+        const cv = {
+            canvas: pdfCanvas,
+            scrollArea: document.getElementById('canvas-scroll-area'),
+            loadingOverlay: document.getElementById('canvas-loading-overlay'),
+            loadingIcon: document.getElementById('canvas-loading-icon'),
+            loadingText: document.getElementById('canvas-loading-text'),
+            currentPageEl: document.getElementById('canvas-current-page'),
+            totalPagesEl: document.getElementById('canvas-total-pages'),
+            zoomLevelEl: document.getElementById('canvas-zoom-level'),
+            btnPrev: document.getElementById('btn-canvas-prev'),
+            btnNext: document.getElementById('btn-canvas-next'),
+            btnZoomIn: document.getElementById('btn-canvas-zoom-in'),
+            btnZoomOut: document.getElementById('btn-canvas-zoom-out'),
+            btnFullscreen: document.getElementById('btn-canvas-fullscreen')
         };
+
+        function getCanvasContext() {
+            if (!cv.canvas) return null;
+            return cv.canvas.getContext('2d');
+        }
 
         function showLoading(message) {
-            pdfViewer.isLoading = true;
-            pv.loadingText.textContent = message || 'Đang tải PDF...';
-            pv.loadingIcon.className = 'fas fa-circle-notch fa-spin';
-            pv.loadingOverlay.style.display = 'block';
+            canvasViewer.isLoading = true;
+            cv.loadingText.textContent = message || 'Đang tải PDF...';
+            cv.loadingIcon.className = 'fas fa-circle-notch fa-spin';
+            cv.loadingOverlay.style.display = 'block';
+        }
+
+        function showError(message) {
+            canvasViewer.isLoading = false;
+            cv.loadingText.textContent = message || 'Lỗi tải PDF';
+            cv.loadingIcon.className = 'fas fa-exclamation-circle error-icon';
+            cv.loadingOverlay.style.display = 'block';
         }
 
         function hideLoading() {
-            pdfViewer.isLoading = false;
-            pv.loadingOverlay.style.display = 'none';
+            canvasViewer.isLoading = false;
+            cv.loadingOverlay.style.display = 'none';
         }
 
         function updateControls() {
-            pv.currentPageEl.textContent = pdfViewer.currentPage;
-            pv.totalPagesEl.textContent = pdfViewer.totalPages || '-';
-            pv.zoomLevelEl.textContent = Math.round(pdfViewer.currentScale * 100) + '%';
+            cv.currentPageEl.textContent = canvasViewer.currentPage;
+            cv.totalPagesEl.textContent = canvasViewer.totalPages || '-';
+            cv.zoomLevelEl.textContent = Math.round(canvasViewer.currentScale * 100) + '%';
             
-            pv.btnPrev.disabled = pdfViewer.currentPage <= 1;
-            pv.btnNext.disabled = pdfViewer.currentPage >= pdfViewer.totalPages;
-            pv.btnZoomIn.disabled = pdfViewer.currentScale >= pdfViewer.MAX_SCALE;
-            pv.btnZoomOut.disabled = pdfViewer.currentScale <= pdfViewer.MIN_SCALE;
+            cv.btnPrev.disabled = canvasViewer.currentPage <= 1;
+            cv.btnNext.disabled = canvasViewer.currentPage >= canvasViewer.totalPages;
+            cv.btnZoomIn.disabled = canvasViewer.currentScale >= canvasViewer.MAX_SCALE;
+            cv.btnZoomOut.disabled = canvasViewer.currentScale <= canvasViewer.MIN_SCALE;
+        }
+
+        function calculateFitScale(page) {
+            const viewport = page.getViewport({ scale: 1 });
+            const containerWidth = cv.scrollArea.clientWidth - 32;
+            const fitScale = containerWidth / viewport.width;
+            return Math.min(fitScale, 1.5);
+        }
+
+        async function renderCurrentPage(scrollToTop = true) {
+            if (!canvasViewer.pdfDoc || !cv.canvas) return;
+            
+            try {
+                const page = await canvasViewer.pdfDoc.getPage(canvasViewer.currentPage);
+                const ctx = getCanvasContext();
+                if (!ctx) { showError('Không thể khởi tạo canvas'); return; }
+                
+                let scale = canvasViewer.currentScale;
+                if (scale === 1.0) {
+                    scale = calculateFitScale(page);
+                    canvasViewer.currentScale = scale;
+                }
+                
+                const viewport = page.getViewport({ scale: scale });
+                const dpr = window.devicePixelRatio || 1;
+                
+                // Set exact pixel dimensions
+                cv.canvas.width = Math.round(viewport.width * dpr);
+                cv.canvas.height = Math.round(viewport.height * dpr);
+                cv.canvas.style.width = viewport.width + 'px';
+                cv.canvas.style.height = viewport.height + 'px';
+                
+                // Render PDF page to canvas
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                
+                // ===== REWRITTEN TEXT LAYER RENDERING =====
+                const textLayerDiv = document.getElementById('text-layer');
+                textLayerDiv.innerHTML = ''; // Clear previous
+                textLayerDiv.style.width = viewport.width + 'px';
+                textLayerDiv.style.height = viewport.height + 'px';
+                
+                const textContent = await page.getTextContent();
+                
+                if (textContent && textContent.items && textContent.items.length > 0) {
+                    try {
+                        // Try modern PDF.js 3.x TextLayer class first
+                        if (typeof pdfjsLib.TextLayer !== 'undefined') {
+                            const textLayer = new pdfjsLib.TextLayer({
+                                textContentSource: textContent,
+                                container: textLayerDiv,
+                                viewport: viewport
+                            });
+                            await textLayer.render();
+                        } else {
+                            // Fallback for older versions
+                            pdfjsLib.renderTextLayer({
+                                textContentSource: textContent,
+                                container: textLayerDiv,
+                                viewport: viewport,
+                                textDivs: []
+                            });
+                        }
+                        console.log(`[Text Layer] Rendered successfully for page ${canvasViewer.currentPage}`);
+                    } catch (e) {
+                        console.error("[Text Layer] Render error:", e);
+                    }
+                } else {
+                    console.warn(`[Text Layer] No text content found on page ${canvasViewer.currentPage}. This PDF page may be a scanned image.`);
+                }
+                // ==========================================
+                
+                updateControls();
+                
+                if (scrollToTop) {
+                    cv.scrollArea.scrollTop = 0;
+                }
+                
+                hideLoading();
+                
+            } catch (error) {
+                console.error('Render error:', error);
+                showError('Lỗi khi render trang');
+            }
         }
 
         async function loadPDF(url, startPage = 1) {
-            if (pdfViewer.pdfDoc) {
-                try { pdfViewer.pdfDoc.destroy(); } catch(e) {}
-                pdfViewer.pdfDoc = null;
+            if (canvasViewer.pdfDoc) {
+                try { canvasViewer.pdfDoc.destroy(); } catch(e) {}
+                canvasViewer.pdfDoc = null;
             }
             
-            pdfViewer.currentUrl = url;
-            pdfViewer.currentPage = Math.max(1, parseInt(startPage) || 1);
-            pdfViewer.currentScale = 1.0;
-            pdfViewer.renderedPages.clear();
-            pv.container.innerHTML = '';
+            canvasViewer.currentUrl = url;
+            canvasViewer.currentPage = Math.max(1, parseInt(startPage) || 1);
+            canvasViewer.currentScale = 1.0;
             
             showLoading('Đang tải PDF...');
             
             try {
                 const loadingTask = pdfjsLib.getDocument(url);
-                pdfViewer.pdfDoc = await loadingTask.promise;
-                pdfViewer.totalPages = pdfViewer.pdfDoc.numPages;
-                currentTotalPages = pdfViewer.totalPages;
+                canvasViewer.pdfDoc = await loadingTask.promise;
+                canvasViewer.totalPages = canvasViewer.pdfDoc.numPages;
                 
-                for (let i = 1; i <= pdfViewer.totalPages; i++) {
-                    await renderSinglePage(i);
+                if (canvasViewer.currentPage > canvasViewer.totalPages) {
+                    canvasViewer.currentPage = 1;
                 }
                 
-                updateControls();
-                hideLoading();
-                
-                const targetPage = document.getElementById(`page-${pdfViewer.currentPage}`);
-                if (targetPage) {
-                    targetPage.scrollIntoView({ behavior: 'auto', block: 'start' });
-                }
+                await renderCurrentPage(true);
                 
                 if (currentBookId) {
-                    savePosition(currentBookId, pdfViewer.currentPage, 'native');
+                    savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
                 }
             } catch (error) {
                 console.error('Load PDF error:', error);
-                pv.loadingText.textContent = 'Không thể tải PDF: ' + (error.message || 'Lỗi không xác định');
-                pv.loadingIcon.className = 'fas fa-exclamation-circle';
+                showError('Không thể tải PDF: ' + (error.message || 'Lỗi không xác định'));
             }
         }
 
-        async function renderSinglePage(pageNum) {
-            if (!pdfViewer.pdfDoc) return;
+        // =================================================================
+        // ===== 3D PAGE FLIP ANIMATION =====
+        // =================================================================
+        
+        async function goToPageAnimated(pageNum) {
+            if (!canvasViewer.pdfDoc || pageNum < 1 || pageNum > canvasViewer.totalPages || pageNum === canvasViewer.currentPage) return;
             
-            const page = await pdfViewer.pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: pdfViewer.currentScale });
+            const container = document.getElementById('pdf-canvas-container');
+            const isNext = pageNum > canvasViewer.currentPage;
             
-            const pageDiv = document.createElement('div');
-            pageDiv.className = 'pdf-page';
-            pageDiv.id = `page-${pageNum}`;
-            pageDiv.style.width = `${viewport.width}px`;
-            pageDiv.style.height = `${viewport.height}px`;
+            // 1. Start flipping out
+            container.style.transition = 'transform 0.35s ease-in';
+            container.style.transformOrigin = isNext ? 'left center' : 'right center';
+            container.style.transform = isNext ? 'rotateY(-90deg)' : 'rotateY(90deg)';
             
-            // 1. Render Canvas (Visual Layer)
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const outputScale = window.devicePixelRatio || 1;
+            // 2. Update state and scroll to top immediately
+            canvasViewer.currentPage = pageNum;
+            cv.scrollArea.scrollTop = 0;
             
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            canvas.style.width = `${viewport.width}px`;
-            canvas.style.height = `${viewport.height}px`;
+            const renderPromise = renderCurrentPage(false); 
             
-            const renderContext = {
-                canvasContext: ctx,
-                transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null,
-                viewport: viewport
-            };
-            await page.render(renderContext).promise;
-            pageDiv.appendChild(canvas);
-
-            // 2. Render Text Layer (Interactive Layer)
-            const textLayerDiv = document.createElement('div');
-            textLayerDiv.className = 'textLayer';
+            // 3. Wait for both the flip-out animation and the PDF rendering to complete
+            await Promise.all([
+                new Promise(resolve => setTimeout(resolve, 350)),
+                renderPromise
+            ]);
             
-            const textContent = await page.getTextContent();
+            // 4. Snap to the other side without transition
+            container.style.transition = 'none';
+            container.style.transform = isNext ? 'rotateY(90deg)' : 'rotateY(-90deg)';
             
-            // CRITICAL CHECK: Does this PDF actually have text?
-            if (textContent && textContent.items && textContent.items.length > 0) {
-                try {
-                    const textLayer = new pdfjsLib.TextLayer({
-                        textContentSource: textContent,
-                        container: textLayerDiv,
-                        viewport: viewport
-                    });
-                    await textLayer.render();
-                    pageDiv.appendChild(textLayerDiv);
-                } catch (e) {
-                    console.error(`TextLayer render error on page ${pageNum}:`, e);
-                }
-            } else {
-                console.error(`⚠️ PAGE ${pageNum} HAS NO TEXT DATA! This PDF is likely a scanned image.`);
-                const warning = document.createElement('div');
-                warning.style.cssText = "position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#dc2626; color:white; padding:20px; z-index:10000; font-weight:bold; text-align:center; border-radius:8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);";
-                warning.innerHTML = "⚠️ <b>SCANNED IMAGE DETECTED</b><br>This page contains no selectable text data.<br>You cannot highlight a photograph.";
-                pageDiv.appendChild(warning);
-            }
+            // Force reflow to apply the snap immediately
+            void container.offsetWidth; 
             
-            pv.container.appendChild(pageDiv);
-            pdfViewer.renderedPages.add(pageNum);
-        }
-
-        function scrollToPage(pageNum) {
-            if (pageNum < 1 || pageNum > pdfViewer.totalPages) return;
-            const targetPage = document.getElementById(`page-${pageNum}`);
-            if (targetPage) {
-                targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                pdfViewer.currentPage = pageNum;
-                updateControls();
-                if (currentBookId) savePosition(currentBookId, pageNum, 'native');
+            // 5. Flip in
+            container.style.transition = 'transform 0.35s ease-out';
+            container.style.transform = 'rotateY(0deg)';
+            
+            // Save position after flip
+            if (currentBookId) {
+                schedulePositionSave(currentBookId, canvasViewer.currentPage, 'canvas');
             }
         }
 
         function zoomIn() {
-            if (pdfViewer.currentScale < pdfViewer.MAX_SCALE) {
-                pdfViewer.currentScale += pdfViewer.SCALE_STEP;
-                reloadCurrentPDF();
+            if (canvasViewer.currentScale < canvasViewer.MAX_SCALE) {
+                canvasViewer.currentScale = Math.min(canvasViewer.currentScale + canvasViewer.SCALE_STEP, canvasViewer.MAX_SCALE);
+                renderCurrentPage(false);
             }
         }
 
         function zoomOut() {
-            if (pdfViewer.currentScale > pdfViewer.MIN_SCALE) {
-                pdfViewer.currentScale -= pdfViewer.SCALE_STEP;
-                reloadCurrentPDF();
+            if (canvasViewer.currentScale > canvasViewer.MIN_SCALE) {
+                canvasViewer.currentScale = Math.max(canvasViewer.currentScale - canvasViewer.SCALE_STEP, canvasViewer.MIN_SCALE);
+                renderCurrentPage(false);
             }
         }
 
-        async function reloadCurrentPDF() {
-            if (!pdfViewer.currentUrl) return;
-            const currentPage = pdfViewer.currentPage;
-            pv.container.innerHTML = '';
-            pdfViewer.renderedPages.clear();
-            showLoading('Đang điều chỉnh kích thước...');
-            await loadPDF(pdfViewer.currentUrl, currentPage);
-        }
-
-        function cleanupViewer() {
-            if (pdfViewer.pdfDoc) {
-                try { pdfViewer.pdfDoc.destroy(); } catch(e) {}
-                pdfViewer.pdfDoc = null;
+        function cleanupCanvasViewer() {
+            if (canvasViewer.pdfDoc) {
+                try { canvasViewer.pdfDoc.destroy(); } catch(e) {}
+                canvasViewer.pdfDoc = null;
             }
-            pdfViewer.currentPage = 1;
-            pdfViewer.totalPages = 0;
-            pdfViewer.currentScale = 1.0;
+            canvasViewer.currentPage = 1;
+            canvasViewer.totalPages = 0;
+            canvasViewer.currentScale = 1.0;
             hideLoading();
-            pv.container.innerHTML = '';
+            
+            const container = document.getElementById('pdf-canvas-container');
+            if (container) {
+                container.style.transform = 'rotateY(0deg)';
+            }
+            
+            if (cv.canvas) {
+                const ctx = getCanvasContext();
+                if (ctx) ctx.clearRect(0, 0, cv.canvas.width, cv.canvas.height);
+            }
+            
+            const textLayerDiv = document.getElementById('text-layer');
+            if (textLayerDiv) textLayerDiv.innerHTML = '';
         }
 
-        pv.btnPrev.addEventListener('click', () => scrollToPage(pdfViewer.currentPage - 1));
-        pv.btnNext.addEventListener('click', () => scrollToPage(pdfViewer.currentPage + 1));
-        pv.btnZoomIn.addEventListener('click', zoomIn);
-        pv.btnZoomOut.addEventListener('click', zoomOut);
-        pv.btnFullscreen.addEventListener('click', toggleFullscreen);
+        cv.btnPrev.addEventListener('click', () => goToPageAnimated(canvasViewer.currentPage - 1));
+        cv.btnNext.addEventListener('click', () => goToPageAnimated(canvasViewer.currentPage + 1));
+        cv.btnZoomIn.addEventListener('click', zoomIn);
+        cv.btnZoomOut.addEventListener('click', zoomOut);
+        cv.btnFullscreen.addEventListener('click', toggleFullscreen);
 
-        if (pv.scrollArea) {
-            pv.scrollArea.addEventListener('scroll', () => {
-                const pages = pv.container.querySelectorAll('.pdf-page');
-                let closestPage = pdfViewer.currentPage;
-                let minDistance = Infinity;
+        // Swipe navigation (with text selection protection)
+        if (cv.scrollArea) {
+            let touchStartX = 0, touchStartY = 0;
+            let isVerticalScroll = false;
+            const SWIPE_THRESHOLD = 80;
+            const VERTICAL_THRESHOLD = 30;
+
+            cv.scrollArea.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].screenX;
+                touchStartY = e.touches[0].screenY;
+                isVerticalScroll = false;
+            }, { passive: true });
+            
+            cv.scrollArea.addEventListener('touchmove', (e) => {
+                const diffY = Math.abs(e.touches[0].screenY - touchStartY);
+                const diffX = Math.abs(e.touches[0].screenX - touchStartX);
+                if (diffY > VERTICAL_THRESHOLD && diffY > diffX) isVerticalScroll = true;
+            }, { passive: true });
+            
+            cv.scrollArea.addEventListener('touchend', (e) => {
+                // Don't swipe if user is selecting text
+                const selection = window.getSelection();
+                if (selection && selection.toString().length > 0) return;
                 
-                pages.forEach(p => {
-                    const rect = p.getBoundingClientRect();
-                    const distance = Math.abs(rect.top);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestPage = parseInt(p.id.replace('page-', ''));
-                    }
-                });
-                
-                if (closestPage !== pdfViewer.currentPage) {
-                    pdfViewer.currentPage = closestPage;
-                    updateControls();
-                    if (currentBookId) savePosition(currentBookId, closestPage, 'native');
+                const diffX = touchStartX - e.changedTouches[0].screenX;
+                if (!isVerticalScroll && Math.abs(diffX) > SWIPE_THRESHOLD) {
+                    if (diffX > 0) goToPageAnimated(canvasViewer.currentPage + 1);
+                    else if (diffX < 0) goToPageAnimated(canvasViewer.currentPage - 1);
                 }
-            });
+            }, { passive: true });
         }
 
         // =================================================================
         // ===== FULLSCREEN =====
         // =================================================================
+        
         const btnFullscreen = document.getElementById('btn-fullscreen');
         
         function toggleFullscreen() {
@@ -1051,9 +1132,9 @@
                 btnFullscreen.querySelector('span').textContent = text;
                 btnFullscreen.classList.toggle('active', isFullscreen);
             }
-            if (pv.btnFullscreen) {
-                pv.btnFullscreen.querySelector('i').className = `fas ${icon}`;
-                pv.btnFullscreen.classList.toggle('active', isFullscreen);
+            if (cv.btnFullscreen) {
+                cv.btnFullscreen.querySelector('i').className = `fas ${icon}`;
+                cv.btnFullscreen.classList.toggle('active', isFullscreen);
             }
         }
 
@@ -1064,6 +1145,7 @@
         // =================================================================
         // ===== TABS =====
         // =================================================================
+        
         function switchMainTab(tabName) {
             const tabs = [
                 { btn: tabBooks, content: contentBooks, name: 'books' },
@@ -1085,16 +1167,8 @@
         // =================================================================
         // ===== BOOKS LIST =====
         // =================================================================
+        
         function getBookDisplayName(book) { return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - '); }
-
-        async function getBookInfo(pdfUrl) {
-            try {
-                const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-                return { pages: pdf.numPages };
-            } catch (e) {
-                return { pages: 1 };
-            }
-        }
 
         async function generateThumbnail(pdfUrl, canvasId) {
             try {
@@ -1112,12 +1186,11 @@
 
         function loadBooksList(bustCache = false) {
             const fetchUrl = bustCache ? `files.json?t=${Date.now()}` : 'files.json';
-            fetch(fetchUrl).then(r => r.json()).then(async (books) => {
+            fetch(fetchUrl).then(r => r.json()).then(books => {
                 listContainer.innerHTML = '';
                 books.sort((a, b) => { const numA = parseInt(a.id); const numB = parseInt(b.id); if (!isNaN(numA) && !isNaN(numB)) return numA - numB; return String(a.id).localeCompare(String(b.id)); });
                 allBooksMap = {};
-                
-                for (const book of books) {
+                books.forEach((book, idx) => {
                     allBooksMap[book.id] = book;
                     const item = document.createElement('div');
                     item.className = 'pdf-item flex items-center p-4 rounded cursor-pointer';
@@ -1131,7 +1204,7 @@
                     item.innerHTML = `
                         <div class="w-16 h-20 flex-shrink-0 mr-4 sm:mr-5 rounded flex items-center justify-center shadow-sm overflow-hidden relative">
                             <i class="fas fa-circle-notch fa-spin text-white text-xl loading-icon"></i>
-                            <canvas id="thumb-${book.id}" class="w-full h-full object-cover hidden"></canvas>
+                            <canvas id="thumb-${idx}" class="w-full h-full object-cover hidden"></canvas>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-start gap-2 mb-1">
@@ -1145,16 +1218,10 @@
                             <p class="book-hint">${positionHint}</p>
                         </div>
                         <i class="fas fa-external-link-alt text-xl ml-3 flex-shrink-0"></i>`;
-                    
-                    item.addEventListener('click', async () => {
-                        const info = await getBookInfo(`Giao_trinh_triet_hoc/${book.filename}`);
-                        currentTotalPages = info.pages;
-                        openViewer(`Giao_trinh_triet_hoc/${book.filename}`, book);
-                    });
-                    
+                    item.addEventListener('click', () => openViewer(`Giao_trinh_triet_hoc/${book.filename}`, book));
                     listContainer.appendChild(item);
-                    generateThumbnail(`Giao_trinh_triet_hoc/${book.filename}`, `thumb-${book.id}`);
-                }
+                    generateThumbnail(`Giao_trinh_triet_hoc/${book.filename}`, `thumb-${idx}`);
+                });
             }).catch(err => {
                 listContainer.innerHTML = `<div class="text-center p-8 rounded" style="background: rgba(220,38,38,0.05); border: 1px solid var(--neon-red);"><p class="font-mono" style="color: var(--neon-red);">// Lỗi tải danh sách.</p></div>`;
             });
@@ -1163,6 +1230,7 @@
         // =================================================================
         // ===== COMPILED NOTES =====
         // =================================================================
+        
         function loadCompiledNotes() {
             compiledNotesList.innerHTML = '';
             const notesData = [];
@@ -1221,6 +1289,7 @@
         // =================================================================
         // ===== OPEN/CLOSE VIEWER =====
         // =================================================================
+        
         const mobileNotesArea = document.getElementById('mobile-notes-area');
         const mobileSaveStatus = document.getElementById('mobile-save-status');
         const mobileClearBtn = document.getElementById('mobile-clear-notes');
@@ -1271,11 +1340,14 @@
         }
 
         function closeViewer() { 
-            if (currentBookId && pdfViewer.pdfDoc) {
-                savePosition(currentBookId, pdfViewer.currentPage, 'native');
+            if (currentBookId && canvasViewer.pdfDoc) {
+                savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
             }
+            
+            clearTimeout(positionSaveTimer);
+            
             viewerModal.classList.add('hidden'); 
-            cleanupViewer();
+            cleanupCanvasViewer();
             
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 if (document.exitFullscreen) document.exitFullscreen();
@@ -1284,6 +1356,12 @@
         }
         document.getElementById('close-modal').addEventListener('click', closeViewer);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !viewerModal.classList.contains('hidden')) closeViewer(); });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && currentBookId && canvasViewer.pdfDoc) {
+                savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
+            }
+        });
 
         let saveTimeout;
         noteArea.addEventListener('input', (e) => {
@@ -1305,7 +1383,7 @@
 
         document.getElementById('btn-download-pdf').addEventListener('click', () => { 
             const link = document.createElement('a'); 
-            link.href = pdfViewer.currentUrl; 
+            link.href = canvasViewer.currentUrl; 
             link.download = currentFile; 
             link.click(); 
         });
@@ -1319,6 +1397,7 @@
         // =================================================================
         // ===== INIT =====
         // =================================================================
+        
         loadBooksList(true);
 
         document.getElementById('btn-refresh').addEventListener('click', () => {
