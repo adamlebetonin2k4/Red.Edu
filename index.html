@@ -246,11 +246,9 @@
         .fullscreen-btn.active { color: var(--neon-red); }
 
         /* ===== PDF VIEWER SWITCHING ===== */
-        /* By default: iframe visible, canvas hidden */
         #pdf-viewer-canvas { display: none; }
         #pdf-viewer-iframe { display: block; }
         
-        /* When .use-canvas is on modal: canvas visible, iframe hidden */
         #viewer-modal.use-canvas #pdf-viewer-canvas { display: flex; }
         #viewer-modal.use-canvas #pdf-viewer-iframe { display: none; }
         #viewer-modal.use-canvas .notes-panel-desktop { display: none; }
@@ -494,7 +492,6 @@
                     <h3 id="modal-title" class="truncate text-base sm:text-lg">Tài liệu</h3>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0 flex-wrap gap-2">
-                    <!-- PDF VIEWER TOGGLE BUTTON -->
                     <button id="btn-toggle-viewer" class="fullscreen-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);" title="Chuyển đổi trình đọc PDF">
                         <i class="fas fa-window-restore mr-1 sm:mr-2"></i> <span class="hidden sm:inline" id="viewer-mode-label">Browser</span>
                     </button>
@@ -722,10 +719,73 @@
         const contentCompiled = document.getElementById('content-compiled');
 
         // =================================================================
-        // ===== BUILT-IN PDF VIEWER (rebuilt from scratch) =====
+        // ===== POSITION CACHE (per book ID, shared across modes) =====
         // =================================================================
         
-        // State
+        const POSITION_KEY_PREFIX = 'red_position_';
+        
+        /**
+         * Save reading position for a book.
+         * Stores: { page, mode, timestamp }
+         */
+        function savePosition(bookId, page, mode) {
+            if (!bookId || !page) return;
+            try {
+                const data = {
+                    page: parseInt(page) || 1,
+                    mode: mode || 'unknown',
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(POSITION_KEY_PREFIX + bookId, JSON.stringify(data));
+            } catch (e) {
+                console.warn('Failed to save position:', e);
+            }
+        }
+
+        /**
+         * Load saved reading position for a book.
+         * Returns { page, mode, timestamp } or null.
+         */
+        function loadPosition(bookId) {
+            if (!bookId) return null;
+            try {
+                const raw = localStorage.getItem(POSITION_KEY_PREFIX + bookId);
+                if (!raw) return null;
+                const data = JSON.parse(raw);
+                // Validate
+                if (data && typeof data.page === 'number' && data.page >= 1) {
+                    return data;
+                }
+                return null;
+            } catch (e) {
+                console.warn('Failed to load position:', e);
+                return null;
+            }
+        }
+
+        /**
+         * Clear saved position for a book.
+         */
+        function clearPosition(bookId) {
+            if (!bookId) return;
+            try {
+                localStorage.removeItem(POSITION_KEY_PREFIX + bookId);
+            } catch (e) {}
+        }
+
+        // Debounced position saver for canvas viewer
+        let positionSaveTimer = null;
+        function schedulePositionSave(bookId, page, mode) {
+            clearTimeout(positionSaveTimer);
+            positionSaveTimer = setTimeout(() => {
+                savePosition(bookId, page, mode);
+            }, 400);
+        }
+
+        // =================================================================
+        // ===== BUILT-IN PDF VIEWER =====
+        // =================================================================
+        
         const canvasViewer = {
             pdfDoc: null,
             currentPage: 1,
@@ -739,7 +799,6 @@
             SCALE_STEP: 0.25
         };
 
-        // DOM elements
         const cv = {
             canvas: document.getElementById('pdf-canvas'),
             scrollArea: document.getElementById('canvas-scroll-area'),
@@ -757,13 +816,11 @@
             btnFullscreen: document.getElementById('btn-canvas-fullscreen')
         };
 
-        // Get 2D context (recreate if needed)
         function getCanvasContext() {
             if (!cv.canvas) return null;
             return cv.canvas.getContext('2d');
         }
 
-        // Show/hide loading
         function showLoading(message) {
             canvasViewer.isLoading = true;
             cv.loadingText.textContent = message || 'Đang tải PDF...';
@@ -783,7 +840,6 @@
             cv.loadingOverlay.style.display = 'none';
         }
 
-        // Update UI controls state
         function updateControls() {
             cv.currentPageEl.textContent = canvasViewer.currentPage;
             cv.totalPagesEl.textContent = canvasViewer.totalPages || '-';
@@ -795,15 +851,13 @@
             cv.btnZoomOut.disabled = canvasViewer.currentScale <= canvasViewer.MIN_SCALE;
         }
 
-        // Calculate fit scale for container
         function calculateFitScale(page) {
             const viewport = page.getViewport({ scale: 1 });
-            const containerWidth = cv.scrollArea.clientWidth - 32; // padding
+            const containerWidth = cv.scrollArea.clientWidth - 32;
             const fitScale = containerWidth / viewport.width;
-            return Math.min(fitScale, 1.5); // cap at 1.5x
+            return Math.min(fitScale, 1.5);
         }
 
-        // Render current page to canvas
         async function renderCurrentPage(scrollToTop = true) {
             if (!canvasViewer.pdfDoc || !cv.canvas) return;
             
@@ -814,7 +868,6 @@
                 const ctx = getCanvasContext();
                 if (!ctx) { showError('Không thể khởi tạo canvas'); return; }
                 
-                // Determine scale
                 let scale = canvasViewer.currentScale;
                 if (scale === 1.0) {
                     scale = calculateFitScale(page);
@@ -824,19 +877,13 @@
                 const viewport = page.getViewport({ scale: scale });
                 const dpr = window.devicePixelRatio || 1;
                 
-                // Set canvas dimensions (high-DPI)
                 cv.canvas.width = Math.round(viewport.width * dpr);
                 cv.canvas.height = Math.round(viewport.height * dpr);
                 cv.canvas.style.width = viewport.width + 'px';
                 cv.canvas.style.height = viewport.height + 'px';
                 
-                // Scale context for DPR
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                
-                // Render
                 await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-                
-                // Reset transform
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
                 
                 updateControls();
@@ -846,14 +893,18 @@
                 }
                 
                 hideLoading();
+                
+                // Save position after successful render
+                if (currentBookId) {
+                    schedulePositionSave(currentBookId, canvasViewer.currentPage, 'canvas');
+                }
             } catch (error) {
                 console.error('Render error:', error);
                 showError('Lỗi khi render trang');
             }
         }
 
-        // Load a PDF into the canvas viewer
-        async function loadPDF(url) {
+        async function loadPDF(url, startPage = 1) {
             // Cleanup previous
             if (canvasViewer.pdfDoc) {
                 try { canvasViewer.pdfDoc.destroy(); } catch(e) {}
@@ -861,7 +912,7 @@
             }
             
             canvasViewer.currentUrl = url;
-            canvasViewer.currentPage = 1;
+            canvasViewer.currentPage = Math.max(1, parseInt(startPage) || 1);
             canvasViewer.currentScale = 1.0;
             canvasViewer.isDark = false;
             cv.canvas.classList.remove('dark-mode-canvas');
@@ -874,6 +925,11 @@
                 canvasViewer.pdfDoc = await loadingTask.promise;
                 canvasViewer.totalPages = canvasViewer.pdfDoc.numPages;
                 
+                // Clamp startPage to valid range
+                if (canvasViewer.currentPage > canvasViewer.totalPages) {
+                    canvasViewer.currentPage = 1;
+                }
+                
                 await renderCurrentPage(true);
             } catch (error) {
                 console.error('Load PDF error:', error);
@@ -881,7 +937,6 @@
             }
         }
 
-        // Navigate to specific page
         function goToPage(pageNum) {
             if (!canvasViewer.pdfDoc) return;
             if (pageNum < 1 || pageNum > canvasViewer.totalPages) return;
@@ -889,7 +944,6 @@
             renderCurrentPage(true);
         }
 
-        // Zoom
         function zoomIn() {
             if (canvasViewer.currentScale < canvasViewer.MAX_SCALE) {
                 canvasViewer.currentScale = Math.min(
@@ -910,14 +964,12 @@
             }
         }
 
-        // Toggle dark mode on canvas
         function toggleCanvasDark() {
             canvasViewer.isDark = !canvasViewer.isDark;
             cv.canvas.classList.toggle('dark-mode-canvas', canvasViewer.isDark);
             cv.btnDark.classList.toggle('active-toggle', canvasViewer.isDark);
         }
 
-        // Cleanup canvas viewer
         function cleanupCanvasViewer() {
             if (canvasViewer.pdfDoc) {
                 try { canvasViewer.pdfDoc.destroy(); } catch(e) {}
@@ -928,7 +980,6 @@
             canvasViewer.currentScale = 1.0;
             hideLoading();
             
-            // Clear canvas
             if (cv.canvas) {
                 const ctx = getCanvasContext();
                 if (ctx) {
@@ -937,7 +988,7 @@
             }
         }
 
-        // ===== Wire up canvas viewer controls =====
+        // Wire up canvas viewer controls
         cv.btnPrev.addEventListener('click', () => goToPage(canvasViewer.currentPage - 1));
         cv.btnNext.addEventListener('click', () => goToPage(canvasViewer.currentPage + 1));
         cv.btnZoomIn.addEventListener('click', zoomIn);
@@ -945,7 +996,7 @@
         cv.btnDark.addEventListener('click', toggleCanvasDark);
         cv.btnFullscreen.addEventListener('click', toggleFullscreen);
 
-        // Swipe navigation on canvas
+        // Swipe navigation
         if (cv.scrollArea) {
             let touchStartX = 0, touchStartY = 0;
             let isVerticalScroll = false;
@@ -993,32 +1044,30 @@
             }
         }
 
-        // Apply on load
         applyViewerMode();
 
-        // Toggle handler
         btnToggleViewer.addEventListener('click', () => {
             useCanvasViewer = !useCanvasViewer;
             localStorage.setItem('red_use_canvas_viewer', useCanvasViewer);
             applyViewerMode();
             
             // If a PDF is currently open, reload it in the new viewer
+            // Position is preserved via cache (shared across modes)
             if (currentBookId && currentFile) {
-                const savedPage = canvasViewer.currentPage;
+                const savedPos = loadPosition(currentBookId);
+                const targetPage = (savedPos && savedPos.page) ? savedPos.page : 1;
                 const savedUrl = `Giao_trinh_triet_hoc/${currentFile}`;
                 
                 if (useCanvasViewer) {
-                    // Switching TO canvas viewer
                     pdfFrame.src = '';
-                    loadPDF(savedUrl).then(() => {
-                        if (savedPage > 1 && savedPage <= canvasViewer.totalPages) {
-                            goToPage(savedPage);
-                        }
-                    });
+                    loadPDF(savedUrl, targetPage);
                 } else {
-                    // Switching TO iframe viewer
                     cleanupCanvasViewer();
-                    pdfFrame.src = savedUrl;
+                    // Use #page= hash for iframe viewer
+                    const iframeUrl = targetPage > 1 
+                        ? `${savedUrl}#page=${targetPage}` 
+                        : savedUrl;
+                    pdfFrame.src = iframeUrl;
                 }
             }
         });
@@ -1112,6 +1161,13 @@
                     const item = document.createElement('div');
                     item.className = 'pdf-item flex items-center p-4 rounded cursor-pointer';
                     const authorText = book.author || 'Ẩn danh';
+                    
+                    // Check if there's a saved position for this book
+                    const savedPos = loadPosition(book.id);
+                    const positionHint = savedPos && savedPos.page > 1 
+                        ? `// Tiếp tục từ trang ${savedPos.page}` 
+                        : '// Nhấn để mở trình đọc & ghi chú';
+                    
                     item.innerHTML = `
                         <div class="w-16 h-20 flex-shrink-0 mr-4 sm:mr-5 rounded flex items-center justify-center shadow-sm overflow-hidden relative">
                             <i class="fas fa-circle-notch fa-spin text-white text-xl loading-icon"></i>
@@ -1126,7 +1182,7 @@
                                 <span class="author-label">Tác giả:</span>
                                 <span class="author-name">${authorText}</span>
                             </div>
-                            <p class="book-hint">// Nhấn để mở trình đọc & ghi chú</p>
+                            <p class="book-hint">${positionHint}</p>
                         </div>
                         <i class="fas fa-external-link-alt text-xl ml-3 flex-shrink-0"></i>`;
                     item.addEventListener('click', () => openViewer(`Giao_trinh_triet_hoc/${book.filename}`, book));
@@ -1205,7 +1261,6 @@
         const mobileSaveStatus = document.getElementById('mobile-save-status');
         const mobileClearBtn = document.getElementById('mobile-clear-notes');
 
-        // Mobile notes save
         if (mobileNotesArea) {
             let mobileSaveTimeout;
             mobileNotesArea.addEventListener('input', (e) => {
@@ -1245,22 +1300,46 @@
             noteArea.value = savedNotes;
             if (mobileNotesArea) mobileNotesArea.value = savedNotes;
             
-            // Open with current viewer mode
+            // Load saved position (shared across both modes)
+            const savedPos = loadPosition(currentBookId);
+            const targetPage = (savedPos && savedPos.page && savedPos.page >= 1) ? savedPos.page : 1;
+            
+            // Open with current viewer mode, starting at saved page
             if (useCanvasViewer) {
                 pdfFrame.src = '';
-                loadPDF(url);
+                loadPDF(url, targetPage);
             } else {
                 cleanupCanvasViewer();
-                pdfFrame.src = url;
+                // Use #page= hash for iframe viewer
+                const iframeUrl = targetPage > 1 
+                    ? `${url}#page=${targetPage}` 
+                    : url;
+                pdfFrame.src = iframeUrl;
+                
+                // Save position for iframe mode too (so it persists)
+                savePosition(currentBookId, targetPage, 'iframe');
             }
             
             viewerModal.classList.remove('hidden');
         }
 
         function closeViewer() { 
+            // Save final position before closing
+            if (currentBookId) {
+                if (useCanvasViewer && canvasViewer.pdfDoc) {
+                    savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
+                } else if (!useCanvasViewer) {
+                    // For iframe, we can't reliably detect current page,
+                    // so we keep the last saved position
+                }
+            }
+            
+            clearTimeout(positionSaveTimer);
+            
             viewerModal.classList.add('hidden'); 
             pdfFrame.src = ''; 
             cleanupCanvasViewer();
+            
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 if (document.exitFullscreen) document.exitFullscreen();
                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -1268,6 +1347,15 @@
         }
         document.getElementById('close-modal').addEventListener('click', closeViewer);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !viewerModal.classList.contains('hidden')) closeViewer(); });
+
+        // Save position on visibility change (tab switch, minimize)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && currentBookId) {
+                if (useCanvasViewer && canvasViewer.pdfDoc) {
+                    savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
+                }
+            }
+        });
 
         // Desktop notes save
         let saveTimeout;
