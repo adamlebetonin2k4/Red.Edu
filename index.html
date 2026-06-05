@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Sử dụng phiên bản PDF.js ổn định -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -325,7 +324,6 @@
             align-items: center;
             padding: 2rem 1rem;
             min-height: 100%;
-            perspective: 2500px;
         }
 
         /* Individual Page Wrapper */
@@ -334,13 +332,49 @@
             margin-bottom: 2rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             background: white;
-            transition: transform 0.4s ease-in-out, opacity 0.4s;
-            transform-origin: center center;
+            pointer-events: auto !important;
         }
 
-        /* Dark mode filter applied to the whole container */
-        body.dark-mode #pdf-pages-container {
+        .pdf-page-wrapper canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none !important; /* Let clicks pass through to text layer */
+            user-select: none !important;
+        }
+
+        /* Dark mode filter applied ONLY to the canvas to preserve text layer selection */
+        body.dark-mode .pdf-page-wrapper canvas {
             filter: invert(1) hue-rotate(180deg);
+        }
+
+        /* ===== TEXT SELECTION LAYER (BULLETPROOF) ===== */
+        .textLayer {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+            opacity: 0.2 !important; /* KEEP AT 0.2 TO VERIFY IT WORKS. Change to 0 later! */
+            line-height: 1.0 !important;
+            pointer-events: auto !important;
+            z-index: 10 !important;
+        }
+        .textLayer span, .textLayer br {
+            color: transparent !important;
+            position: absolute !important;
+            white-space: pre !important;
+            cursor: text !important;
+            transform-origin: 0% 0% !important;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            pointer-events: auto !important;
+        }
+        .textLayer ::selection {
+            background: rgba(220, 38, 38, 0.4) !important;
+            color: transparent !important;
         }
         
         #dom-loading-overlay {
@@ -373,7 +407,6 @@
         #mobile-notes-area::placeholder { color: var(--text-secondary); font-style: italic; }
         #mobile-notes-area:focus { box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.15); }
 
-        /* ===== SCREEN-WIDTH MEDIA QUERIES ===== */
         @media (max-width: 768px) {
             .desktop-nav { display: none !important; }
             #mobile-notes-section { display: block; }
@@ -545,7 +578,7 @@
                         <div id="dom-loading-text">Đang tải PDF...</div>
                     </div>
                     <div id="pdf-pages-container">
-                        <!-- Pages will be injected here as DIVs -->
+                        <!-- Pages will be injected here -->
                     </div>
                 </div>
                 <div id="mobile-notes-section">
@@ -732,10 +765,6 @@
         const contentGuide = document.getElementById('content-guide');
         const contentCompiled = document.getElementById('content-compiled');
 
-        // =================================================================
-        // ===== POSITION CACHE =====
-        // =================================================================
-        
         const POSITION_KEY_PREFIX = 'red_position_';
         
         function savePosition(bookId, page, mode) {
@@ -766,7 +795,7 @@
         }
 
         // =================================================================
-        // ===== NEW DOM-BASED PDF VIEWER LOGIC (FIXED) =====
+        // ===== NEW DOM-BASED PDF VIEWER LOGIC (FIXED HIGHLIGHTING) =====
         // =================================================================
         
         const domViewer = {
@@ -847,7 +876,6 @@
                 domViewer.pdfDoc = await loadingTask.promise;
                 domViewer.totalPages = domViewer.pdfDoc.numPages;
                 
-                // Render all pages sequentially
                 for (let i = 1; i <= domViewer.totalPages; i++) {
                     await renderSinglePageFlat(i);
                 }
@@ -855,7 +883,6 @@
                 updateControls();
                 hideLoading();
                 
-                // Scroll to saved page
                 const targetWrapper = document.getElementById(`page-wrapper-${domViewer.currentPage}`);
                 if (targetWrapper) {
                     targetWrapper.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -881,9 +908,8 @@
             wrapper.id = `page-wrapper-${pageNum}`;
             wrapper.style.width = `${viewport.width}px`;
             wrapper.style.height = `${viewport.height}px`;
-            wrapper.style.position = 'relative';
             
-            // Canvas for visual rendering
+            // 1. Canvas for visual rendering
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const dpr = window.devicePixelRatio || 1;
@@ -896,34 +922,25 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             await page.render({ canvasContext: ctx, viewport: viewport }).promise;
             
-            // Text Layer for selection (Using safe instantiation)
+            // 2. Text Layer for selection
             const textLayerDiv = document.createElement('div');
             textLayerDiv.className = 'textLayer';
-            textLayerDiv.style.position = 'absolute';
-            textLayerDiv.style.left = '0';
-            textLayerDiv.style.top = '0';
-            textLayerDiv.style.right = '0';
-            textLayerDiv.style.bottom = '0';
-            textLayerDiv.style.overflow = 'hidden';
-            textLayerDiv.style.opacity = '1';
-            textLayerDiv.style.lineHeight = '1.0';
-            textLayerDiv.style.pointerEvents = 'auto'; // Ensure selection works
             
             const textContent = await page.getTextContent();
             
-            // Safe TextLayer instantiation for v3.11
-            if (pdfjsLib.TextLayer) {
+            if (textContent && textContent.items && textContent.items.length > 0) {
                 try {
                     const textLayer = new pdfjsLib.TextLayer({
                         textContentSource: textContent,
                         container: textLayerDiv,
-                        viewport: viewport,
-                        textDivs: []
+                        viewport: viewport
                     });
                     await textLayer.render();
                 } catch (e) {
                     console.warn("TextLayer render warning:", e);
                 }
+            } else {
+                console.warn(`Page ${pageNum} has no selectable text (might be a scanned image).`);
             }
             
             wrapper.appendChild(canvas);
@@ -984,7 +1001,6 @@
         dv.btnZoomOut.addEventListener('click', zoomOut);
         dv.btnFullscreen.addEventListener('click', toggleFullscreen);
 
-        // Scroll listener to update current page number
         if (dv.scrollArea) {
             dv.scrollArea.addEventListener('scroll', () => {
                 const wrappers = dv.container.querySelectorAll('.pdf-page-wrapper');
@@ -1011,7 +1027,6 @@
         // =================================================================
         // ===== FULLSCREEN =====
         // =================================================================
-        
         const btnFullscreen = document.getElementById('btn-fullscreen');
         
         function toggleFullscreen() {
@@ -1047,7 +1062,6 @@
         // =================================================================
         // ===== TABS =====
         // =================================================================
-        
         function switchMainTab(tabName) {
             const tabs = [
                 { btn: tabBooks, content: contentBooks, name: 'books' },
@@ -1069,7 +1083,6 @@
         // =================================================================
         // ===== BOOKS LIST =====
         // =================================================================
-        
         function getBookDisplayName(book) { return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - '); }
 
         async function generateThumbnail(pdfUrl, canvasId) {
@@ -1132,7 +1145,6 @@
         // =================================================================
         // ===== COMPILED NOTES =====
         // =================================================================
-        
         function loadCompiledNotes() {
             compiledNotesList.innerHTML = '';
             const notesData = [];
@@ -1191,7 +1203,6 @@
         // =================================================================
         // ===== OPEN/CLOSE VIEWER =====
         // =================================================================
-        
         const mobileNotesArea = document.getElementById('mobile-notes-area');
         const mobileSaveStatus = document.getElementById('mobile-save-status');
         const mobileClearBtn = document.getElementById('mobile-clear-notes');
@@ -1245,9 +1256,7 @@
             if (currentBookId && domViewer.pdfDoc) {
                 savePosition(currentBookId, domViewer.currentPage, 'dom');
             }
-            
             clearTimeout(positionSaveTimer);
-            
             viewerModal.classList.add('hidden'); 
             cleanupDomViewer();
             
@@ -1296,10 +1305,6 @@
             const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `ID_${currentBookId}_notes.txt`; link.click(); URL.revokeObjectURL(url);
         });
 
-        // =================================================================
-        // ===== INIT =====
-        // =================================================================
-        
         loadBooksList(true);
 
         document.getElementById('btn-refresh').addEventListener('click', () => {
