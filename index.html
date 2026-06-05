@@ -12,11 +12,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
 
     <style>
         :root {
@@ -262,8 +257,8 @@
         .fullscreen-btn:hover { color: var(--neon-red); }
         .fullscreen-btn.active { color: var(--neon-red); }
 
-        /* ===== NEW PDF VIEWER LAYOUT (DOM BASED) ===== */
-        #pdf-viewer-dom {
+        /* ===== NATIVE IFRAME PDF VIEWER ===== */
+        #pdf-viewer-native {
             flex: 1;
             flex-direction: column;
             min-height: 0;
@@ -272,7 +267,7 @@
             display: flex;
         }
         
-        #dom-controls-bar {
+        #native-controls-bar {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -285,7 +280,7 @@
             z-index: 10;
         }
         
-        #dom-controls-bar button {
+        #native-controls-bar button {
             background: var(--bg-solid);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
@@ -300,84 +295,36 @@
             align-items: center;
             justify-content: center;
         }
-        #dom-controls-bar button:hover:not(:disabled) { border-color: var(--neon-red); color: var(--neon-red); }
-        #dom-controls-bar button:active:not(:disabled) { transform: scale(0.95); }
-        #dom-controls-bar button:disabled { opacity: 0.3; cursor: not-allowed; }
+        #native-controls-bar button:hover:not(:disabled) { border-color: var(--neon-red); color: var(--neon-red); }
+        #native-controls-bar button:active:not(:disabled) { transform: scale(0.95); }
+        #native-controls-bar button:disabled { opacity: 0.3; cursor: not-allowed; }
         
-        #dom-page-info { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary); min-width: 70px; text-align: center; font-weight: 500; }
-        #dom-zoom-controls { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle); }
-        #dom-zoom-level { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); min-width: 45px; text-align: center; }
+        #native-page-info { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary); min-width: 70px; text-align: center; font-weight: 500; }
+        #native-zoom-controls { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle); }
+        #native-zoom-level { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); min-width: 45px; text-align: center; }
         
-        #dom-scroll-area {
+        #native-scroll-area {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: hidden; /* Let iframe handle scrolling */
             position: relative;
-            -webkit-overflow-scrolling: touch;
             background: var(--bg-main);
-            scroll-behavior: smooth;
-        }
-        
-        #pdf-pages-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem 1rem;
-            min-height: 100%;
         }
 
-        /* Individual Page Wrapper */
-        .pdf-page-wrapper {
-            position: relative;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            background: white;
-            pointer-events: auto !important;
+        #pdf-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            transition: transform 0.3s ease;
+            transform-origin: top center;
         }
 
-        .pdf-page-wrapper canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            pointer-events: none !important; /* Let clicks pass through to text layer */
-            user-select: none !important;
-        }
-
-        /* Dark mode filter applied ONLY to the canvas to preserve text layer selection */
-        body.dark-mode .pdf-page-wrapper canvas {
+        /* Dark mode filter applied to the iframe */
+        body.dark-mode #pdf-iframe {
             filter: invert(1) hue-rotate(180deg);
         }
-
-        /* ===== TEXT SELECTION LAYER (BULLETPROOF) ===== */
-        .textLayer {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            overflow: hidden !important;
-            opacity: 0.2 !important; /* KEEP AT 0.2 TO VERIFY IT WORKS. Change to 0 later! */
-            line-height: 1.0 !important;
-            pointer-events: auto !important;
-            z-index: 10 !important;
-        }
-        .textLayer span, .textLayer br {
-            color: transparent !important;
-            position: absolute !important;
-            white-space: pre !important;
-            cursor: text !important;
-            transform-origin: 0% 0% !important;
-            user-select: text !important;
-            -webkit-user-select: text !important;
-            pointer-events: auto !important;
-        }
-        .textLayer ::selection {
-            background: rgba(220, 38, 38, 0.4) !important;
-            color: transparent !important;
-        }
         
-        #dom-loading-overlay {
+        #native-loading-overlay {
             display: none;
             position: absolute;
             top: 50%;
@@ -391,8 +338,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        #dom-loading-overlay i { font-size: 2rem; color: var(--neon-red); margin-bottom: 0.5rem; }
-        #dom-loading-overlay .error-icon { color: var(--neon-red); }
+        #native-loading-overlay i { font-size: 2rem; color: var(--neon-red); margin-bottom: 0.5rem; }
 
         /* ===== MOBILE NOTES ===== */
         #mobile-notes-section { display: none; width: 100%; flex-shrink: 0; background: var(--bg-surface); border-top: 2px solid var(--border-color); }
@@ -557,29 +503,28 @@
         </div>
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
             
-            <!-- ===== NEW DOM-BASED PDF VIEWER ===== -->
-            <div id="pdf-viewer-dom">
-                <div id="dom-controls-bar">
-                    <button id="btn-dom-prev" title="Trang trước"><i class="fas fa-chevron-up"></i></button>
-                    <span id="dom-page-info"><span id="dom-current-page">1</span> / <span id="dom-total-pages">-</span></span>
-                    <button id="btn-dom-next" title="Trang sau"><i class="fas fa-chevron-down"></i></button>
-                    <div id="dom-zoom-controls">
-                        <button id="btn-dom-zoom-out" title="Thu nhỏ"><i class="fas fa-minus"></i></button>
-                        <span id="dom-zoom-level">100%</span>
-                        <button id="btn-dom-zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
+            <!-- ===== NATIVE IFRAME PDF VIEWER ===== -->
+            <div id="pdf-viewer-native">
+                <div id="native-controls-bar">
+                    <button id="btn-native-prev" title="Trang trước"><i class="fas fa-chevron-up"></i></button>
+                    <span id="native-page-info"><span id="native-current-page">1</span> / <span id="native-total-pages">-</span></span>
+                    <button id="btn-native-next" title="Trang sau"><i class="fas fa-chevron-down"></i></button>
+                    <div id="native-zoom-controls">
+                        <button id="btn-native-zoom-out" title="Thu nhỏ"><i class="fas fa-minus"></i></button>
+                        <span id="native-zoom-level">100%</span>
+                        <button id="btn-native-zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
                     </div>
-                    <button id="btn-dom-fullscreen" class="fullscreen-btn" title="Toàn màn hình" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
+                    <button id="btn-native-fullscreen" class="fullscreen-btn" title="Toàn màn hình" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
-                <div id="dom-scroll-area">
-                    <div id="dom-loading-overlay">
-                        <i class="fas fa-circle-notch fa-spin" id="dom-loading-icon"></i>
-                        <div id="dom-loading-text">Đang tải PDF...</div>
+                <div id="native-scroll-area">
+                    <div id="native-loading-overlay">
+                        <i class="fas fa-circle-notch fa-spin" id="native-loading-icon"></i>
+                        <div id="native-loading-text">Đang tải PDF...</div>
                     </div>
-                    <div id="pdf-pages-container">
-                        <!-- Pages will be injected here -->
-                    </div>
+                    <!-- Native browser PDF viewer -->
+                    <iframe id="pdf-iframe" src="about:blank" allowfullscreen></iframe>
                 </div>
                 <div id="mobile-notes-section">
                     <div id="mobile-notes-header">
@@ -749,6 +694,7 @@
         // ===== APP STATE =====
         let currentFile = '';
         let currentBookId = '';
+        let currentTotalPages = 1; // Native viewer doesn't know total pages easily, we'll mock or fetch
         let allBooksMap = {};
         const listContainer = document.getElementById('pdf-list');
         const compiledNotesList = document.getElementById('compiled-notes-list');
@@ -770,7 +716,7 @@
         function savePosition(bookId, page, mode) {
             if (!bookId || !page) return;
             try {
-                const data = { page: parseInt(page) || 1, mode: mode || 'dom', timestamp: Date.now() };
+                const data = { page: parseInt(page) || 1, mode: mode || 'native', timestamp: Date.now() };
                 localStorage.setItem(POSITION_KEY_PREFIX + bookId, JSON.stringify(data));
             } catch (e) { console.warn('Failed to save position:', e); }
         }
@@ -786,243 +732,110 @@
             } catch (e) { return null; }
         }
 
-        let positionSaveTimer = null;
-        function schedulePositionSave(bookId, page, mode) {
-            clearTimeout(positionSaveTimer);
-            positionSaveTimer = setTimeout(() => {
-                savePosition(bookId, page, mode);
-            }, 400);
-        }
-
         // =================================================================
-        // ===== NEW DOM-BASED PDF VIEWER LOGIC (FIXED HIGHLIGHTING) =====
+        // ===== NATIVE IFRAME PDF VIEWER LOGIC =====
         // =================================================================
         
-        const domViewer = {
-            pdfDoc: null,
-            currentPage: 1,
-            totalPages: 0,
-            currentScale: 1.0,
-            isLoading: false,
+        const nativeViewer = {
             currentUrl: null,
-            MIN_SCALE: 0.5,
-            MAX_SCALE: 3.0,
-            SCALE_STEP: 0.25,
-            renderedPages: new Set()
+            currentPage: 1,
+            currentScale: 1.0,
+            SCALE_STEP: 0.25
         };
 
-        const dv = {
-            container: document.getElementById('pdf-pages-container'),
-            scrollArea: document.getElementById('dom-scroll-area'),
-            loadingOverlay: document.getElementById('dom-loading-overlay'),
-            loadingIcon: document.getElementById('dom-loading-icon'),
-            loadingText: document.getElementById('dom-loading-text'),
-            currentPageEl: document.getElementById('dom-current-page'),
-            totalPagesEl: document.getElementById('dom-total-pages'),
-            zoomLevelEl: document.getElementById('dom-zoom-level'),
-            btnPrev: document.getElementById('btn-dom-prev'),
-            btnNext: document.getElementById('btn-dom-next'),
-            btnZoomIn: document.getElementById('btn-dom-zoom-in'),
-            btnZoomOut: document.getElementById('btn-dom-zoom-out'),
-            btnFullscreen: document.getElementById('btn-dom-fullscreen')
+        const nv = {
+            iframe: document.getElementById('pdf-iframe'),
+            loadingOverlay: document.getElementById('native-loading-overlay'),
+            currentPageEl: document.getElementById('native-current-page'),
+            totalPagesEl: document.getElementById('native-total-pages'),
+            zoomLevelEl: document.getElementById('native-zoom-level'),
+            btnPrev: document.getElementById('btn-native-prev'),
+            btnNext: document.getElementById('btn-native-next'),
+            btnZoomIn: document.getElementById('btn-native-zoom-in'),
+            btnZoomOut: document.getElementById('btn-native-zoom-out'),
+            btnFullscreen: document.getElementById('btn-native-fullscreen')
         };
 
-        function showLoading(message) {
-            domViewer.isLoading = true;
-            dv.loadingText.textContent = message || 'Đang tải PDF...';
-            dv.loadingIcon.className = 'fas fa-circle-notch fa-spin';
-            dv.loadingOverlay.style.display = 'block';
-        }
-
-        function showError(message) {
-            domViewer.isLoading = false;
-            dv.loadingText.textContent = message || 'Lỗi tải PDF';
-            dv.loadingIcon.className = 'fas fa-exclamation-circle error-icon';
-            dv.loadingOverlay.style.display = 'block';
+        function showLoading() {
+            nv.loadingOverlay.style.display = 'block';
         }
 
         function hideLoading() {
-            domViewer.isLoading = false;
-            dv.loadingOverlay.style.display = 'none';
+            nv.loadingOverlay.style.display = 'none';
         }
 
         function updateControls() {
-            dv.currentPageEl.textContent = domViewer.currentPage;
-            dv.totalPagesEl.textContent = domViewer.totalPages || '-';
-            dv.zoomLevelEl.textContent = Math.round(domViewer.currentScale * 100) + '%';
+            nv.currentPageEl.textContent = nativeViewer.currentPage;
+            nv.totalPagesEl.textContent = currentTotalPages > 1 ? currentTotalPages : '-';
+            nv.zoomLevelEl.textContent = Math.round(nativeViewer.currentScale * 100) + '%';
             
-            dv.btnPrev.disabled = domViewer.currentPage <= 1;
-            dv.btnNext.disabled = domViewer.currentPage >= domViewer.totalPages;
-            dv.btnZoomIn.disabled = domViewer.currentScale >= domViewer.MAX_SCALE;
-            dv.btnZoomOut.disabled = domViewer.currentScale <= domViewer.MIN_SCALE;
+            nv.btnPrev.disabled = nativeViewer.currentPage <= 1;
+            // We can't easily disable "next" without knowing total pages, so we leave it enabled
+            nv.btnZoomIn.disabled = nativeViewer.currentScale >= 2.0;
+            nv.btnZoomOut.disabled = nativeViewer.currentScale <= 0.5;
         }
 
-        async function loadPDF(url, startPage = 1) {
-            if (domViewer.pdfDoc) {
-                try { domViewer.pdfDoc.destroy(); } catch(e) {}
-                domViewer.pdfDoc = null;
-            }
+        function loadPDF(url, startPage = 1) {
+            nativeViewer.currentUrl = url;
+            nativeViewer.currentPage = Math.max(1, parseInt(startPage) || 1);
+            nativeViewer.currentScale = 1.0;
             
-            domViewer.currentUrl = url;
-            domViewer.currentPage = Math.max(1, parseInt(startPage) || 1);
-            domViewer.currentScale = 1.0;
-            domViewer.renderedPages.clear();
-            dv.container.innerHTML = '';
+            showLoading();
             
-            showLoading('Đang tải PDF...');
+            // Native browser PDF viewer with hidden toolbar and specific page
+            // #toolbar=0 hides the top bar, #page=X jumps to page
+            nv.iframe.src = `${url}#page=${nativeViewer.currentPage}&toolbar=0&navpanes=0&scrollbar=1`;
             
-            try {
-                const loadingTask = pdfjsLib.getDocument(url);
-                domViewer.pdfDoc = await loadingTask.promise;
-                domViewer.totalPages = domViewer.pdfDoc.numPages;
-                
-                for (let i = 1; i <= domViewer.totalPages; i++) {
-                    await renderSinglePageFlat(i);
-                }
-                
-                updateControls();
+            nv.iframe.onload = () => {
                 hideLoading();
-                
-                const targetWrapper = document.getElementById(`page-wrapper-${domViewer.currentPage}`);
-                if (targetWrapper) {
-                    targetWrapper.scrollIntoView({ behavior: 'auto', block: 'start' });
-                }
-                
                 if (currentBookId) {
-                    savePosition(currentBookId, domViewer.currentPage, 'dom');
+                    savePosition(currentBookId, nativeViewer.currentPage, 'native');
                 }
-            } catch (error) {
-                console.error('Load PDF error:', error);
-                showError('Không thể tải PDF: ' + (error.message || 'Lỗi không xác định'));
-            }
+            };
+
+            // Reset zoom
+            nv.iframe.style.transform = 'scale(1)';
+            updateControls();
         }
 
-        async function renderSinglePageFlat(pageNum) {
-            if (!domViewer.pdfDoc) return;
-            
-            const page = await domViewer.pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: domViewer.currentScale });
-            
-            const wrapper = document.createElement('div');
-            wrapper.className = 'pdf-page-wrapper';
-            wrapper.id = `page-wrapper-${pageNum}`;
-            wrapper.style.width = `${viewport.width}px`;
-            wrapper.style.height = `${viewport.height}px`;
-            
-            // 1. Canvas for visual rendering
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const dpr = window.devicePixelRatio || 1;
-            
-            canvas.width = viewport.width * dpr;
-            canvas.height = viewport.height * dpr;
-            canvas.style.width = `${viewport.width}px`;
-            canvas.style.height = `${viewport.height}px`;
-            
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-            
-            // 2. Text Layer for selection
-            const textLayerDiv = document.createElement('div');
-            textLayerDiv.className = 'textLayer';
-            
-            const textContent = await page.getTextContent();
-            
-            if (textContent && textContent.items && textContent.items.length > 0) {
-                try {
-                    const textLayer = new pdfjsLib.TextLayer({
-                        textContentSource: textContent,
-                        container: textLayerDiv,
-                        viewport: viewport
-                    });
-                    await textLayer.render();
-                } catch (e) {
-                    console.warn("TextLayer render warning:", e);
-                }
-            } else {
-                console.warn(`Page ${pageNum} has no selectable text (might be a scanned image).`);
-            }
-            
-            wrapper.appendChild(canvas);
-            wrapper.appendChild(textLayerDiv);
-            dv.container.appendChild(wrapper);
-            
-            domViewer.renderedPages.add(pageNum);
-        }
-
-        function scrollToPage(pageNum) {
-            const wrapper = document.getElementById(`page-wrapper-${pageNum}`);
-            if (wrapper) {
-                wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                domViewer.currentPage = pageNum;
-                updateControls();
-                if (currentBookId) schedulePositionSave(currentBookId, pageNum, 'dom');
-            }
+        function goToPage(pageNum) {
+            if (pageNum < 1) return;
+            nativeViewer.currentPage = pageNum;
+            nv.iframe.src = `${nativeViewer.currentUrl}#page=${nativeViewer.currentPage}&toolbar=0&navpanes=0&scrollbar=1`;
+            updateControls();
+            if (currentBookId) savePosition(currentBookId, nativeViewer.currentPage, 'native');
         }
 
         function zoomIn() {
-            if (domViewer.currentScale < domViewer.MAX_SCALE) {
-                domViewer.currentScale += domViewer.SCALE_STEP;
-                reloadCurrentPDF();
+            if (nativeViewer.currentScale < 2.0) {
+                nativeViewer.currentScale += nativeViewer.SCALE_STEP;
+                nv.iframe.style.transform = `scale(${nativeViewer.currentScale})`;
+                updateControls();
             }
         }
 
         function zoomOut() {
-            if (domViewer.currentScale > domViewer.MIN_SCALE) {
-                domViewer.currentScale -= domViewer.SCALE_STEP;
-                reloadCurrentPDF();
+            if (nativeViewer.currentScale > 0.5) {
+                nativeViewer.currentScale -= nativeViewer.SCALE_STEP;
+                nv.iframe.style.transform = `scale(${nativeViewer.currentScale})`;
+                updateControls();
             }
         }
 
-        async function reloadCurrentPDF() {
-            if (!domViewer.currentUrl) return;
-            const currentPage = domViewer.currentPage;
-            dv.container.innerHTML = '';
-            domViewer.renderedPages.clear();
-            showLoading('Đang điều chỉnh kích thước...');
-            await loadPDF(domViewer.currentUrl, currentPage);
-        }
-
-        function cleanupDomViewer() {
-            if (domViewer.pdfDoc) {
-                try { domViewer.pdfDoc.destroy(); } catch(e) {}
-                domViewer.pdfDoc = null;
-            }
-            domViewer.currentPage = 1;
-            domViewer.totalPages = 0;
-            domViewer.currentScale = 1.0;
+        function cleanupNativeViewer() {
+            nativeViewer.currentUrl = null;
+            nativeViewer.currentPage = 1;
+            nativeViewer.currentScale = 1.0;
+            nv.iframe.src = 'about:blank';
+            nv.iframe.style.transform = 'scale(1)';
             hideLoading();
-            dv.container.innerHTML = '';
         }
 
-        dv.btnPrev.addEventListener('click', () => scrollToPage(domViewer.currentPage - 1));
-        dv.btnNext.addEventListener('click', () => scrollToPage(domViewer.currentPage + 1));
-        dv.btnZoomIn.addEventListener('click', zoomIn);
-        dv.btnZoomOut.addEventListener('click', zoomOut);
-        dv.btnFullscreen.addEventListener('click', toggleFullscreen);
-
-        if (dv.scrollArea) {
-            dv.scrollArea.addEventListener('scroll', () => {
-                const wrappers = dv.container.querySelectorAll('.pdf-page-wrapper');
-                let closestPage = domViewer.currentPage;
-                let minDistance = Infinity;
-                
-                wrappers.forEach(w => {
-                    const rect = w.getBoundingClientRect();
-                    const distance = Math.abs(rect.top);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestPage = parseInt(w.id.replace('page-wrapper-', ''));
-                    }
-                });
-                
-                if (closestPage !== domViewer.currentPage) {
-                    domViewer.currentPage = closestPage;
-                    updateControls();
-                    if (currentBookId) schedulePositionSave(currentBookId, closestPage, 'dom');
-                }
-            });
-        }
+        nv.btnPrev.addEventListener('click', () => goToPage(nativeViewer.currentPage - 1));
+        nv.btnNext.addEventListener('click', () => goToPage(nativeViewer.currentPage + 1));
+        nv.btnZoomIn.addEventListener('click', zoomIn);
+        nv.btnZoomOut.addEventListener('click', zoomOut);
+        nv.btnFullscreen.addEventListener('click', toggleFullscreen);
 
         // =================================================================
         // ===== FULLSCREEN =====
@@ -1049,9 +862,9 @@
                 btnFullscreen.querySelector('span').textContent = text;
                 btnFullscreen.classList.toggle('active', isFullscreen);
             }
-            if (dv.btnFullscreen) {
-                dv.btnFullscreen.querySelector('i').className = `fas ${icon}`;
-                dv.btnFullscreen.classList.toggle('active', isFullscreen);
+            if (nv.btnFullscreen) {
+                nv.btnFullscreen.querySelector('i').className = `fas ${icon}`;
+                nv.btnFullscreen.classList.toggle('active', isFullscreen);
             }
         }
 
@@ -1085,6 +898,16 @@
         // =================================================================
         function getBookDisplayName(book) { return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - '); }
 
+        // We still use PDF.js just for thumbnails and getting page count
+        async function getBookInfo(pdfUrl) {
+            try {
+                const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+                return { pages: pdf.numPages };
+            } catch (e) {
+                return { pages: 1 };
+            }
+        }
+
         async function generateThumbnail(pdfUrl, canvasId) {
             try {
                 const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
@@ -1101,11 +924,12 @@
 
         function loadBooksList(bustCache = false) {
             const fetchUrl = bustCache ? `files.json?t=${Date.now()}` : 'files.json';
-            fetch(fetchUrl).then(r => r.json()).then(books => {
+            fetch(fetchUrl).then(r => r.json()).then(async (books) => {
                 listContainer.innerHTML = '';
                 books.sort((a, b) => { const numA = parseInt(a.id); const numB = parseInt(b.id); if (!isNaN(numA) && !isNaN(numB)) return numA - numB; return String(a.id).localeCompare(String(b.id)); });
                 allBooksMap = {};
-                books.forEach((book, idx) => {
+                
+                for (const book of books) {
                     allBooksMap[book.id] = book;
                     const item = document.createElement('div');
                     item.className = 'pdf-item flex items-center p-4 rounded cursor-pointer';
@@ -1119,7 +943,7 @@
                     item.innerHTML = `
                         <div class="w-16 h-20 flex-shrink-0 mr-4 sm:mr-5 rounded flex items-center justify-center shadow-sm overflow-hidden relative">
                             <i class="fas fa-circle-notch fa-spin text-white text-xl loading-icon"></i>
-                            <canvas id="thumb-${idx}" class="w-full h-full object-cover hidden"></canvas>
+                            <canvas id="thumb-${book.id}" class="w-full h-full object-cover hidden"></canvas>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-start gap-2 mb-1">
@@ -1133,10 +957,16 @@
                             <p class="book-hint">${positionHint}</p>
                         </div>
                         <i class="fas fa-external-link-alt text-xl ml-3 flex-shrink-0"></i>`;
-                    item.addEventListener('click', () => openViewer(`Giao_trinh_triet_hoc/${book.filename}`, book));
+                    
+                    item.addEventListener('click', async () => {
+                        const info = await getBookInfo(`Giao_trinh_triet_hoc/${book.filename}`);
+                        currentTotalPages = info.pages;
+                        openViewer(`Giao_trinh_triet_hoc/${book.filename}`, book);
+                    });
+                    
                     listContainer.appendChild(item);
-                    generateThumbnail(`Giao_trinh_triet_hoc/${book.filename}`, `thumb-${idx}`);
-                });
+                    generateThumbnail(`Giao_trinh_triet_hoc/${book.filename}`, `thumb-${book.id}`);
+                }
             }).catch(err => {
                 listContainer.innerHTML = `<div class="text-center p-8 rounded" style="background: rgba(220,38,38,0.05); border: 1px solid var(--neon-red);"><p class="font-mono" style="color: var(--neon-red);">// Lỗi tải danh sách.</p></div>`;
             });
@@ -1253,12 +1083,11 @@
         }
 
         function closeViewer() { 
-            if (currentBookId && domViewer.pdfDoc) {
-                savePosition(currentBookId, domViewer.currentPage, 'dom');
-            }
-            clearTimeout(positionSaveTimer);
+            if (currentBookId && nativeViewer.currentUrl) {
+                savePosition(currentBookId, nativeViewer.currentPage, 'native');
+           64}
             viewerModal.classList.add('hidden'); 
-            cleanupDomViewer();
+            cleanupNativeViewer();
             
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 if (document.exitFullscreen) document.exitFullscreen();
@@ -1267,12 +1096,6 @@
         }
         document.getElementById('close-modal').addEventListener('click', closeViewer);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !viewerModal.classList.contains('hidden')) closeViewer(); });
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && currentBookId && domViewer.pdfDoc) {
-                savePosition(currentBookId, domViewer.currentPage, 'dom');
-            }
-        });
 
         let saveTimeout;
         noteArea.addEventListener('input', (e) => {
@@ -1294,7 +1117,7 @@
 
         document.getElementById('btn-download-pdf').addEventListener('click', () => { 
             const link = document.createElement('a'); 
-            link.href = domViewer.currentUrl; 
+            link.href = nativeViewer.currentUrl; 
             link.download = currentFile; 
             link.click(); 
         });
@@ -1305,6 +1128,9 @@
             const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `ID_${currentBookId}_notes.txt`; link.click(); URL.revokeObjectURL(url);
         });
 
+        // =================================================================
+        // ===== INIT =====
+        // =================================================================
         loadBooksList(true);
 
         document.getElementById('btn-refresh').addEventListener('click', () => {
