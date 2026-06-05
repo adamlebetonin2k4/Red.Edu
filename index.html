@@ -355,12 +355,21 @@
             overflow: hidden !important;
             touch-action: auto !important;
             transform: translateZ(2px) !important;
+            
+            /* CRITICAL PDF.JS METRICS */
+            text-align: initial !important;
+            line-height: 1.0 !important;
+            text-size-adjust: none !important;
+            transform-origin: 0 0 !important;
         }
 
         #text-layer span, #text-layer div {
             color: transparent !important;
             position: absolute !important;
             white-space: pre !important;
+            
+            /* CRITICAL FOR ROTATION/SCALING ANCHOR */
+            transform-origin: 0% 0% !important;
         }
 
         #text-layer ::selection {
