@@ -559,6 +559,9 @@
                         <span id="note-id-display" class="text-xs px-2 py-0.5 rounded hidden sm:inline-block"></span>
                     </div>
                     <div class="flex items-center space-x-2 sm:space-x-3">
+                        <button id="btn-save-page-manual" class="text-xs font-semibold px-2 py-1 rounded transition" style="background: var(--bg-main); border: 1px solid var(--border-subtle); color: var(--text-secondary);" title="Lưu trang hiện tại">
+                            <i class="fas fa-bookmark mr-1"></i>Save Page
+                        </button>
                         <span id="save-status" class="text-xs font-medium opacity-0 transition-opacity duration-300"><i class="fas fa-check-circle mr-1"></i>Đã lưu</span>
                         <button id="btn-clear-notes" class="text-xs font-semibold" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                     </div>
@@ -585,8 +588,6 @@
                 themeIcon.className = 'fas fa-moon';
                 if (mobileThemeToggle) mobileThemeToggle.querySelector('i').className = 'fas fa-moon mr-2';
             }
-            // PDF dark mode follows page theme automatically via CSS
-            // No separate toggle needed
         }
         applyTheme();
         
@@ -731,6 +732,7 @@
             try {
                 const data = { page: parseInt(page) || 1, mode: mode || 'unknown', timestamp: Date.now() };
                 localStorage.setItem(POSITION_KEY_PREFIX + bookId, JSON.stringify(data));
+                console.log(`[Position] Saved: Book ${bookId}, Page ${page}, Mode ${mode}`);
             } catch (e) { console.warn('Failed to save position:', e); }
         }
 
@@ -973,18 +975,16 @@
         }
 
         // =================================================================
-        // ===== IFRAME PAGE TRACKING (improved) =====
+        // ===== IFRAME PAGE TRACKING (improved with manual save) =====
         // =================================================================
         
-        let iframePagePollInterval = null;
         let lastKnownIframePage = 1;
-        let iframeLoadTimeout = null;
+        let iframePagePollInterval = null;
 
         function tryReadIframePage() {
             if (!pdfFrame || !currentBookId) return null;
             
             try {
-                // Method 1: Try contentWindow.location (works for same-origin)
                 const loc = pdfFrame.contentWindow?.location;
                 if (loc) {
                     const hash = loc.hash || '';
@@ -993,30 +993,10 @@
                         const page = parseInt(match[1]);
                         if (page && page >= 1) return page;
                     }
-                    // Also check href in case hash isn't set but page is in URL
-                    const href = loc.href || '';
-                    const hrefMatch = href.match(/#page=(\d+)/i);
-                    if (hrefMatch) {
-                        const page = parseInt(hrefMatch[1]);
-                        if (page && page >= 1) return page;
-                    }
                 }
             } catch (e) {
                 // Cross-origin - can't read
             }
-            
-            try {
-                // Method 2: Try contentDocument (rarely works for PDFs but worth trying)
-                const doc = pdfFrame.contentDocument;
-                if (doc && doc.location) {
-                    const hash = doc.location.hash || '';
-                    const match = hash.match(/#page=(\d+)/i);
-                    if (match) {
-                        const page = parseInt(match[1]);
-                        if (page && page >= 1) return page;
-                    }
-                }
-            } catch (e) {}
             
             return null;
         }
@@ -1025,16 +1005,7 @@
             stopIframePagePolling();
             lastKnownIframePage = 1;
             
-            // Initial read after a short delay (let PDF load)
-            iframeLoadTimeout = setTimeout(() => {
-                const page = tryReadIframePage();
-                if (page) {
-                    lastKnownIframePage = page;
-                    savePosition(currentBookId, page, 'iframe');
-                }
-            }, 1500);
-            
-            // Poll every 1.5 seconds
+            // Poll every 2 seconds
             iframePagePollInterval = setInterval(() => {
                 if (!pdfFrame || !currentBookId) return;
                 
@@ -1043,7 +1014,7 @@
                     lastKnownIframePage = page;
                     savePosition(currentBookId, page, 'iframe');
                 }
-            }, 1500);
+            }, 2000);
         }
 
         function stopIframePagePolling() {
@@ -1051,24 +1022,24 @@
                 clearInterval(iframePagePollInterval);
                 iframePagePollInterval = null;
             }
-            if (iframeLoadTimeout) {
-                clearTimeout(iframeLoadTimeout);
-                iframeLoadTimeout = null;
-            }
         }
 
-        // Listen to iframe load events
-        if (pdfFrame) {
-            pdfFrame.addEventListener('load', () => {
+        // Manual save page button
+        const btnSavePageManual = document.getElementById('btn-save-page-manual');
+        if (btnSavePageManual) {
+            btnSavePageManual.addEventListener('click', () => {
                 if (!useCanvasViewer && currentBookId) {
-                    // Wait a bit for PDF viewer to initialize
+                    // For iframe mode, save the last known page
+                    savePosition(currentBookId, lastKnownIframePage, 'iframe');
+                    
+                    // Visual feedback
+                    const originalHTML = btnSavePageManual.innerHTML;
+                    btnSavePageManual.innerHTML = '<i class="fas fa-check mr-1"></i>Saved!';
+                    btnSavePageManual.style.color = '#10b981';
                     setTimeout(() => {
-                        const page = tryReadIframePage();
-                        if (page) {
-                            lastKnownIframePage = page;
-                            savePosition(currentBookId, page, 'iframe');
-                        }
-                    }, 1000);
+                        btnSavePageManual.innerHTML = originalHTML;
+                        btnSavePageManual.style.color = '';
+                    }, 1500);
                 }
             });
         }
@@ -1232,7 +1203,7 @@
                             </div>
                             <p class="book-hint">${positionHint}</p>
                         </div>
-                        <i class="fas fa-external-link-alt text-xl ml-3 flex-shrink-0"></i>`;
+                        <i class="fas faexternal-link-alt text-xl ml-3 flex-shrink-0"></i>`;
                     item.addEventListener('click', () => openViewer(`Giao_trinh_triet_hoc/${book.filename}`, book));
                     listContainer.appendChild(item);
                     generateThumbnail(`Giao_trinh_triet_hoc/${book.filename}`, `thumb-${idx}`);
@@ -1374,10 +1345,7 @@
                 if (useCanvasViewer && canvasViewer.pdfDoc) {
                     savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
                 } else if (!useCanvasViewer) {
-                    // Try one final read before closing
-                    const finalPage = tryReadIframePage();
-                    const pageToSave = finalPage || lastKnownIframePage;
-                    savePosition(currentBookId, pageToSave, 'iframe');
+                    savePosition(currentBookId, lastKnownIframePage, 'iframe');
                 }
             }
             
@@ -1402,8 +1370,7 @@
                 if (useCanvasViewer && canvasViewer.pdfDoc) {
                     savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
                 } else if (!useCanvasViewer) {
-                    const currentPage = tryReadIframePage() || lastKnownIframePage;
-                    savePosition(currentBookId, currentPage, 'iframe');
+                    savePosition(currentBookId, lastKnownIframePage, 'iframe');
                 }
             }
         });
