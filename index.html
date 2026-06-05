@@ -12,6 +12,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
 
     <style>
         :root {
@@ -257,7 +262,7 @@
         .fullscreen-btn:hover { color: var(--neon-red); }
         .fullscreen-btn.active { color: var(--neon-red); }
 
-        /* ===== NATIVE IFRAME PDF VIEWER ===== */
+        /* ===== BULLETPROOF PDF VIEWER LAYOUT ===== */
         #pdf-viewer-native {
             flex: 1;
             flex-direction: column;
@@ -305,23 +310,78 @@
         
         #native-scroll-area {
             flex: 1;
-            overflow: hidden; /* Let iframe handle scrolling */
+            overflow-y: auto;
+            overflow-x: hidden;
             position: relative;
+            -webkit-overflow-scrolling: touch;
             background: var(--bg-main);
+            scroll-behavior: smooth;
         }
 
-        #pdf-iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-            transition: transform 0.3s ease;
-            transform-origin: top center;
+        #pdf-pages-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            min-height: 100%;
         }
 
-        /* Dark mode filter applied to the iframe */
-        body.dark-mode #pdf-iframe {
+        /* Individual Page Wrapper */
+        .pdf-page {
+            position: relative;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            background: white;
+            pointer-events: auto !important;
+        }
+
+        /* Canvas MUST NOT block clicks so text layer receives them */
+        .pdf-page canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none !important;
+            user-select: none !important;
+        }
+
+        /* Dark mode filter applied ONLY to canvas to preserve text layer hit-testing */
+        body.dark-mode .pdf-page canvas {
             filter: invert(1) hue-rotate(180deg);
+        }
+
+        /* ===== BULLETPROOF TEXT SELECTION LAYER ===== */
+        .textLayer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            /* DEBUG: Change opacity to 0 and color to transparent when you confirm highlighting works! */
+            opacity: 0.3 !important; 
+            line-height: 1.0;
+            pointer-events: auto !important;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            z-index: 10 !important;
+        }
+
+        .textLayer > span {
+            /* DEBUG: Change color to transparent !important when you confirm highlighting works! */
+            color: #333 !important; 
+            position: absolute;
+            white-space: pre;
+            cursor: text !important;
+            transform-origin: 0% 0%;
+            pointer-events: auto !important;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+        }
+
+        .textLayer ::selection {
+            background: rgba(220, 38, 38, 0.4) !important;
+            color: transparent !important;
         }
         
         #native-loading-overlay {
@@ -503,7 +563,7 @@
         </div>
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
             
-            <!-- ===== NATIVE IFRAME PDF VIEWER ===== -->
+            <!-- ===== BULLETPROOF PDF VIEWER ===== -->
             <div id="pdf-viewer-native">
                 <div id="native-controls-bar">
                     <button id="btn-native-prev" title="Trang trước"><i class="fas fa-chevron-up"></i></button>
@@ -523,8 +583,9 @@
                         <i class="fas fa-circle-notch fa-spin" id="native-loading-icon"></i>
                         <div id="native-loading-text">Đang tải PDF...</div>
                     </div>
-                    <!-- Native browser PDF viewer -->
-                    <iframe id="pdf-iframe" src="about:blank" allowfullscreen></iframe>
+                    <div id="pdf-pages-container">
+                        <!-- Pages injected here -->
+                    </div>
                 </div>
                 <div id="mobile-notes-section">
                     <div id="mobile-notes-header">
@@ -694,7 +755,7 @@
         // ===== APP STATE =====
         let currentFile = '';
         let currentBookId = '';
-        let currentTotalPages = 1; // Native viewer doesn't know total pages easily, we'll mock or fetch
+        let currentTotalPages = 1;
         let allBooksMap = {};
         const listContainer = document.getElementById('pdf-list');
         const compiledNotesList = document.getElementById('compiled-notes-list');
@@ -733,19 +794,28 @@
         }
 
         // =================================================================
-        // ===== NATIVE IFRAME PDF VIEWER LOGIC =====
+        // ===== BULLETPROOF PDF RENDERER =====
         // =================================================================
         
-        const nativeViewer = {
-            currentUrl: null,
+        const pdfViewer = {
+            pdfDoc: null,
             currentPage: 1,
+            totalPages: 0,
             currentScale: 1.0,
-            SCALE_STEP: 0.25
+            isLoading: false,
+            currentUrl: null,
+            MIN_SCALE: 0.5,
+            MAX_SCALE: 2.5,
+            SCALE_STEP: 0.25,
+            renderedPages: new Set()
         };
 
-        const nv = {
-            iframe: document.getElementById('pdf-iframe'),
+        const pv = {
+            container: document.getElementById('pdf-pages-container'),
+            scrollArea: document.getElementById('native-scroll-area'),
             loadingOverlay: document.getElementById('native-loading-overlay'),
+            loadingIcon: document.getElementById('native-loading-icon'),
+            loadingText: document.getElementById('native-loading-text'),
             currentPageEl: document.getElementById('native-current-page'),
             totalPagesEl: document.getElementById('native-total-pages'),
             zoomLevelEl: document.getElementById('native-zoom-level'),
@@ -756,86 +826,204 @@
             btnFullscreen: document.getElementById('btn-native-fullscreen')
         };
 
-        function showLoading() {
-            nv.loadingOverlay.style.display = 'block';
+        function showLoading(message) {
+            pdfViewer.isLoading = true;
+            pv.loadingText.textContent = message || 'Đang tải PDF...';
+            pv.loadingIcon.className = 'fas fa-circle-notch fa-spin';
+            pv.loadingOverlay.style.display = 'block';
         }
 
         function hideLoading() {
-            nv.loadingOverlay.style.display = 'none';
+            pdfViewer.isLoading = false;
+            pv.loadingOverlay.style.display = 'none';
         }
 
         function updateControls() {
-            nv.currentPageEl.textContent = nativeViewer.currentPage;
-            nv.totalPagesEl.textContent = currentTotalPages > 1 ? currentTotalPages : '-';
-            nv.zoomLevelEl.textContent = Math.round(nativeViewer.currentScale * 100) + '%';
+            pv.currentPageEl.textContent = pdfViewer.currentPage;
+            pv.totalPagesEl.textContent = pdfViewer.totalPages || '-';
+            pv.zoomLevelEl.textContent = Math.round(pdfViewer.currentScale * 100) + '%';
             
-            nv.btnPrev.disabled = nativeViewer.currentPage <= 1;
-            // We can't easily disable "next" without knowing total pages, so we leave it enabled
-            nv.btnZoomIn.disabled = nativeViewer.currentScale >= 2.0;
-            nv.btnZoomOut.disabled = nativeViewer.currentScale <= 0.5;
+            pv.btnPrev.disabled = pdfViewer.currentPage <= 1;
+            pv.btnNext.disabled = pdfViewer.currentPage >= pdfViewer.totalPages;
+            pv.btnZoomIn.disabled = pdfViewer.currentScale >= pdfViewer.MAX_SCALE;
+            pv.btnZoomOut.disabled = pdfViewer.currentScale <= pdfViewer.MIN_SCALE;
         }
 
-        function loadPDF(url, startPage = 1) {
-            nativeViewer.currentUrl = url;
-            nativeViewer.currentPage = Math.max(1, parseInt(startPage) || 1);
-            nativeViewer.currentScale = 1.0;
+        async function loadPDF(url, startPage = 1) {
+            if (pdfViewer.pdfDoc) {
+                try { pdfViewer.pdfDoc.destroy(); } catch(e) {}
+                pdfViewer.pdfDoc = null;
+            }
             
-            showLoading();
+            pdfViewer.currentUrl = url;
+            pdfViewer.currentPage = Math.max(1, parseInt(startPage) || 1);
+            pdfViewer.currentScale = 1.0;
+            pdfViewer.renderedPages.clear();
+            pv.container.innerHTML = '';
             
-            // Native browser PDF viewer with hidden toolbar and specific page
-            // #toolbar=0 hides the top bar, #page=X jumps to page
-            nv.iframe.src = `${url}#page=${nativeViewer.currentPage}&toolbar=0&navpanes=0&scrollbar=1`;
+            showLoading('Đang tải PDF...');
             
-            nv.iframe.onload = () => {
-                hideLoading();
-                if (currentBookId) {
-                    savePosition(currentBookId, nativeViewer.currentPage, 'native');
+            try {
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfViewer.pdfDoc = await loadingTask.promise;
+                pdfViewer.totalPages = pdfViewer.pdfDoc.numPages;
+                currentTotalPages = pdfViewer.totalPages;
+                
+                // Render all pages sequentially for smooth scrolling
+                for (let i = 1; i <= pdfViewer.totalPages; i++) {
+                    await renderSinglePage(i);
                 }
-            };
-
-            // Reset zoom
-            nv.iframe.style.transform = 'scale(1)';
-            updateControls();
+                
+                updateControls();
+                hideLoading();
+                
+                // Scroll to saved page smoothly
+                const targetPage = document.getElementById(`page-${pdfViewer.currentPage}`);
+                if (targetPage) {
+                    targetPage.scrollIntoView({ behavior: 'auto', block: 'start' });
+                }
+                
+                if (currentBookId) {
+                    savePosition(currentBookId, pdfViewer.currentPage, 'native');
+                }
+            } catch (error) {
+                console.error('Load PDF error:', error);
+                pv.loadingText.textContent = 'Không thể tải PDF: ' + (error.message || 'Lỗi không xác định');
+                pv.loadingIcon.className = 'fas fa-exclamation-circle';
+            }
         }
 
-        function goToPage(pageNum) {
-            if (pageNum < 1) return;
-            nativeViewer.currentPage = pageNum;
-            nv.iframe.src = `${nativeViewer.currentUrl}#page=${nativeViewer.currentPage}&toolbar=0&navpanes=0&scrollbar=1`;
-            updateControls();
-            if (currentBookId) savePosition(currentBookId, nativeViewer.currentPage, 'native');
+        async function renderSinglePage(pageNum) {
+            if (!pdfViewer.pdfDoc) return;
+            
+            const page = await pdfViewer.pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: pdfViewer.currentScale });
+            
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'pdf-page';
+            pageDiv.id = `page-${pageNum}`;
+            pageDiv.style.width = `${viewport.width}px`;
+            pageDiv.style.height = `${viewport.height}px`;
+            
+            // 1. Render Canvas (Visual)
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const outputScale = window.devicePixelRatio || 1;
+            
+            canvas.width = Math.floor(viewport.width * outputScale);
+            canvas.height = Math.floor(viewport.height * outputScale);
+            canvas.style.width = `${viewport.width}px`;
+            canvas.style.height = `${viewport.height}px`;
+            
+            const renderContext = {
+                canvasContext: ctx,
+                transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null,
+                viewport: viewport
+            };
+            await page.render(renderContext).promise;
+            pageDiv.appendChild(canvas);
+
+            // 2. Render Text Layer (Selectable)
+            const textLayerDiv = document.createElement('div');
+            textLayerDiv.className = 'textLayer';
+            
+            const textContent = await page.getTextContent();
+            if (textContent && textContent.items && textContent.items.length > 0) {
+                try {
+                    const textLayer = new pdfjsLib.TextLayer({
+                        textContentSource: textContent,
+                        container: textLayerDiv,
+                        viewport: viewport
+                    });
+                    await textLayer.render();
+                } catch (e) {
+                    console.error(`TextLayer render error on page ${pageNum}:`, e);
+                }
+            } else {
+                console.warn(`Page ${pageNum} contains no selectable text. It may be a scanned image.`);
+            }
+            
+            pageDiv.appendChild(textLayerDiv);
+            pv.container.appendChild(pageDiv);
+            
+            pdfViewer.renderedPages.add(pageNum);
+        }
+
+        function scrollToPage(pageNum) {
+            if (pageNum < 1 || pageNum > pdfViewer.totalPages) return;
+            const targetPage = document.getElementById(`page-${pageNum}`);
+            if (targetPage) {
+                targetPage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                pdfViewer.currentPage = pageNum;
+                updateControls();
+                if (currentBookId) savePosition(currentBookId, pageNum, 'native');
+            }
         }
 
         function zoomIn() {
-            if (nativeViewer.currentScale < 2.0) {
-                nativeViewer.currentScale += nativeViewer.SCALE_STEP;
-                nv.iframe.style.transform = `scale(${nativeViewer.currentScale})`;
-                updateControls();
+            if (pdfViewer.currentScale < pdfViewer.MAX_SCALE) {
+                pdfViewer.currentScale += pdfViewer.SCALE_STEP;
+                reloadCurrentPDF();
             }
         }
 
         function zoomOut() {
-            if (nativeViewer.currentScale > 0.5) {
-                nativeViewer.currentScale -= nativeViewer.SCALE_STEP;
-                nv.iframe.style.transform = `scale(${nativeViewer.currentScale})`;
-                updateControls();
+            if (pdfViewer.currentScale > pdfViewer.MIN_SCALE) {
+                pdfViewer.currentScale -= pdfViewer.SCALE_STEP;
+                reloadCurrentPDF();
             }
         }
 
-        function cleanupNativeViewer() {
-            nativeViewer.currentUrl = null;
-            nativeViewer.currentPage = 1;
-            nativeViewer.currentScale = 1.0;
-            nv.iframe.src = 'about:blank';
-            nv.iframe.style.transform = 'scale(1)';
-            hideLoading();
+        async function reloadCurrentPDF() {
+            if (!pdfViewer.currentUrl) return;
+            const currentPage = pdfViewer.currentPage;
+            pv.container.innerHTML = '';
+            pdfViewer.renderedPages.clear();
+            showLoading('Đang điều chỉnh kích thước...');
+            await loadPDF(pdfViewer.currentUrl, currentPage);
         }
 
-        nv.btnPrev.addEventListener('click', () => goToPage(nativeViewer.currentPage - 1));
-        nv.btnNext.addEventListener('click', () => goToPage(nativeViewer.currentPage + 1));
-        nv.btnZoomIn.addEventListener('click', zoomIn);
-        nv.btnZoomOut.addEventListener('click', zoomOut);
-        nv.btnFullscreen.addEventListener('click', toggleFullscreen);
+        function cleanupViewer() {
+            if (pdfViewer.pdfDoc) {
+                try { pdfViewer.pdfDoc.destroy(); } catch(e) {}
+                pdfViewer.pdfDoc = null;
+            }
+            pdfViewer.currentPage = 1;
+            pdfViewer.totalPages = 0;
+            pdfViewer.currentScale = 1.0;
+            hideLoading();
+            pv.container.innerHTML = '';
+        }
+
+        pv.btnPrev.addEventListener('click', () => scrollToPage(pdfViewer.currentPage - 1));
+        pv.btnNext.addEventListener('click', () => scrollToPage(pdfViewer.currentPage + 1));
+        pv.btnZoomIn.addEventListener('click', zoomIn);
+        pv.btnZoomOut.addEventListener('click', zoomOut);
+        pv.btnFullscreen.addEventListener('click', toggleFullscreen);
+
+        // Scroll listener to update current page number dynamically
+        if (pv.scrollArea) {
+            pv.scrollArea.addEventListener('scroll', () => {
+                const pages = pv.container.querySelectorAll('.pdf-page');
+                let closestPage = pdfViewer.currentPage;
+                let minDistance = Infinity;
+                
+                pages.forEach(p => {
+                    const rect = p.getBoundingClientRect();
+                    const distance = Math.abs(rect.top);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestPage = parseInt(p.id.replace('page-', ''));
+                    }
+                });
+                
+                if (closestPage !== pdfViewer.currentPage) {
+                    pdfViewer.currentPage = closestPage;
+                    updateControls();
+                    if (currentBookId) savePosition(currentBookId, closestPage, 'native');
+                }
+            });
+        }
 
         // =================================================================
         // ===== FULLSCREEN =====
@@ -862,9 +1050,9 @@
                 btnFullscreen.querySelector('span').textContent = text;
                 btnFullscreen.classList.toggle('active', isFullscreen);
             }
-            if (nv.btnFullscreen) {
-                nv.btnFullscreen.querySelector('i').className = `fas ${icon}`;
-                nv.btnFullscreen.classList.toggle('active', isFullscreen);
+            if (pv.btnFullscreen) {
+                pv.btnFullscreen.querySelector('i').className = `fas ${icon}`;
+                pv.btnFullscreen.classList.toggle('active', isFullscreen);
             }
         }
 
@@ -898,7 +1086,6 @@
         // =================================================================
         function getBookDisplayName(book) { return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - '); }
 
-        // We still use PDF.js just for thumbnails and getting page count
         async function getBookInfo(pdfUrl) {
             try {
                 const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
@@ -1083,11 +1270,11 @@
         }
 
         function closeViewer() { 
-            if (currentBookId && nativeViewer.currentUrl) {
-                savePosition(currentBookId, nativeViewer.currentPage, 'native');
-           64}
+            if (currentBookId && pdfViewer.pdfDoc) {
+                savePosition(currentBookId, pdfViewer.currentPage, 'native');
+            }
             viewerModal.classList.add('hidden'); 
-            cleanupNativeViewer();
+            cleanupViewer();
             
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 if (document.exitFullscreen) document.exitFullscreen();
@@ -1117,7 +1304,7 @@
 
         document.getElementById('btn-download-pdf').addEventListener('click', () => { 
             const link = document.createElement('a'); 
-            link.href = nativeViewer.currentUrl; 
+            link.href = pdfViewer.currentUrl; 
             link.download = currentFile; 
             link.click(); 
         });
