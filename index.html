@@ -903,12 +903,15 @@
                 // ===== REWRITTEN TEXT LAYER RENDERING =====
                 const textLayerDiv = document.getElementById('text-layer');
                 textLayerDiv.innerHTML = ''; // Clear previous
+                
+                // Set exact dimensions to match viewport
                 textLayerDiv.style.width = viewport.width + 'px';
                 textLayerDiv.style.height = viewport.height + 'px';
                 
-                // FIX: PDF.js 3.x requires the --scale-factor CSS variable 
-                // to correctly calculate text span transforms and selection boxes.
-                textLayerDiv.style.setProperty('--scale-factor', viewport.scale);
+                // *** CRITICAL FIX FOR PDF.JS v3.x ***
+                // Set the scale factor CSS variable so the text layer scales correctly
+                textLayerDiv.style.setProperty('--scale-factor', scale);
+                // *************************************
                 
                 const textContent = await page.getTextContent();
                 
