@@ -352,12 +352,12 @@
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
+            width: 100%;
+            height: 100%;
             overflow: hidden !important;
             line-height: 1.0 !important;
             touch-action: auto !important;
-            transform: translateZ(2px) !important; /* Pushes it physically in front of canvas in 3D space */
+            /* transform: translateZ(2px) !important; REMOVED to fix text selection and 3D flipping */
         }
 
         #text-layer span, #text-layer div {
