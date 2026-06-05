@@ -332,16 +332,17 @@
             margin-bottom: 2rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             background: white;
-            pointer-events: auto !important;
         }
 
-        /* Canvas MUST NOT block clicks so text layer receives them */
+        /* === LAYER 1: VISUAL CANVAS (Non-interactive) === */
         .pdf-page canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            pointer-events: none !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1 !important;
+            pointer-events: none !important; /* CRITICAL: Lets clicks pass through to text layer */
             user-select: none !important;
         }
 
@@ -350,37 +351,35 @@
             filter: invert(1) hue-rotate(180deg);
         }
 
-        /* ===== BULLETPROOF TEXT SELECTION LAYER ===== */
+        /* === LAYER 2: INTERACTIVE TEXT (Selectable) === */
         .textLayer {
-            position: absolute;
-            left: 0;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            overflow: hidden;
-            /* DEBUG: Change opacity to 0 and color to transparent when you confirm highlighting works! */
-            opacity: 0.3 !important; 
-            line-height: 1.0;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 9999 !important; /* ABOVE the canvas */
             pointer-events: auto !important;
             user-select: text !important;
             -webkit-user-select: text !important;
-            z-index: 10 !important;
+            opacity: 0.3 !important; /* Visible for debugging. Change to 0 when working! */
+            line-height: 1.0 !important;
         }
 
-        .textLayer > span {
-            /* DEBUG: Change color to transparent !important when you confirm highlighting works! */
-            color: #333 !important; 
-            position: absolute;
-            white-space: pre;
+        .textLayer span {
+            position: absolute !important;
+            color: transparent !important; /* Invisible text, but selectable */
+            white-space: pre !important;
             cursor: text !important;
-            transform-origin: 0% 0%;
+            transform-origin: 0% 0% !important;
             pointer-events: auto !important;
             user-select: text !important;
             -webkit-user-select: text !important;
+            z-index: 9999 !important;
         }
 
         .textLayer ::selection {
-            background: rgba(220, 38, 38, 0.4) !important;
+            background: rgba(220, 38, 38, 0.6) !important; /* BRIGHT RED HIGHLIGHT */
             color: transparent !important;
         }
         
@@ -869,7 +868,6 @@
                 pdfViewer.totalPages = pdfViewer.pdfDoc.numPages;
                 currentTotalPages = pdfViewer.totalPages;
                 
-                // Render all pages sequentially for smooth scrolling
                 for (let i = 1; i <= pdfViewer.totalPages; i++) {
                     await renderSinglePage(i);
                 }
@@ -877,7 +875,6 @@
                 updateControls();
                 hideLoading();
                 
-                // Scroll to saved page smoothly
                 const targetPage = document.getElementById(`page-${pdfViewer.currentPage}`);
                 if (targetPage) {
                     targetPage.scrollIntoView({ behavior: 'auto', block: 'start' });
@@ -905,7 +902,7 @@
             pageDiv.style.width = `${viewport.width}px`;
             pageDiv.style.height = `${viewport.height}px`;
             
-            // 1. Render Canvas (Visual)
+            // 1. Render Canvas (Visual Layer)
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const outputScale = window.devicePixelRatio || 1;
@@ -923,11 +920,13 @@
             await page.render(renderContext).promise;
             pageDiv.appendChild(canvas);
 
-            // 2. Render Text Layer (Selectable)
+            // 2. Render Text Layer (Interactive Layer)
             const textLayerDiv = document.createElement('div');
             textLayerDiv.className = 'textLayer';
             
             const textContent = await page.getTextContent();
+            
+            // CRITICAL CHECK: Does this PDF actually have text?
             if (textContent && textContent.items && textContent.items.length > 0) {
                 try {
                     const textLayer = new pdfjsLib.TextLayer({
@@ -936,16 +935,19 @@
                         viewport: viewport
                     });
                     await textLayer.render();
+                    pageDiv.appendChild(textLayerDiv);
                 } catch (e) {
                     console.error(`TextLayer render error on page ${pageNum}:`, e);
                 }
             } else {
-                console.warn(`Page ${pageNum} contains no selectable text. It may be a scanned image.`);
+                console.error(`⚠️ PAGE ${pageNum} HAS NO TEXT DATA! This PDF is likely a scanned image.`);
+                const warning = document.createElement('div');
+                warning.style.cssText = "position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#dc2626; color:white; padding:20px; z-index:10000; font-weight:bold; text-align:center; border-radius:8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);";
+                warning.innerHTML = "⚠️ <b>SCANNED IMAGE DETECTED</b><br>This page contains no selectable text data.<br>You cannot highlight a photograph.";
+                pageDiv.appendChild(warning);
             }
             
-            pageDiv.appendChild(textLayerDiv);
             pv.container.appendChild(pageDiv);
-            
             pdfViewer.renderedPages.add(pageNum);
         }
 
@@ -1001,7 +1003,6 @@
         pv.btnZoomOut.addEventListener('click', zoomOut);
         pv.btnFullscreen.addEventListener('click', toggleFullscreen);
 
-        // Scroll listener to update current page number dynamically
         if (pv.scrollArea) {
             pv.scrollArea.addEventListener('scroll', () => {
                 const pages = pv.container.querySelectorAll('.pdf-page');
