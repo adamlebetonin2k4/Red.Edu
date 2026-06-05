@@ -13,9 +13,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- PDF.js -->
+    <!-- Sử dụng phiên bản PDF.js ổn định -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
 
     <style>
         :root {
@@ -219,7 +221,7 @@
         #btn-download-notes { background: transparent !important; border: 2px solid var(--neon-red) !important; color: var(--neon-red) !important; transition: all 0.3s; }
         #btn-download-notes:hover { background: rgba(220, 38, 38, 0.1) !important; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
 
-        /* ===== NOTES PANEL (Smaller Size) ===== */
+        /* ===== NOTES PANEL ===== */
         #notes-panel {
             background: var(--bg-surface) !important;
             border-left: 1px solid var(--border-subtle);
@@ -261,7 +263,7 @@
         .fullscreen-btn:hover { color: var(--neon-red); }
         .fullscreen-btn.active { color: var(--neon-red); }
 
-        /* ===== NEW DOM-BASED PDF VIEWER LAYOUT ===== */
+        /* ===== NEW PDF VIEWER LAYOUT (DOM BASED) ===== */
         #pdf-viewer-dom {
             flex: 1;
             flex-direction: column;
@@ -281,6 +283,7 @@
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
             flex-wrap: wrap;
+            z-index: 10;
         }
         
         #dom-controls-bar button {
@@ -325,7 +328,7 @@
             perspective: 2500px;
         }
 
-        /* Individual Page Wrapper for Flip Animation */
+        /* Individual Page Wrapper */
         .pdf-page-wrapper {
             position: relative;
             margin-bottom: 2rem;
@@ -763,7 +766,7 @@
         }
 
         // =================================================================
-        // ===== NEW DOM-BASED PDF VIEWER LOGIC =====
+        // ===== NEW DOM-BASED PDF VIEWER LOGIC (FIXED) =====
         // =================================================================
         
         const domViewer = {
@@ -776,7 +779,7 @@
             MIN_SCALE: 0.5,
             MAX_SCALE: 3.0,
             SCALE_STEP: 0.25,
-            renderedPages: new Set() // Track which pages are already in DOM
+            renderedPages: new Set()
         };
 
         const dv = {
@@ -825,50 +828,6 @@
             dv.btnZoomOut.disabled = domViewer.currentScale <= domViewer.MIN_SCALE;
         }
 
-        async function renderPageToDOM(pageNum) {
-            if (!domViewer.pdfDoc) return;
-            if (domViewer.renderedPages.has(pageNum)) return; // Already rendered
-
-            try {
-                const page = await domViewer.pdfDoc.getPage(pageNum);
-                const viewport = page.getViewport({ scale: domViewer.currentScale });
-                
-                const wrapper = document.createElement('div');
-                wrapper.className = 'pdf-page-wrapper';
-                wrapper.id = `page-wrapper-${pageNum}`;
-                wrapper.style.width = `${viewport.width}px`;
-                wrapper.style.height = `${viewport.height}px`;
-                
-                // Render page content into the wrapper
-                await page.render({
-                    canvasContext: undefined, // We want DOM/SVG output, not canvas
-                    viewport: viewport,
-                    intent: 'display'
-                }).promise;
-                
-                // Note: In newer PDF.js versions, getPage().render() without canvasContext 
-                // might not work as expected in all browsers. 
-                // The most robust way for DOM-based text selection is using the text layer 
-                // but keeping it simple: we will use the standard canvas approach BUT 
-                // wrapped in a way that allows text selection via the built-in text layer 
-                // provided by PDF.js if we use the full viewer, OR we stick to the canvas 
-                // but ensure the text layer is perfectly aligned.
-                
-                // REVISION: Since pure DOM rendering of PDFs is complex without the full viewer,
-                // let's stick to the Canvas + TextLayer approach but FIX the alignment issues 
-                // by removing the 3D transforms that were breaking hit-testing.
-                
-                // Let's revert to a simpler Canvas approach but WITHOUT the 3D flip 
-                // that was causing the selection issues. We'll use a simple fade/slide.
-                
-            } catch (e) {
-                console.error("Page render error", e);
-            }
-        }
-
-        // Reverting to a robust Canvas + TextLayer approach, but FLAT (No 3D)
-        // This ensures text selection works perfectly.
-        
         async function loadPDF(url, startPage = 1) {
             if (domViewer.pdfDoc) {
                 try { domViewer.pdfDoc.destroy(); } catch(e) {}
@@ -879,7 +838,7 @@
             domViewer.currentPage = Math.max(1, parseInt(startPage) || 1);
             domViewer.currentScale = 1.0;
             domViewer.renderedPages.clear();
-            dv.container.innerHTML = ''; // Clear previous pages
+            dv.container.innerHTML = '';
             
             showLoading('Đang tải PDF...');
             
@@ -888,7 +847,7 @@
                 domViewer.pdfDoc = await loadingTask.promise;
                 domViewer.totalPages = domViewer.pdfDoc.numPages;
                 
-                // Render all pages sequentially for scrolling
+                // Render all pages sequentially
                 for (let i = 1; i <= domViewer.totalPages; i++) {
                     await renderSinglePageFlat(i);
                 }
@@ -937,7 +896,7 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             await page.render({ canvasContext: ctx, viewport: viewport }).promise;
             
-            // Text Layer for selection
+            // Text Layer for selection (Using safe instantiation)
             const textLayerDiv = document.createElement('div');
             textLayerDiv.className = 'textLayer';
             textLayerDiv.style.position = 'absolute';
@@ -948,15 +907,24 @@
             textLayerDiv.style.overflow = 'hidden';
             textLayerDiv.style.opacity = '1';
             textLayerDiv.style.lineHeight = '1.0';
+            textLayerDiv.style.pointerEvents = 'auto'; // Ensure selection works
             
             const textContent = await page.getTextContent();
-            const textLayer = new pdfjsLib.TextLayer({
-                textContentSource: textContent,
-                container: textLayerDiv,
-                viewport: viewport,
-                textDivs: []
-            });
-            await textLayer.render();
+            
+            // Safe TextLayer instantiation for v3.11
+            if (pdfjsLib.TextLayer) {
+                try {
+                    const textLayer = new pdfjsLib.TextLayer({
+                        textContentSource: textContent,
+                        container: textLayerDiv,
+                        viewport: viewport,
+                        textDivs: []
+                    });
+                    await textLayer.render();
+                } catch (e) {
+                    console.warn("TextLayer render warning:", e);
+                }
+            }
             
             wrapper.appendChild(canvas);
             wrapper.appendChild(textLayerDiv);
