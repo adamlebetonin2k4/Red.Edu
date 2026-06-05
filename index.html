@@ -218,10 +218,26 @@
         #btn-download-notes { background: transparent !important; border: 2px solid var(--neon-red) !important; color: var(--neon-red) !important; transition: all 0.3s; }
         #btn-download-notes:hover { background: rgba(220, 38, 38, 0.1) !important; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
 
-        #viewer-modal .flex-1.md\:w-\[400px\] { background: var(--bg-surface) !important; border-left: 1px solid var(--border-subtle); }
-        #viewer-modal .flex-1.md\:w-\[400px\] > div:first-child { background: var(--bg-main) !important; border-bottom: 1px solid var(--border-subtle) !important; }
-        #viewer-modal .flex-1.md\:w-\[400px\] h4 { color: var(--text-primary) !important; font-weight: 700; letter-spacing: 0.15em; }
-        #viewer-modal .flex-1.md\:w-\[400px\] .fa-sticky-note { color: var(--neon-red) !important; filter: drop-shadow(0 0 6px var(--neon-red-glow)); }
+        /* ===== NOTES PANEL (Smaller Size) ===== */
+        #notes-panel {
+            background: var(--bg-surface) !important;
+            border-left: 1px solid var(--border-subtle);
+            width: 300px; /* Reduced from 400px/450px */
+        }
+        #notes-panel > div:first-child {
+            background: var(--bg-main) !important;
+            border-bottom: 1px solid var(--border-subtle) !important;
+        }
+        #notes-panel h4 {
+            color: var(--text-primary) !important;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+        }
+        #notes-panel .fa-sticky-note {
+            color: var(--neon-red) !important;
+            filter: drop-shadow(0 0 6px var(--neon-red-glow));
+        }
+
         #note-id-display { background: rgba(220, 38, 38, 0.1) !important; color: var(--neon-red) !important; border: 1px solid rgba(220, 38, 38, 0.3); font-family: 'JetBrains Mono', monospace !important; }
         #save-status { color: #10b981 !important; }
         #btn-clear-notes { color: var(--neon-red) !important; transition: all 0.3s; }
@@ -291,8 +307,7 @@
         
         #canvas-scroll-area {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: auto; /* Allows both X and Y scrolling when zoomed */
             position: relative;
             -webkit-overflow-scrolling: touch;
         }
@@ -304,9 +319,9 @@
             min-height: 100%;
             perspective: 2500px;
         }
-
-        /* 3D PAGE CONTAINER */
-        #page-container {
+        
+        /* Container for 3D flip */
+        #pdf-canvas-container {
             position: relative;
             display: inline-block;
             transform-style: preserve-3d;
@@ -315,83 +330,41 @@
         
         #pdf-canvas {
             display: block;
+            touch-action: pan-y;
             user-select: none;
             -webkit-user-select: none;
+            /* Removed max-width: 100% to prevent zoom distortion */
         }
-
-        /* TEXT LAYER FOR HIGHLIGHTING */
+        
+        /* Text selection layer */
         #text-layer {
             position: absolute;
-            top: 0;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            z-index: 2;
-            pointer-events: auto;
             line-height: 1.0;
             text-align: initial;
-        }
-
-        #text-layer span {
-            color: transparent;
-            position: absolute;
-            white-space: pre;
-            cursor: text;
-            transform-origin: 0% 0%;
             pointer-events: auto;
-        }
-
-        #text-layer span::selection {
-            background: rgba(220, 38, 38, 0.3);
-            color: transparent;
-        }
-
-        #text-layer span.highlight {
-            background: rgba(255, 215, 0, 0.4);
-            box-shadow: inset 0 0 2px rgba(255, 215, 0, 0.8);
-            border-radius: 2px;
-        }
-
-        body.dark-mode #text-layer span::selection {
-            background: rgba(239, 68, 68, 0.4);
-        }
-
-        body.dark-mode #text-layer span.highlight {
-            background: rgba(255, 215, 0, 0.3);
+            z-index: 10;
         }
         
-        /* BENDY 3D PAGE FLIP ANIMATIONS */
-        .flip-next-out, .flip-next-in { transform-origin: left center; }
-        .flip-prev-out, .flip-prev-in { transform-origin: right center; }
-
-        .flip-next-out { animation: flipNextOut 0.6s ease-in-out forwards; }
-        .flip-next-in { animation: flipNextIn 0.6s ease-in-out forwards; }
-        .flip-prev-out { animation: flipPrevOut 0.6s ease-in-out forwards; }
-        .flip-prev-in { animation: flipPrevIn 0.6s ease-in-out forwards; }
-
-        @keyframes flipNextOut {
-            0% { transform: perspective(2000px) rotateY(0deg) rotateX(0deg); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-            50% { transform: perspective(2000px) rotateY(-45deg) rotateX(5deg) scale(0.98) skewY(2deg); box-shadow: -15px 15px 30px rgba(0,0,0,0.4); }
-            100% { transform: perspective(2000px) rotateY(-90deg) rotateX(10deg) scale(0.95) skewY(4deg); box-shadow: -20px 20px 40px rgba(0,0,0,0.1); opacity: 0; }
+        #text-layer span {
+            color: transparent !important;
+            position: absolute;
+            white-space: pre;
+            transform-origin: 0% 0%;
+            cursor: text;
         }
-
-        @keyframes flipNextIn {
-            0% { transform: perspective(2000px) rotateY(45deg) rotateX(5deg) scale(0.98) skewY(-2deg); opacity: 0; box-shadow: 15px 15px 30px rgba(0,0,0,0.4); }
-            50% { transform: perspective(2000px) rotateY(20deg) rotateX(2deg) scale(0.99) skewY(-1deg); opacity: 0.8; box-shadow: 10px 10px 20px rgba(0,0,0,0.3); }
-            100% { transform: perspective(2000px) rotateY(0deg) rotateX(0deg); opacity: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        
+        #text-layer ::selection {
+            background: rgba(220, 38, 38, 0.4);
+            color: transparent;
         }
-
-        @keyframes flipPrevOut {
-            0% { transform: perspective(2000px) rotateY(0deg) rotateX(0deg); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-            50% { transform: perspective(2000px) rotateY(45deg) rotateX(5deg) scale(0.98) skewY(-2deg); box-shadow: 15px 15px 30px rgba(0,0,0,0.4); }
-            100% { transform: perspective(2000px) rotateY(90deg) rotateX(10deg) scale(0.95) skewY(-4deg); box-shadow: 20px 20px 40px rgba(0,0,0,0.1); opacity: 0; }
-        }
-
-        @keyframes flipPrevIn {
-            0% { transform: perspective(2000px) rotateY(-45deg) rotateX(5deg) scale(0.98) skewY(2deg); opacity: 0; box-shadow: -15px 15px 30px rgba(0,0,0,0.4); }
-            50% { transform: perspective(2000px) rotateY(-20deg) rotateX(2deg) scale(0.99) skewY(1deg); opacity: 0.8; box-shadow: -10px 10px 20px rgba(0,0,0,0.3); }
-            100% { transform: perspective(2000px) rotateY(0deg) rotateX(0deg); opacity: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        
+        body.dark-mode #pdf-canvas {
+            filter: invert(1) hue-rotate(180deg);
         }
         
         #canvas-loading-overlay {
@@ -436,6 +409,7 @@
             .pdf-item { padding: 1rem !important; }
             .pdf-item .w-16 { width: 3.5rem !important; height: 4.5rem !important; }
             .pdf-item h3 { font-size: 1rem !important; }
+            #notes-panel { width: 100% !important; border-left: none !important; border-top: 1px solid var(--border-subtle); }
         }
 
         @media (min-width: 769px) {
@@ -500,7 +474,6 @@
                     <div>
                         <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-compass mr-2"></i> Điều hướng và Cách đọc</h3>
                         <p>Chào mừng bạn đến với kho tàng triết học của RED. Education. Website được thiết kế để bạn có thể đọc và ghi chú trực tiếp. Khi mở bất kỳ tác phẩm nào, màn hình sẽ chia làm hai phần: trình đọc PDF bên trái và không gian Ghi chú (Notes) bên phải. Mọi ghi chú của bạn đều được tự động lưu lại theo mã số của tác phẩm đó.</p>
-                        <p class="mt-2">Bạn có thể <strong>bôi đen (highlight)</strong> trực tiếp trên trang PDF để đánh dấu các đoạn quan trọng. Các highlight sẽ được tự động lưu lại.</p>
                     </div>
                     <div>
                         <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-list-ol mr-2"></i> Trình tự đọc</h3>
@@ -586,9 +559,6 @@
                         <span id="canvas-zoom-level">100%</span>
                         <button id="btn-canvas-zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
                     </div>
-                    <button id="btn-canvas-clear-highlights" title="Xóa highlight trang này" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
-                        <i class="fas fa-eraser"></i>
-                    </button>
                     <button id="btn-canvas-fullscreen" class="fullscreen-btn" title="Toàn màn hình" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
                         <i class="fas fa-expand"></i>
                     </button>
@@ -599,7 +569,7 @@
                         <div id="canvas-loading-text">Đang tải PDF...</div>
                     </div>
                     <div id="canvas-wrapper">
-                        <div id="page-container">
+                        <div id="pdf-canvas-container">
                             <canvas id="pdf-canvas"></canvas>
                             <div id="text-layer"></div>
                         </div>
@@ -618,7 +588,7 @@
             </div>
             
             <!-- ===== DESKTOP NOTES PANEL ===== -->
-            <div class="flex-1 md:w-[400px] lg:w-[450px] flex flex-col flex-shrink-0 min-h-0 notes-panel-desktop">
+            <div id="notes-panel" class="flex flex-col flex-shrink-0 min-h-0 notes-panel-desktop">
                 <div class="px-3 sm:px-4 py-3 flex justify-between items-center shadow-sm flex-shrink-0">
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-sticky-note"></i>
@@ -823,84 +793,6 @@
         }
 
         // =================================================================
-        // ===== HIGHLIGHTS CACHE =====
-        // =================================================================
-        
-        let currentHighlights = {};
-
-        function loadHighlights() {
-            if (!currentBookId) return;
-            const saved = localStorage.getItem(`red_highlights_${currentBookId}`);
-            if (saved) {
-                try { currentHighlights = JSON.parse(saved); } 
-                catch (e) { currentHighlights = {}; }
-            } else {
-                currentHighlights = {};
-            }
-        }
-
-        function saveHighlights() {
-            if (!currentBookId) return;
-            localStorage.setItem(`red_highlights_${currentBookId}`, JSON.stringify(currentHighlights));
-        }
-
-        function applyHighlights() {
-            const textLayer = document.getElementById('text-layer');
-            if (!textLayer) return;
-            
-            textLayer.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
-            
-            const pageHighlights = currentHighlights[canvasViewer.currentPage];
-            if (pageHighlights && Array.isArray(pageHighlights)) {
-                pageHighlights.forEach(idx => {
-                    const span = textLayer.querySelector(`.text-item[data-index="${idx}"]`);
-                    if (span) span.classList.add('highlight');
-                });
-            }
-        }
-
-        function handleSelection() {
-            const selection = window.getSelection();
-            if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
-            
-            const textLayer = document.getElementById('text-layer');
-            if (!textLayer) return;
-            
-            const range = selection.getRangeAt(0);
-            if (!textLayer.contains(range.commonAncestorContainer)) return;
-            
-            const selectedIndices = new Set();
-            const spans = textLayer.querySelectorAll('.text-item');
-            
-            spans.forEach(span => {
-                const spanRange = document.createRange();
-                spanRange.selectNodeContents(span);
-                
-                if (range.compareBoundaryPoints(Range.END_TO_START, spanRange) < 0 &&
-                    range.compareBoundaryPoints(Range.START_TO_END, spanRange) > 0) {
-                    selectedIndices.add(parseInt(span.dataset.index));
-                }
-            });
-            
-            if (selectedIndices.size > 0) {
-                if (!currentHighlights[canvasViewer.currentPage]) {
-                    currentHighlights[canvasViewer.currentPage] = [];
-                }
-                const existing = new Set(currentHighlights[canvasViewer.currentPage]);
-                selectedIndices.forEach(idx => existing.add(idx));
-                currentHighlights[canvasViewer.currentPage] = Array.from(existing);
-                
-                saveHighlights();
-                applyHighlights();
-                
-                setTimeout(() => selection.removeAllRanges(), 100);
-            }
-        }
-
-        document.addEventListener('mouseup', handleSelection);
-        document.addEventListener('touchend', handleSelection);
-
-        // =================================================================
         // ===== CANVAS PDF VIEWER =====
         // =================================================================
         
@@ -975,67 +867,6 @@
             return Math.min(fitScale, 1.5);
         }
 
-        function multiplyMatrix(a, b) {
-            return [
-                a[0] * b[0] + a[1] * b[2],
-                a[0] * b[1] + a[1] * b[3],
-                a[2] * b[0] + a[3] * b[2],
-                a[2] * b[1] + a[3] * b[3],
-                a[4] * b[0] + a[5] * b[2] + b[4],
-                a[4] * b[1] + a[5] * b[3] + b[5]
-            ];
-        }
-
-        async function renderTextLayer(page, viewport) {
-            const textLayer = document.getElementById('text-layer');
-            if (!textLayer) return;
-            textLayer.innerHTML = '';
-            
-            try {
-                const textContent = await page.getTextContent();
-                
-                textContent.items.forEach((item, index) => {
-                    if (!item.str && !item.hasEOL) return;
-                    const span = document.createElement('span');
-                    span.textContent = item.str;
-                    span.dataset.index = index;
-                    span.className = 'text-item';
-                    
-                    const tx = multiplyMatrix(viewport.transform, item.transform);
-                    const fontSize = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]);
-                    
-                    span.style.left = `${tx[4]}px`;
-                    span.style.top = `${tx[5] - fontSize}px`;
-                    span.style.fontSize = `${fontSize}px`;
-                    span.style.fontFamily = item.fontName || 'sans-serif';
-                    
-                    if (item.width > 0) {
-                        span.style.width = `${item.width * viewport.scale}px`;
-                        span.style.whiteSpace = 'pre';
-                    }
-                    
-                    textLayer.appendChild(span);
-                });
-                
-                const spans = textLayer.querySelectorAll('.text-item');
-                spans.forEach(span => {
-                    const idx = parseInt(span.dataset.index);
-                    const item = textContent.items[idx];
-                    if (item && item.width > 0 && span.offsetWidth > 0) {
-                        const expectedWidth = item.width * viewport.scale;
-                        const scaleX = expectedWidth / span.offsetWidth;
-                        if (Math.abs(scaleX - 1) > 0.01) {
-                            span.style.transform = `scaleX(${scaleX})`;
-                        }
-                    }
-                });
-                
-                applyHighlights();
-            } catch (e) {
-                console.warn('Text layer error:', e);
-            }
-        }
-
         async function renderCurrentPage(scrollToTop = true) {
             if (!canvasViewer.pdfDoc || !cv.canvas) return;
             
@@ -1053,22 +884,35 @@
                 const viewport = page.getViewport({ scale: scale });
                 const dpr = window.devicePixelRatio || 1;
                 
+                // Set exact pixel dimensions (no max-width distortion)
                 cv.canvas.width = Math.round(viewport.width * dpr);
                 cv.canvas.height = Math.round(viewport.height * dpr);
                 cv.canvas.style.width = viewport.width + 'px';
                 cv.canvas.style.height = viewport.height + 'px';
                 
-                const pageContainer = document.getElementById('page-container');
-                if (pageContainer) {
-                    pageContainer.style.width = viewport.width + 'px';
-                    pageContainer.style.height = viewport.height + 'px';
-                }
-                
+                // Render PDF page to canvas
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 await page.render({ canvasContext: ctx, viewport: viewport }).promise;
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
                 
-                await renderTextLayer(page, viewport);
+                // Render text layer for selection
+                const textLayerDiv = document.getElementById('text-layer');
+                textLayerDiv.innerHTML = '';
+                textLayerDiv.style.width = viewport.width + 'px';
+                textLayerDiv.style.height = viewport.height + 'px';
+                
+                const textContent = await page.getTextContent();
+                if (textContent.items.length > 0) {
+                    const textLayerTask = pdfjsLib.renderTextLayer({
+                        textContentSource: textContent,
+                        container: textLayerDiv,
+                        viewport: viewport,
+                        textDivs: []
+                    });
+                    if (textLayerTask && textLayerTask.promise) {
+                        await textLayerTask.promise;
+                    }
+                }
                 
                 updateControls();
                 
@@ -1123,25 +967,34 @@
         async function goToPageAnimated(pageNum) {
             if (!canvasViewer.pdfDoc || pageNum < 1 || pageNum > canvasViewer.totalPages || pageNum === canvasViewer.currentPage) return;
             
-            const container = document.getElementById('page-container');
+            const container = document.getElementById('pdf-canvas-container');
             const isNext = pageNum > canvasViewer.currentPage;
             
-            container.classList.remove('flip-next-in', 'flip-prev-in', 'flip-next-out', 'flip-prev-out');
-            void container.offsetWidth;
-            container.classList.add(isNext ? 'flip-next-out' : 'flip-prev-out');
+            // 1. Start flipping out
+            container.style.transition = 'transform 0.35s ease-in';
+            container.style.transformOrigin = isNext ? 'left center' : 'right center';
+            container.style.transform = isNext ? 'rotateY(-90deg)' : 'rotateY(90deg)';
             
-            await new Promise(resolve => setTimeout(resolve, 600));
-            
+            // 2. Update state and render
             canvasViewer.currentPage = pageNum;
-            await renderCurrentPage(false); 
+            const renderPromise = renderCurrentPage(false); 
             
-            container.classList.remove('flip-next-out', 'flip-prev-out');
-            void container.offsetWidth;
-            container.classList.add(isNext ? 'flip-next-in' : 'flip-prev-in');
+            // 3. Wait for both
+            await Promise.all([
+                new Promise(resolve => setTimeout(resolve, 350)),
+                renderPromise
+            ]);
             
-            await new Promise(resolve => setTimeout(resolve, 600));
+            // 4. Snap to the other side
+            container.style.transition = 'none';
+            container.style.transform = isNext ? 'rotateY(90deg)' : 'rotateY(-90deg)';
             
-            container.classList.remove('flip-next-in', 'flip-prev-in');
+            // Force reflow
+            void container.offsetWidth; 
+            
+            // 5. Flip in
+            container.style.transition = 'transform 0.35s ease-out';
+            container.style.transform = 'rotateY(0deg)';
             
             if (currentBookId) {
                 schedulePositionSave(currentBookId, canvasViewer.currentPage, 'canvas');
@@ -1172,13 +1025,18 @@
             canvasViewer.currentScale = 1.0;
             hideLoading();
             
-            const textLayer = document.getElementById('text-layer');
-            if (textLayer) textLayer.innerHTML = '';
+            const container = document.getElementById('pdf-canvas-container');
+            if (container) {
+                container.style.transform = 'rotateY(0deg)';
+            }
             
             if (cv.canvas) {
                 const ctx = getCanvasContext();
                 if (ctx) ctx.clearRect(0, 0, cv.canvas.width, cv.canvas.height);
             }
+            
+            const textLayerDiv = document.getElementById('text-layer');
+            if (textLayerDiv) textLayerDiv.innerHTML = '';
         }
 
         cv.btnPrev.addEventListener('click', () => goToPageAnimated(canvasViewer.currentPage - 1));
@@ -1187,15 +1045,7 @@
         cv.btnZoomOut.addEventListener('click', zoomOut);
         cv.btnFullscreen.addEventListener('click', toggleFullscreen);
 
-        document.getElementById('btn-canvas-clear-highlights').addEventListener('click', () => {
-            if (currentHighlights[canvasViewer.currentPage]) {
-                delete currentHighlights[canvasViewer.currentPage];
-                saveHighlights();
-                applyHighlights();
-            }
-        });
-
-        // Swipe navigation
+        // Swipe navigation (with text selection protection)
         if (cv.scrollArea) {
             let touchStartX = 0, touchStartY = 0;
             let isVerticalScroll = false;
@@ -1215,8 +1065,8 @@
             }, { passive: true });
             
             cv.scrollArea.addEventListener('touchend', (e) => {
-                const selection = window.getSelection();
-                if (selection && !selection.isCollapsed) return;
+                // Don't swipe if user is selecting text
+                if (window.getSelection().toString().length > 0) return;
                 
                 const diffX = touchStartX - e.changedTouches[0].screenX;
                 if (!isVerticalScroll && Math.abs(diffX) > SWIPE_THRESHOLD) {
@@ -1451,8 +1301,6 @@
             }
             noteArea.value = savedNotes;
             if (mobileNotesArea) mobileNotesArea.value = savedNotes;
-            
-            loadHighlights();
             
             const savedPos = loadPosition(currentBookId);
             const targetPage = (savedPos && savedPos.page && savedPos.page >= 1) ? savedPos.page : 1;
