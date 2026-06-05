@@ -96,7 +96,6 @@
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        /* THEME TOGGLE HOVER - Removed rotation */
         #theme-toggle, #theme-toggle-modal { transition: color 0.2s, transform 0.3s, filter 0.3s; color: var(--text-secondary); }
         #theme-toggle:hover, #theme-toggle-modal:hover { color: var(--neon-red) !important; transform: scale(1.1); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
 
@@ -298,29 +297,101 @@
             -webkit-overflow-scrolling: touch;
         }
         
-        /* 3D PERSPECTIVE FOR PAGE FLIP */
         #canvas-wrapper {
             display: flex;
             justify-content: center;
             padding: 1rem 0.5rem;
             min-height: 100%;
-            perspective: 2500px; /* Crucial for 3D depth */
+            perspective: 2500px;
+        }
+
+        /* 3D PAGE CONTAINER */
+        #page-container {
+            position: relative;
+            display: inline-block;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
         
         #pdf-canvas {
             display: block;
-            max-width: 100%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            touch-action: pan-y;
             user-select: none;
             -webkit-user-select: none;
-            transform-style: preserve-3d;
-            /* Transition is controlled dynamically by JS for the flip */
+        }
+
+        /* TEXT LAYER FOR HIGHLIGHTING */
+        #text-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 2;
+            pointer-events: auto;
+            line-height: 1.0;
+            text-align: initial;
+        }
+
+        #text-layer span {
+            color: transparent;
+            position: absolute;
+            white-space: pre;
+            cursor: text;
+            transform-origin: 0% 0%;
+            pointer-events: auto;
+        }
+
+        #text-layer span::selection {
+            background: rgba(220, 38, 38, 0.3);
+            color: transparent;
+        }
+
+        #text-layer span.highlight {
+            background: rgba(255, 215, 0, 0.4);
+            box-shadow: inset 0 0 2px rgba(255, 215, 0, 0.8);
+            border-radius: 2px;
+        }
+
+        body.dark-mode #text-layer span::selection {
+            background: rgba(239, 68, 68, 0.4);
+        }
+
+        body.dark-mode #text-layer span.highlight {
+            background: rgba(255, 215, 0, 0.3);
         }
         
-        /* PDF dark mode follows page theme */
-        body.dark-mode #pdf-canvas {
-            filter: invert(1) hue-rotate(180deg);
+        /* BENDY 3D PAGE FLIP ANIMATIONS */
+        .flip-next-out, .flip-next-in { transform-origin: left center; }
+        .flip-prev-out, .flip-prev-in { transform-origin: right center; }
+
+        .flip-next-out { animation: flipNextOut 0.6s ease-in-out forwards; }
+        .flip-next-in { animation: flipNextIn 0.6s ease-in-out forwards; }
+        .flip-prev-out { animation: flipPrevOut 0.6s ease-in-out forwards; }
+        .flip-prev-in { animation: flipPrevIn 0.6s ease-in-out forwards; }
+
+        @keyframes flipNextOut {
+            0% { transform: perspective(2000px) rotateY(0deg) rotateX(0deg); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+            50% { transform: perspective(2000px) rotateY(-45deg) rotateX(5deg) scale(0.98) skewY(2deg); box-shadow: -15px 15px 30px rgba(0,0,0,0.4); }
+            100% { transform: perspective(2000px) rotateY(-90deg) rotateX(10deg) scale(0.95) skewY(4deg); box-shadow: -20px 20px 40px rgba(0,0,0,0.1); opacity: 0; }
+        }
+
+        @keyframes flipNextIn {
+            0% { transform: perspective(2000px) rotateY(45deg) rotateX(5deg) scale(0.98) skewY(-2deg); opacity: 0; box-shadow: 15px 15px 30px rgba(0,0,0,0.4); }
+            50% { transform: perspective(2000px) rotateY(20deg) rotateX(2deg) scale(0.99) skewY(-1deg); opacity: 0.8; box-shadow: 10px 10px 20px rgba(0,0,0,0.3); }
+            100% { transform: perspective(2000px) rotateY(0deg) rotateX(0deg); opacity: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        }
+
+        @keyframes flipPrevOut {
+            0% { transform: perspective(2000px) rotateY(0deg) rotateX(0deg); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+            50% { transform: perspective(2000px) rotateY(45deg) rotateX(5deg) scale(0.98) skewY(-2deg); box-shadow: 15px 15px 30px rgba(0,0,0,0.4); }
+            100% { transform: perspective(2000px) rotateY(90deg) rotateX(10deg) scale(0.95) skewY(-4deg); box-shadow: 20px 20px 40px rgba(0,0,0,0.1); opacity: 0; }
+        }
+
+        @keyframes flipPrevIn {
+            0% { transform: perspective(2000px) rotateY(-45deg) rotateX(5deg) scale(0.98) skewY(2deg); opacity: 0; box-shadow: -15px 15px 30px rgba(0,0,0,0.4); }
+            50% { transform: perspective(2000px) rotateY(-20deg) rotateX(2deg) scale(0.99) skewY(1deg); opacity: 0.8; box-shadow: -10px 10px 20px rgba(0,0,0,0.3); }
+            100% { transform: perspective(2000px) rotateY(0deg) rotateX(0deg); opacity: 1; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
         }
         
         #canvas-loading-overlay {
@@ -429,6 +500,7 @@
                     <div>
                         <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-compass mr-2"></i> Điều hướng và Cách đọc</h3>
                         <p>Chào mừng bạn đến với kho tàng triết học của RED. Education. Website được thiết kế để bạn có thể đọc và ghi chú trực tiếp. Khi mở bất kỳ tác phẩm nào, màn hình sẽ chia làm hai phần: trình đọc PDF bên trái và không gian Ghi chú (Notes) bên phải. Mọi ghi chú của bạn đều được tự động lưu lại theo mã số của tác phẩm đó.</p>
+                        <p class="mt-2">Bạn có thể <strong>bôi đen (highlight)</strong> trực tiếp trên trang PDF để đánh dấu các đoạn quan trọng. Các highlight sẽ được tự động lưu lại.</p>
                     </div>
                     <div>
                         <h3 class="text-lg sm:text-xl mb-2 sm:mb-3 flex items-center"><i class="fas fa-list-ol mr-2"></i> Trình tự đọc</h3>
@@ -514,6 +586,9 @@
                         <span id="canvas-zoom-level">100%</span>
                         <button id="btn-canvas-zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
                     </div>
+                    <button id="btn-canvas-clear-highlights" title="Xóa highlight trang này" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
+                        <i class="fas fa-eraser"></i>
+                    </button>
                     <button id="btn-canvas-fullscreen" class="fullscreen-btn" title="Toàn màn hình" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
                         <i class="fas fa-expand"></i>
                     </button>
@@ -524,7 +599,10 @@
                         <div id="canvas-loading-text">Đang tải PDF...</div>
                     </div>
                     <div id="canvas-wrapper">
-                        <canvas id="pdf-canvas"></canvas>
+                        <div id="page-container">
+                            <canvas id="pdf-canvas"></canvas>
+                            <div id="text-layer"></div>
+                        </div>
                     </div>
                 </div>
                 <div id="mobile-notes-section">
@@ -745,6 +823,84 @@
         }
 
         // =================================================================
+        // ===== HIGHLIGHTS CACHE =====
+        // =================================================================
+        
+        let currentHighlights = {};
+
+        function loadHighlights() {
+            if (!currentBookId) return;
+            const saved = localStorage.getItem(`red_highlights_${currentBookId}`);
+            if (saved) {
+                try { currentHighlights = JSON.parse(saved); } 
+                catch (e) { currentHighlights = {}; }
+            } else {
+                currentHighlights = {};
+            }
+        }
+
+        function saveHighlights() {
+            if (!currentBookId) return;
+            localStorage.setItem(`red_highlights_${currentBookId}`, JSON.stringify(currentHighlights));
+        }
+
+        function applyHighlights() {
+            const textLayer = document.getElementById('text-layer');
+            if (!textLayer) return;
+            
+            textLayer.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+            
+            const pageHighlights = currentHighlights[canvasViewer.currentPage];
+            if (pageHighlights && Array.isArray(pageHighlights)) {
+                pageHighlights.forEach(idx => {
+                    const span = textLayer.querySelector(`.text-item[data-index="${idx}"]`);
+                    if (span) span.classList.add('highlight');
+                });
+            }
+        }
+
+        function handleSelection() {
+            const selection = window.getSelection();
+            if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+            
+            const textLayer = document.getElementById('text-layer');
+            if (!textLayer) return;
+            
+            const range = selection.getRangeAt(0);
+            if (!textLayer.contains(range.commonAncestorContainer)) return;
+            
+            const selectedIndices = new Set();
+            const spans = textLayer.querySelectorAll('.text-item');
+            
+            spans.forEach(span => {
+                const spanRange = document.createRange();
+                spanRange.selectNodeContents(span);
+                
+                if (range.compareBoundaryPoints(Range.END_TO_START, spanRange) < 0 &&
+                    range.compareBoundaryPoints(Range.START_TO_END, spanRange) > 0) {
+                    selectedIndices.add(parseInt(span.dataset.index));
+                }
+            });
+            
+            if (selectedIndices.size > 0) {
+                if (!currentHighlights[canvasViewer.currentPage]) {
+                    currentHighlights[canvasViewer.currentPage] = [];
+                }
+                const existing = new Set(currentHighlights[canvasViewer.currentPage]);
+                selectedIndices.forEach(idx => existing.add(idx));
+                currentHighlights[canvasViewer.currentPage] = Array.from(existing);
+                
+                saveHighlights();
+                applyHighlights();
+                
+                setTimeout(() => selection.removeAllRanges(), 100);
+            }
+        }
+
+        document.addEventListener('mouseup', handleSelection);
+        document.addEventListener('touchend', handleSelection);
+
+        // =================================================================
         // ===== CANVAS PDF VIEWER =====
         // =================================================================
         
@@ -819,6 +975,67 @@
             return Math.min(fitScale, 1.5);
         }
 
+        function multiplyMatrix(a, b) {
+            return [
+                a[0] * b[0] + a[1] * b[2],
+                a[0] * b[1] + a[1] * b[3],
+                a[2] * b[0] + a[3] * b[2],
+                a[2] * b[1] + a[3] * b[3],
+                a[4] * b[0] + a[5] * b[2] + b[4],
+                a[4] * b[1] + a[5] * b[3] + b[5]
+            ];
+        }
+
+        async function renderTextLayer(page, viewport) {
+            const textLayer = document.getElementById('text-layer');
+            if (!textLayer) return;
+            textLayer.innerHTML = '';
+            
+            try {
+                const textContent = await page.getTextContent();
+                
+                textContent.items.forEach((item, index) => {
+                    if (!item.str && !item.hasEOL) return;
+                    const span = document.createElement('span');
+                    span.textContent = item.str;
+                    span.dataset.index = index;
+                    span.className = 'text-item';
+                    
+                    const tx = multiplyMatrix(viewport.transform, item.transform);
+                    const fontSize = Math.sqrt(tx[0] * tx[0] + tx[1] * tx[1]);
+                    
+                    span.style.left = `${tx[4]}px`;
+                    span.style.top = `${tx[5] - fontSize}px`;
+                    span.style.fontSize = `${fontSize}px`;
+                    span.style.fontFamily = item.fontName || 'sans-serif';
+                    
+                    if (item.width > 0) {
+                        span.style.width = `${item.width * viewport.scale}px`;
+                        span.style.whiteSpace = 'pre';
+                    }
+                    
+                    textLayer.appendChild(span);
+                });
+                
+                const spans = textLayer.querySelectorAll('.text-item');
+                spans.forEach(span => {
+                    const idx = parseInt(span.dataset.index);
+                    const item = textContent.items[idx];
+                    if (item && item.width > 0 && span.offsetWidth > 0) {
+                        const expectedWidth = item.width * viewport.scale;
+                        const scaleX = expectedWidth / span.offsetWidth;
+                        if (Math.abs(scaleX - 1) > 0.01) {
+                            span.style.transform = `scaleX(${scaleX})`;
+                        }
+                    }
+                });
+                
+                applyHighlights();
+            } catch (e) {
+                console.warn('Text layer error:', e);
+            }
+        }
+
         async function renderCurrentPage(scrollToTop = true) {
             if (!canvasViewer.pdfDoc || !cv.canvas) return;
             
@@ -841,9 +1058,17 @@
                 cv.canvas.style.width = viewport.width + 'px';
                 cv.canvas.style.height = viewport.height + 'px';
                 
+                const pageContainer = document.getElementById('page-container');
+                if (pageContainer) {
+                    pageContainer.style.width = viewport.width + 'px';
+                    pageContainer.style.height = viewport.height + 'px';
+                }
+                
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 await page.render({ canvasContext: ctx, viewport: viewport }).promise;
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
+                
+                await renderTextLayer(page, viewport);
                 
                 updateControls();
                 
@@ -898,36 +1123,26 @@
         async function goToPageAnimated(pageNum) {
             if (!canvasViewer.pdfDoc || pageNum < 1 || pageNum > canvasViewer.totalPages || pageNum === canvasViewer.currentPage) return;
             
-            const canvas = document.getElementById('pdf-canvas');
+            const container = document.getElementById('page-container');
             const isNext = pageNum > canvasViewer.currentPage;
             
-            // 1. Start flipping out
-            canvas.style.transition = 'transform 0.35s ease-in';
-            canvas.style.transformOrigin = isNext ? 'left center' : 'right center';
-            canvas.style.transform = isNext ? 'rotateY(-90deg)' : 'rotateY(90deg)';
+            container.classList.remove('flip-next-in', 'flip-prev-in', 'flip-next-out', 'flip-prev-out');
+            void container.offsetWidth;
+            container.classList.add(isNext ? 'flip-next-out' : 'flip-prev-out');
             
-            // 2. Update state and render (happens while canvas is edge-on, hiding the render process)
+            await new Promise(resolve => setTimeout(resolve, 600));
+            
             canvasViewer.currentPage = pageNum;
-            const renderPromise = renderCurrentPage(false); 
+            await renderCurrentPage(false); 
             
-            // 3. Wait for both the flip-out animation and the PDF rendering to complete
-            await Promise.all([
-                new Promise(resolve => setTimeout(resolve, 350)), // Wait for CSS transition
-                renderPromise // Wait for PDF.js to finish drawing
-            ]);
+            container.classList.remove('flip-next-out', 'flip-prev-out');
+            void container.offsetWidth;
+            container.classList.add(isNext ? 'flip-next-in' : 'flip-prev-in');
             
-            // 4. Snap to the other side without transition
-            canvas.style.transition = 'none';
-            canvas.style.transform = isNext ? 'rotateY(90deg)' : 'rotateY(-90deg)';
+            await new Promise(resolve => setTimeout(resolve, 600));
             
-            // Force reflow to apply the snap immediately
-            void canvas.offsetWidth; 
+            container.classList.remove('flip-next-in', 'flip-prev-in');
             
-            // 5. Flip in
-            canvas.style.transition = 'transform 0.35s ease-out';
-            canvas.style.transform = 'rotateY(0deg)';
-            
-            // Save position after flip
             if (currentBookId) {
                 schedulePositionSave(currentBookId, canvasViewer.currentPage, 'canvas');
             }
@@ -957,8 +1172,10 @@
             canvasViewer.currentScale = 1.0;
             hideLoading();
             
+            const textLayer = document.getElementById('text-layer');
+            if (textLayer) textLayer.innerHTML = '';
+            
             if (cv.canvas) {
-                cv.canvas.style.transform = 'rotateY(0deg)'; // Reset 3D transform
                 const ctx = getCanvasContext();
                 if (ctx) ctx.clearRect(0, 0, cv.canvas.width, cv.canvas.height);
             }
@@ -969,6 +1186,14 @@
         cv.btnZoomIn.addEventListener('click', zoomIn);
         cv.btnZoomOut.addEventListener('click', zoomOut);
         cv.btnFullscreen.addEventListener('click', toggleFullscreen);
+
+        document.getElementById('btn-canvas-clear-highlights').addEventListener('click', () => {
+            if (currentHighlights[canvasViewer.currentPage]) {
+                delete currentHighlights[canvasViewer.currentPage];
+                saveHighlights();
+                applyHighlights();
+            }
+        });
 
         // Swipe navigation
         if (cv.scrollArea) {
@@ -990,6 +1215,9 @@
             }, { passive: true });
             
             cv.scrollArea.addEventListener('touchend', (e) => {
+                const selection = window.getSelection();
+                if (selection && !selection.isCollapsed) return;
+                
                 const diffX = touchStartX - e.changedTouches[0].screenX;
                 if (!isVerticalScroll && Math.abs(diffX) > SWIPE_THRESHOLD) {
                     if (diffX > 0) goToPageAnimated(canvasViewer.currentPage + 1);
@@ -1224,6 +1452,8 @@
             noteArea.value = savedNotes;
             if (mobileNotesArea) mobileNotesArea.value = savedNotes;
             
+            loadHighlights();
+            
             const savedPos = loadPosition(currentBookId);
             const targetPage = (savedPos && savedPos.page && savedPos.page >= 1) ? savedPos.page : 1;
             
@@ -1249,14 +1479,12 @@
         document.getElementById('close-modal').addEventListener('click', closeViewer);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !viewerModal.classList.contains('hidden')) closeViewer(); });
 
-        // Save position on visibility change
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && currentBookId && canvasViewer.pdfDoc) {
                 savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
             }
         });
 
-        // Desktop notes save
         let saveTimeout;
         noteArea.addEventListener('input', (e) => {
             localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
