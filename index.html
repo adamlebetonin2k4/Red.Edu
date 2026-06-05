@@ -292,7 +292,6 @@
         #canvas-controls-bar button:hover:not(:disabled) { border-color: var(--neon-red); color: var(--neon-red); }
         #canvas-controls-bar button:active:not(:disabled) { transform: scale(0.95); }
         #canvas-controls-bar button:disabled { opacity: 0.3; cursor: not-allowed; }
-        #canvas-controls-bar button.active-toggle { background: var(--neon-red); color: white; border-color: var(--neon-red); }
         
         #canvas-page-info { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-secondary); min-width: 70px; text-align: center; font-weight: 500; }
         #canvas-zoom-controls { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle); }
@@ -322,7 +321,8 @@
             -webkit-user-select: none;
         }
         
-        #pdf-canvas.pdf-dark-canvas {
+        /* PDF dark mode follows page theme */
+        body.dark-mode #pdf-canvas {
             filter: invert(1) hue-rotate(180deg);
         }
         
@@ -356,8 +356,8 @@
         #mobile-notes-area::placeholder { color: var(--text-secondary); font-style: italic; }
         #mobile-notes-area:focus { box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.15); }
 
-        /* Dark mode for iframe */
-        #pdf-frame.pdf-dark-iframe { filter: invert(1) hue-rotate(180deg); }
+        /* Iframe dark mode follows page theme */
+        body.dark-mode #pdf-frame { filter: invert(1) hue-rotate(180deg); }
 
         /* ===== SCREEN-WIDTH MEDIA QUERIES ===== */
         @media (max-width: 768px) {
@@ -520,10 +520,6 @@
                         <span id="canvas-zoom-level">100%</span>
                         <button id="btn-canvas-zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
                     </div>
-                    <!-- UNIFIED DARK MODE TOGGLE (works in both modes) -->
-                    <button id="btn-pdf-dark" title="Chế độ tối PDF" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
-                        <i class="fas fa-moon"></i>
-                    </button>
                     <button id="btn-canvas-fullscreen" class="fullscreen-btn" title="Toàn màn hình" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
                         <i class="fas fa-expand"></i>
                     </button>
@@ -563,10 +559,6 @@
                         <span id="note-id-display" class="text-xs px-2 py-0.5 rounded hidden sm:inline-block"></span>
                     </div>
                     <div class="flex items-center space-x-2 sm:space-x-3">
-                        <!-- UNIFIED DARK MODE TOGGLE (same button, applies to current viewer) -->
-                        <button id="btn-pdf-dark-desktop" class="text-xs font-semibold px-2 py-1 rounded transition" style="background: var(--bg-main); border: 1px solid var(--border-subtle); color: var(--text-secondary);" title="Chế độ tối PDF">
-                            <i class="fas fa-moon mr-1"></i>Dark PDF
-                        </button>
                         <span id="save-status" class="text-xs font-medium opacity-0 transition-opacity duration-300"><i class="fas fa-check-circle mr-1"></i>Đã lưu</span>
                         <button id="btn-clear-notes" class="text-xs font-semibold" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                     </div>
@@ -577,7 +569,7 @@
     </div>
 
     <script>
-        // ===== THEME =====
+        // ===== THEME (unified - controls whole page including PDF) =====
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = themeToggle.querySelector('i');
         const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
@@ -593,10 +585,18 @@
                 themeIcon.className = 'fas fa-moon';
                 if (mobileThemeToggle) mobileThemeToggle.querySelector('i').className = 'fas fa-moon mr-2';
             }
+            // PDF dark mode follows page theme automatically via CSS
+            // No separate toggle needed
         }
         applyTheme();
-        themeToggle.addEventListener('click', () => { isDarkMode = !isDarkMode; localStorage.setItem('red_theme', isDarkMode ? 'dark' : 'light'); applyTheme(); });
-        if (mobileThemeToggle) mobileThemeToggle.addEventListener('click', () => { isDarkMode = !isDarkMode; localStorage.setItem('red_theme', isDarkMode ? 'dark' : 'light'); applyTheme(); });
+        
+        function toggleTheme() { 
+            isDarkMode = !isDarkMode; 
+            localStorage.setItem('red_theme', isDarkMode ? 'dark' : 'light'); 
+            applyTheme(); 
+        }
+        themeToggle.addEventListener('click', toggleTheme);
+        if (mobileThemeToggle) mobileThemeToggle.addEventListener('click', toggleTheme);
 
         // ===== MOBILE MENU =====
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -721,28 +721,23 @@
         const contentCompiled = document.getElementById('content-compiled');
 
         // =================================================================
-        // ===== UNIFIED SETTINGS (persisted, shared across modes) =====
+        // ===== POSITION CACHE =====
         // =================================================================
         
-        const SETTINGS = {
-            POSITION_PREFIX: 'red_position_',
-            PDF_DARK_KEY: 'red_pdf_dark',
-            VIEWER_MODE_KEY: 'red_use_canvas_viewer'
-        };
-
-        // --- Position Cache ---
+        const POSITION_KEY_PREFIX = 'red_position_';
+        
         function savePosition(bookId, page, mode) {
             if (!bookId || !page) return;
             try {
                 const data = { page: parseInt(page) || 1, mode: mode || 'unknown', timestamp: Date.now() };
-                localStorage.setItem(SETTINGS.POSITION_PREFIX + bookId, JSON.stringify(data));
+                localStorage.setItem(POSITION_KEY_PREFIX + bookId, JSON.stringify(data));
             } catch (e) { console.warn('Failed to save position:', e); }
         }
 
         function loadPosition(bookId) {
             if (!bookId) return null;
             try {
-                const raw = localStorage.getItem(SETTINGS.POSITION_PREFIX + bookId);
+                const raw = localStorage.getItem(POSITION_KEY_PREFIX + bookId);
                 if (!raw) return null;
                 const data = JSON.parse(raw);
                 if (data && typeof data.page === 'number' && data.page >= 1) return data;
@@ -750,54 +745,6 @@
             } catch (e) { return null; }
         }
 
-        // --- PDF Dark Mode (UNIFIED - one setting for both viewers) ---
-        let pdfDarkMode = localStorage.getItem(SETTINGS.PDF_DARK_KEY) === 'true';
-        
-        const btnPdfDark = document.getElementById('btn-pdf-dark');
-        const btnPdfDarkDesktop = document.getElementById('btn-pdf-dark-desktop');
-        const pdfCanvas = document.getElementById('pdf-canvas');
-
-        function applyPdfDarkMode() {
-            // Apply to canvas viewer
-            if (pdfCanvas) {
-                pdfCanvas.classList.toggle('pdf-dark-canvas', pdfDarkMode);
-            }
-            // Apply to iframe viewer
-            if (pdfFrame) {
-                pdfFrame.classList.toggle('pdf-dark-iframe', pdfDarkMode);
-            }
-            // Sync BOTH toggle buttons to reflect current state
-            updatePdfDarkButtons();
-        }
-
-        function updatePdfDarkButtons() {
-            const icon = pdfDarkMode ? 'fa-sun' : 'fa-moon';
-            const label = pdfDarkMode ? 'Light PDF' : 'Dark PDF';
-            
-            if (btnPdfDark) {
-                btnPdfDark.querySelector('i').className = `fas ${icon}`;
-                btnPdfDark.classList.toggle('active-toggle', pdfDarkMode);
-            }
-            if (btnPdfDarkDesktop) {
-                btnPdfDarkDesktop.innerHTML = `<i class="fas ${icon} mr-1"></i>${label}`;
-                btnPdfDarkDesktop.classList.toggle('active-toggle', pdfDarkMode);
-            }
-        }
-
-        function togglePdfDarkMode() {
-            pdfDarkMode = !pdfDarkMode;
-            localStorage.setItem(SETTINGS.PDF_DARK_KEY, pdfDarkMode);
-            applyPdfDarkMode();
-        }
-
-        // Wire up BOTH dark mode buttons to the same unified toggle
-        if (btnPdfDark) btnPdfDark.addEventListener('click', togglePdfDarkMode);
-        if (btnPdfDarkDesktop) btnPdfDarkDesktop.addEventListener('click', togglePdfDarkMode);
-
-        // Apply on load
-        applyPdfDarkMode();
-
-        // Debounced position saver
         let positionSaveTimer = null;
         function schedulePositionSave(bookId, page, mode) {
             clearTimeout(positionSaveTimer);
@@ -822,6 +769,7 @@
             SCALE_STEP: 0.25
         };
 
+        const pdfCanvas = document.getElementById('pdf-canvas');
         const cv = {
             canvas: pdfCanvas,
             scrollArea: document.getElementById('canvas-scroll-area'),
@@ -916,7 +864,6 @@
                 
                 hideLoading();
                 
-                // Save position after successful render
                 if (currentBookId) {
                     schedulePositionSave(currentBookId, canvasViewer.currentPage, 'canvas');
                 }
@@ -946,9 +893,6 @@
                 if (canvasViewer.currentPage > canvasViewer.totalPages) {
                     canvasViewer.currentPage = 1;
                 }
-                
-                // Apply unified dark mode after PDF loads
-                applyPdfDarkMode();
                 
                 await renderCurrentPage(true);
             } catch (error) {
@@ -1029,38 +973,77 @@
         }
 
         // =================================================================
-        // ===== IFRAME PAGE DETECTION (for caching browser viewer) =====
+        // ===== IFRAME PAGE TRACKING (improved) =====
         // =================================================================
         
         let iframePagePollInterval = null;
         let lastKnownIframePage = 1;
+        let iframeLoadTimeout = null;
+
+        function tryReadIframePage() {
+            if (!pdfFrame || !currentBookId) return null;
+            
+            try {
+                // Method 1: Try contentWindow.location (works for same-origin)
+                const loc = pdfFrame.contentWindow?.location;
+                if (loc) {
+                    const hash = loc.hash || '';
+                    const match = hash.match(/#page=(\d+)/i);
+                    if (match) {
+                        const page = parseInt(match[1]);
+                        if (page && page >= 1) return page;
+                    }
+                    // Also check href in case hash isn't set but page is in URL
+                    const href = loc.href || '';
+                    const hrefMatch = href.match(/#page=(\d+)/i);
+                    if (hrefMatch) {
+                        const page = parseInt(hrefMatch[1]);
+                        if (page && page >= 1) return page;
+                    }
+                }
+            } catch (e) {
+                // Cross-origin - can't read
+            }
+            
+            try {
+                // Method 2: Try contentDocument (rarely works for PDFs but worth trying)
+                const doc = pdfFrame.contentDocument;
+                if (doc && doc.location) {
+                    const hash = doc.location.hash || '';
+                    const match = hash.match(/#page=(\d+)/i);
+                    if (match) {
+                        const page = parseInt(match[1]);
+                        if (page && page >= 1) return page;
+                    }
+                }
+            } catch (e) {}
+            
+            return null;
+        }
 
         function startIframePagePolling() {
             stopIframePagePolling();
             lastKnownIframePage = 1;
             
+            // Initial read after a short delay (let PDF load)
+            iframeLoadTimeout = setTimeout(() => {
+                const page = tryReadIframePage();
+                if (page) {
+                    lastKnownIframePage = page;
+                    savePosition(currentBookId, page, 'iframe');
+                }
+            }, 1500);
+            
+            // Poll every 1.5 seconds
             iframePagePollInterval = setInterval(() => {
                 if (!pdfFrame || !currentBookId) return;
                 
-                try {
-                    // Try to read the hash from the iframe's location
-                    // Works for same-origin PDFs in most browsers
-                    const iframeLocation = pdfFrame.contentWindow?.location;
-                    if (iframeLocation) {
-                        const hash = iframeLocation.hash || '';
-                        const match = hash.match(/#page=(\d+)/i);
-                        if (match) {
-                            const page = parseInt(match[1]);
-                            if (page && page !== lastKnownIframePage && page >= 1) {
-                                lastKnownIframePage = page;
-                                savePosition(currentBookId, page, 'iframe');
-                            }
-                        }
-                    }
-                } catch (e) {
-                    // Cross-origin or inaccessible - polling silently fails
+                const page = tryReadIframePage();
+                if (page && page !== lastKnownIframePage && page >= 1) {
+                    lastKnownIframePage = page;
+                    savePosition(currentBookId, page, 'iframe');
                 }
-            }, 2000); // Poll every 2 seconds
+            }, 1500);
         }
 
         function stopIframePagePolling() {
@@ -1068,31 +1051,33 @@
                 clearInterval(iframePagePollInterval);
                 iframePagePollInterval = null;
             }
+            if (iframeLoadTimeout) {
+                clearTimeout(iframeLoadTimeout);
+                iframeLoadTimeout = null;
+            }
         }
 
-        // Save iframe position when user explicitly navigates via hash change
-        // (some browsers fire hashchange on the parent when iframe hash changes)
-        window.addEventListener('hashchange', () => {
-            if (!useCanvasViewer && currentBookId && pdfFrame) {
-                try {
-                    const hash = pdfFrame.contentWindow?.location?.hash || '';
-                    const match = hash.match(/#page=(\d+)/i);
-                    if (match) {
-                        const page = parseInt(match[1]);
+        // Listen to iframe load events
+        if (pdfFrame) {
+            pdfFrame.addEventListener('load', () => {
+                if (!useCanvasViewer && currentBookId) {
+                    // Wait a bit for PDF viewer to initialize
+                    setTimeout(() => {
+                        const page = tryReadIframePage();
                         if (page) {
                             lastKnownIframePage = page;
                             savePosition(currentBookId, page, 'iframe');
                         }
-                    }
-                } catch(e) {}
-            }
-        });
+                    }, 1000);
+                }
+            });
+        }
 
         // =================================================================
         // ===== VIEWER TOGGLE BUTTON =====
         // =================================================================
         
-        let useCanvasViewer = localStorage.getItem(SETTINGS.VIEWER_MODE_KEY) === 'true';
+        let useCanvasViewer = localStorage.getItem('red_use_canvas_viewer') === 'true';
         const btnToggleViewer = document.getElementById('btn-toggle-viewer');
         const viewerModeLabel = document.getElementById('viewer-mode-label');
 
@@ -1112,24 +1097,19 @@
 
         btnToggleViewer.addEventListener('click', () => {
             useCanvasViewer = !useCanvasViewer;
-            localStorage.setItem(SETTINGS.VIEWER_MODE_KEY, useCanvasViewer);
+            localStorage.setItem('red_use_canvas_viewer', useCanvasViewer);
             applyViewerMode();
             
-            // If a PDF is currently open, reload it in the new viewer
-            // Position is preserved via shared cache
             if (currentBookId && currentFile) {
-                // Get current page from cache (works for both modes)
                 const savedPos = loadPosition(currentBookId);
                 const targetPage = (savedPos && savedPos.page) ? savedPos.page : 1;
                 const savedUrl = `Giao_trinh_triet_hoc/${currentFile}`;
                 
                 if (useCanvasViewer) {
-                    // Switching TO canvas viewer
                     stopIframePagePolling();
                     pdfFrame.src = '';
                     loadPDF(savedUrl, targetPage);
                 } else {
-                    // Switching TO iframe viewer
                     cleanupCanvasViewer();
                     const iframeUrl = targetPage > 1 
                         ? `${savedUrl}#page=${targetPage}` 
@@ -1358,7 +1338,6 @@
             modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
             noteIdDisplay.textContent = `ID: ${currentBookId}`;
             
-            // Load notes
             let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
             if (!savedNotes) {
                 const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
@@ -1368,14 +1347,9 @@
             noteArea.value = savedNotes;
             if (mobileNotesArea) mobileNotesArea.value = savedNotes;
             
-            // Load saved position (shared across both modes)
             const savedPos = loadPosition(currentBookId);
             const targetPage = (savedPos && savedPos.page && savedPos.page >= 1) ? savedPos.page : 1;
             
-            // Apply unified PDF dark mode
-            applyPdfDarkMode();
-            
-            // Open with current viewer mode, starting at saved page
             if (useCanvasViewer) {
                 pdfFrame.src = '';
                 stopIframePagePolling();
@@ -1389,7 +1363,6 @@
                 lastKnownIframePage = targetPage;
                 startIframePagePolling();
                 
-                // Save initial position for iframe mode
                 savePosition(currentBookId, targetPage, 'iframe');
             }
             
@@ -1397,13 +1370,14 @@
         }
 
         function closeViewer() { 
-            // Save final position before closing
             if (currentBookId) {
                 if (useCanvasViewer && canvasViewer.pdfDoc) {
                     savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
                 } else if (!useCanvasViewer) {
-                    // Save last known iframe page
-                    savePosition(currentBookId, lastKnownIframePage, 'iframe');
+                    // Try one final read before closing
+                    const finalPage = tryReadIframePage();
+                    const pageToSave = finalPage || lastKnownIframePage;
+                    savePosition(currentBookId, pageToSave, 'iframe');
                 }
             }
             
@@ -1428,7 +1402,8 @@
                 if (useCanvasViewer && canvasViewer.pdfDoc) {
                     savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
                 } else if (!useCanvasViewer) {
-                    savePosition(currentBookId, lastKnownIframePage, 'iframe');
+                    const currentPage = tryReadIframePage() || lastKnownIframePage;
+                    savePosition(currentBookId, currentPage, 'iframe');
                 }
             }
         });
