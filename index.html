@@ -96,8 +96,8 @@
             -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        #theme-toggle { transition: color 0.2s, transform 0.3s, filter 0.3s; color: var(--text-secondary); }
-        #theme-toggle:hover { color: var(--neon-red) !important; transform: rotate(15deg) scale(1.1); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
+        #theme-toggle, #theme-toggle-modal { transition: color 0.2s, transform 0.3s, filter 0.3s; color: var(--text-secondary); }
+        #theme-toggle:hover, #theme-toggle-modal:hover { color: var(--neon-red) !important; transform: rotate(15deg) scale(1.1); filter: drop-shadow(0 0 8px var(--neon-red-glow)); }
 
         #mobile-menu-btn {
             transition: all 0.3s; color: var(--text-secondary);
@@ -492,6 +492,9 @@
                     <h3 id="modal-title" class="truncate text-base sm:text-lg">Tài liệu</h3>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0 flex-wrap gap-2">
+                    <button id="theme-toggle-modal" class="fullscreen-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);" title="Chế độ sáng/tối">
+                        <i class="fas fa-moon mr-1 sm:mr-2"></i> <span class="hidden sm:inline">Theme</span>
+                    </button>
                     <button id="btn-toggle-viewer" class="fullscreen-btn px-3 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);" title="Chuyển đổi trình đọc PDF">
                         <i class="fas fa-window-restore mr-1 sm:mr-2"></i> <span class="hidden sm:inline" id="viewer-mode-label">Browser</span>
                     </button>
@@ -559,9 +562,6 @@
                         <span id="note-id-display" class="text-xs px-2 py-0.5 rounded hidden sm:inline-block"></span>
                     </div>
                     <div class="flex items-center space-x-2 sm:space-x-3">
-                        <button id="btn-save-page-manual" class="text-xs font-semibold px-2 py-1 rounded transition" style="background: var(--bg-main); border: 1px solid var(--border-subtle); color: var(--text-secondary);" title="Lưu trang hiện tại">
-                            <i class="fas fa-bookmark mr-1"></i>Save Page
-                        </button>
                         <span id="save-status" class="text-xs font-medium opacity-0 transition-opacity duration-300"><i class="fas fa-check-circle mr-1"></i>Đã lưu</span>
                         <button id="btn-clear-notes" class="text-xs font-semibold" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                     </div>
@@ -575,6 +575,8 @@
         // ===== THEME (unified - controls whole page including PDF) =====
         const themeToggle = document.getElementById('theme-toggle');
         const themeIcon = themeToggle.querySelector('i');
+        const themeToggleModal = document.getElementById('theme-toggle-modal');
+        const themeIconModal = themeToggleModal.querySelector('i');
         const mobileThemeToggle = document.getElementById('mobile-theme-toggle');
         let isDarkMode = localStorage.getItem('red_theme') === 'dark';
 
@@ -582,10 +584,12 @@
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
                 themeIcon.className = 'fas fa-sun';
+                themeIconModal.className = 'fas fa-sun mr-1 sm:mr-2';
                 if (mobileThemeToggle) mobileThemeToggle.querySelector('i').className = 'fas fa-sun mr-2';
             } else {
                 document.body.classList.remove('dark-mode');
                 themeIcon.className = 'fas fa-moon';
+                themeIconModal.className = 'fas fa-moon mr-1 sm:mr-2';
                 if (mobileThemeToggle) mobileThemeToggle.querySelector('i').className = 'fas fa-moon mr-2';
             }
         }
@@ -597,6 +601,7 @@
             applyTheme(); 
         }
         themeToggle.addEventListener('click', toggleTheme);
+        themeToggleModal.addEventListener('click', toggleTheme);
         if (mobileThemeToggle) mobileThemeToggle.addEventListener('click', toggleTheme);
 
         // ===== MOBILE MENU =====
@@ -975,7 +980,7 @@
         }
 
         // =================================================================
-        // ===== IFRAME PAGE TRACKING (improved with manual save) =====
+        // ===== IFRAME PAGE TRACKING (auto-save) =====
         // =================================================================
         
         let lastKnownIframePage = 1;
@@ -1001,20 +1006,34 @@
             return null;
         }
 
+        function updateIframePage() {
+            const page = tryReadIframePage();
+            if (page && page !== lastKnownIframePage && page >= 1) {
+                lastKnownIframePage = page;
+                savePosition(currentBookId, page, 'iframe');
+            }
+        }
+
+        function handleIframeHashChange() {
+            updateIframePage();
+        }
+
         function startIframePagePolling() {
             stopIframePagePolling();
             lastKnownIframePage = 1;
             
-            // Poll every 2 seconds
+            // Try to listen to hashchange for instant updates (same-origin only)
+            try {
+                if (pdfFrame.contentWindow) {
+                    pdfFrame.contentWindow.addEventListener('hashchange', handleIframeHashChange);
+                }
+            } catch(e) {}
+
+            // Fallback polling every 1.5 seconds
             iframePagePollInterval = setInterval(() => {
                 if (!pdfFrame || !currentBookId) return;
-                
-                const page = tryReadIframePage();
-                if (page && page !== lastKnownIframePage && page >= 1) {
-                    lastKnownIframePage = page;
-                    savePosition(currentBookId, page, 'iframe');
-                }
-            }, 2000);
+                updateIframePage();
+            }, 1500);
         }
 
         function stopIframePagePolling() {
@@ -1022,26 +1041,11 @@
                 clearInterval(iframePagePollInterval);
                 iframePagePollInterval = null;
             }
-        }
-
-        // Manual save page button
-        const btnSavePageManual = document.getElementById('btn-save-page-manual');
-        if (btnSavePageManual) {
-            btnSavePageManual.addEventListener('click', () => {
-                if (!useCanvasViewer && currentBookId) {
-                    // For iframe mode, save the last known page
-                    savePosition(currentBookId, lastKnownIframePage, 'iframe');
-                    
-                    // Visual feedback
-                    const originalHTML = btnSavePageManual.innerHTML;
-                    btnSavePageManual.innerHTML = '<i class="fas fa-check mr-1"></i>Saved!';
-                    btnSavePageManual.style.color = '#10b981';
-                    setTimeout(() => {
-                        btnSavePageManual.innerHTML = originalHTML;
-                        btnSavePageManual.style.color = '';
-                    }, 1500);
+            try {
+                if (pdfFrame && pdfFrame.contentWindow) {
+                    pdfFrame.contentWindow.removeEventListener('hashchange', handleIframeHashChange);
                 }
-            });
+            } catch(e) {}
         }
 
         // =================================================================
@@ -1203,7 +1207,7 @@
                             </div>
                             <p class="book-hint">${positionHint}</p>
                         </div>
-                        <i class="fas faexternal-link-alt text-xl ml-3 flex-shrink-0"></i>`;
+                        <i class="fas fa-external-link-alt text-xl ml-3 flex-shrink-0"></i>`;
                     item.addEventListener('click', () => openViewer(`Giao_trinh_triet_hoc/${book.filename}`, book));
                     listContainer.appendChild(item);
                     generateThumbnail(`Giao_trinh_triet_hoc/${book.filename}`, `thumb-${idx}`);
@@ -1345,6 +1349,8 @@
                 if (useCanvasViewer && canvasViewer.pdfDoc) {
                     savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
                 } else if (!useCanvasViewer) {
+                    const currentPage = tryReadIframePage();
+                    if (currentPage) lastKnownIframePage = currentPage;
                     savePosition(currentBookId, lastKnownIframePage, 'iframe');
                 }
             }
@@ -1370,6 +1376,8 @@
                 if (useCanvasViewer && canvasViewer.pdfDoc) {
                     savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
                 } else if (!useCanvasViewer) {
+                    const currentPage = tryReadIframePage();
+                    if (currentPage) lastKnownIframePage = currentPage;
                     savePosition(currentBookId, lastKnownIframePage, 'iframe');
                 }
             }
