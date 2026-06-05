@@ -310,6 +310,7 @@
             overflow: auto;
             position: relative;
             -webkit-overflow-scrolling: touch;
+            pointer-events: auto;
         }
         
         #canvas-wrapper {
@@ -318,6 +319,7 @@
             padding: 1rem 0.5rem;
             min-height: 100%;
             perspective: 2500px;
+            pointer-events: auto;
         }
         
         /* Container for 3D flip */
@@ -333,10 +335,19 @@
             display: block;
             user-select: none;
             -webkit-user-select: none;
+            position: relative;
             z-index: 1;
         }
         
-        /* ===== TEXT SELECTION LAYER (Reinforced) ===== */
+        /* ===== TEXT SELECTION LAYER (Bulletproof) ===== */
+        #text-layer, #text-layer * {
+            pointer-events: auto !important;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            cursor: text !important;
+            z-index: 100 !important;
+        }
+
         #text-layer {
             position: absolute !important;
             left: 0 !important;
@@ -345,27 +356,19 @@
             height: 100% !important;
             overflow: hidden !important;
             line-height: 1.0 !important;
-            pointer-events: auto !important;
-            user-select: text !important;
-            -webkit-user-select: text !important;
             touch-action: auto !important;
-            z-index: 20 !important;
+            transform: translateZ(2px) !important; /* Pushes it physically in front of canvas in 3D space */
         }
 
-        #text-layer span {
+        #text-layer span, #text-layer div {
             color: transparent !important;
             position: absolute !important;
             white-space: pre !important;
-            cursor: text !important;
             transform-origin: 0% 0% !important;
-            user-select: text !important;
-            -webkit-user-select: text !important;
-            pointer-events: auto !important;
-            z-index: 20 !important;
         }
 
         #text-layer ::selection {
-            background: rgba(220, 38, 38, 0.4) !important;
+            background: rgba(220, 38, 38, 0.6) !important;
             color: transparent !important;
         }
         
@@ -890,7 +893,7 @@
                 const viewport = page.getViewport({ scale: scale });
                 const dpr = window.devicePixelRatio || 1;
                 
-                // Set exact pixel dimensions (no max-width distortion)
+                // Set exact pixel dimensions
                 cv.canvas.width = Math.round(viewport.width * dpr);
                 cv.canvas.height = Math.round(viewport.height * dpr);
                 cv.canvas.style.width = viewport.width + 'px';
@@ -901,30 +904,41 @@
                 await page.render({ canvasContext: ctx, viewport: viewport }).promise;
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
                 
-                // Render text layer for selection
+                // ===== REWRITTEN TEXT LAYER RENDERING =====
                 const textLayerDiv = document.getElementById('text-layer');
-                textLayerDiv.innerHTML = '';
+                textLayerDiv.innerHTML = ''; // Clear previous
                 textLayerDiv.style.width = viewport.width + 'px';
                 textLayerDiv.style.height = viewport.height + 'px';
                 
                 const textContent = await page.getTextContent();
                 
-                if (textContent && textContent.items.length > 0) {
+                if (textContent && textContent.items && textContent.items.length > 0) {
                     try {
-                        // PDF.js 3.x API for TextLayer
-                        const textLayer = new pdfjsLib.TextLayer({
-                            textContentSource: textContent,
-                            container: textLayerDiv,
-                            viewport: viewport
-                        });
-                        await textLayer.render();
+                        // Try modern PDF.js 3.x TextLayer class first
+                        if (typeof pdfjsLib.TextLayer !== 'undefined') {
+                            const textLayer = new pdfjsLib.TextLayer({
+                                textContentSource: textContent,
+                                container: textLayerDiv,
+                                viewport: viewport
+                            });
+                            await textLayer.render();
+                        } else {
+                            // Fallback for older versions
+                            pdfjsLib.renderTextLayer({
+                                textContentSource: textContent,
+                                container: textLayerDiv,
+                                viewport: viewport,
+                                textDivs: []
+                            });
+                        }
+                        console.log(`[Text Layer] Rendered successfully for page ${canvasViewer.currentPage}`);
                     } catch (e) {
-                        console.error("Text layer render error:", e);
+                        console.error("[Text Layer] Render error:", e);
                     }
                 } else {
-                    console.warn("No text content found in this PDF page. It may be a scanned image.");
-                    textLayerDiv.innerHTML = '<div style="position:absolute; top:10px; left:10px; font-size:12px; color:var(--neon-red); background:rgba(0,0,0,0.7); padding:4px 8px; border-radius:4px; pointer-events:none;">// PDF dạng hình ảnh quét (không hỗ trợ chọn văn bản)</div>';
+                    console.warn(`[Text Layer] No text content found on page ${canvasViewer.currentPage}. This PDF page may be a scanned image.`);
                 }
+                // ==========================================
                 
                 updateControls();
                 
