@@ -893,7 +893,7 @@
                 const viewport = page.getViewport({ scale: scale });
                 const dpr = window.devicePixelRatio || 1;
                 
-                // Set exact pixel dimensions
+                // Set exact pixel dimensions (no max-width distortion)
                 cv.canvas.width = Math.round(viewport.width * dpr);
                 cv.canvas.height = Math.round(viewport.height * dpr);
                 cv.canvas.style.width = viewport.width + 'px';
@@ -904,9 +904,9 @@
                 await page.render({ canvasContext: ctx, viewport: viewport }).promise;
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
                 
-                // ===== REWRITTEN TEXT LAYER RENDERING =====
+                // ===== TEXT LAYER RENDERING (FIXED SCALING) =====
                 const textLayerDiv = document.getElementById('text-layer');
-                textLayerDiv.innerHTML = ''; // Clear previous
+                textLayerDiv.innerHTML = '';
                 textLayerDiv.style.width = viewport.width + 'px';
                 textLayerDiv.style.height = viewport.height + 'px';
                 
@@ -914,23 +914,14 @@
                 
                 if (textContent && textContent.items && textContent.items.length > 0) {
                     try {
-                        // Try modern PDF.js 3.x TextLayer class first
-                        if (typeof pdfjsLib.TextLayer !== 'undefined') {
-                            const textLayer = new pdfjsLib.TextLayer({
-                                textContentSource: textContent,
-                                container: textLayerDiv,
-                                viewport: viewport
-                            });
-                            await textLayer.render();
-                        } else {
-                            // Fallback for older versions
-                            pdfjsLib.renderTextLayer({
-                                textContentSource: textContent,
-                                container: textLayerDiv,
-                                viewport: viewport,
-                                textDivs: []
-                            });
-                        }
+                        // Use PDF.js TextLayer with proper scaling
+                        const textLayer = new pdfjsLib.TextLayer({
+                            textContentSource: textContent,
+                            container: textLayerDiv,
+                            viewport: viewport,
+                            textDivs: []
+                        });
+                        await textLayer.render();
                         console.log(`[Text Layer] Rendered successfully for page ${canvasViewer.currentPage}`);
                     } catch (e) {
                         console.error("[Text Layer] Render error:", e);
