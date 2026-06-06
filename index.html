@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>RED. Education</title>
+    <meta property="og:title" content="RED. Education - Kho tàng triết học">
+    <meta property="og:description" content="Đọc và ghi chú trực tiếp các tác phẩm triết học. Trình đọc PDF tích hợp, lưu ghi chú tự động và giao diện tối ưu.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/adamlebetonin2k4/Red.Edu/refs/heads/main/logo.png">
+    <meta property="og:url" content="https://github.com/adamlebetonin2k4/Red.Edu/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="RED. Education">
+    
+    <!-- Twitter Card Meta Tags (Also used by some other apps) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="RED. Education - Kho tàng triết học">
+    <meta name="twitter:description" content="Đọc và ghi chú trực tiếp các tác phẩm triết học.">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/adamlebetonin2k4/Red.Edu/refs/heads/main/logo.png">
     
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="shortcut icon" type="image/png" href="logo.png">
@@ -33,13 +45,13 @@
         }
 
         body.dark-mode {
-            --bg-main: #121212;
-            --bg-surface: rgba(28, 28, 28, 0.9);
-            --bg-solid: #1a1a1a;
+            --bg-main: #2a2a2a;
+            --bg-surface: rgba(45, 45, 45, 0.9);
+            --bg-solid: #333333;
             --text-primary: #e8e8e8;
             --text-secondary: #9a9a9a;
             --border-color: rgba(239, 68, 68, 0.25);
-            --border-subtle: #2a2a2a;
+            --border-subtle: #444444;
             --grid-opacity: 0.06;
         }
 
@@ -338,6 +350,16 @@
             position: relative;
             z-index: 1;
         }
+
+        /* ===== PAGE CURL OVERLAY ===== */
+        #page-curl-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 5; /* Above canvas, below text layer */
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
         
         /* ===== TEXT SELECTION LAYER (Bulletproof) ===== */
         #text-layer, #text-layer * {
@@ -355,8 +377,6 @@
             overflow: hidden !important;
             touch-action: auto !important;
             transform: translateZ(2px) !important;
-            
-            /* CRITICAL PDF.JS METRICS */
             text-align: initial !important;
             line-height: 1.0 !important;
             text-size-adjust: none !important;
@@ -367,8 +387,6 @@
             color: transparent !important;
             position: absolute !important;
             white-space: pre !important;
-            
-            /* CRITICAL FOR ROTATION/SCALING ANCHOR */
             transform-origin: 0% 0% !important;
         }
 
@@ -377,8 +395,9 @@
             color: transparent !important;
         }
         
+        /* ===== DARK MODE PDF CANVAS FIX ===== */
         body.dark-mode #pdf-canvas {
-            filter: invert(1) hue-rotate(180deg);
+            filter: brightness(0.92); 
         }
         
         #canvas-loading-overlay {
@@ -585,6 +604,7 @@
                     <div id="canvas-wrapper">
                         <div id="pdf-canvas-container">
                             <canvas id="pdf-canvas"></canvas>
+                            <div id="page-curl-overlay"></div>
                             <div id="text-layer"></div>
                         </div>
                     </div>
@@ -898,35 +918,25 @@
                 const viewport = page.getViewport({ scale: scale });
                 const dpr = window.devicePixelRatio || 1;
                 
-                // Set exact pixel dimensions
                 cv.canvas.width = Math.round(viewport.width * dpr);
                 cv.canvas.height = Math.round(viewport.height * dpr);
                 cv.canvas.style.width = viewport.width + 'px';
                 cv.canvas.style.height = viewport.height + 'px';
                 
-                // Render PDF page to canvas
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 await page.render({ canvasContext: ctx, viewport: viewport }).promise;
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
                 
-                // ===== REWRITTEN TEXT LAYER RENDERING =====
                 const textLayerDiv = document.getElementById('text-layer');
-                textLayerDiv.innerHTML = ''; // Clear previous
-                
-                // Set exact dimensions to match viewport
+                textLayerDiv.innerHTML = ''; 
                 textLayerDiv.style.width = viewport.width + 'px';
                 textLayerDiv.style.height = viewport.height + 'px';
-                
-                // *** CRITICAL FIX FOR PDF.JS v3.x ***
-                // Set the scale factor CSS variable so the text layer scales correctly
                 textLayerDiv.style.setProperty('--scale-factor', scale);
-                // *************************************
                 
                 const textContent = await page.getTextContent();
                 
                 if (textContent && textContent.items && textContent.items.length > 0) {
                     try {
-                        // Try modern PDF.js 3.x TextLayer class first
                         if (typeof pdfjsLib.TextLayer !== 'undefined') {
                             const textLayer = new pdfjsLib.TextLayer({
                                 textContentSource: textContent,
@@ -935,7 +945,6 @@
                             });
                             await textLayer.render();
                         } else {
-                            // Fallback for older versions
                             pdfjsLib.renderTextLayer({
                                 textContentSource: textContent,
                                 container: textLayerDiv,
@@ -943,21 +952,13 @@
                                 textDivs: []
                             });
                         }
-                        console.log(`[Text Layer] Rendered successfully for page ${canvasViewer.currentPage}`);
                     } catch (e) {
                         console.error("[Text Layer] Render error:", e);
                     }
-                } else {
-                    console.warn(`[Text Layer] No text content found on page ${canvasViewer.currentPage}. This PDF page may be a scanned image.`);
                 }
-                // ==========================================
                 
                 updateControls();
-                
-                if (scrollToTop) {
-                    cv.scrollArea.scrollTop = 0;
-                }
-                
+                if (scrollToTop) cv.scrollArea.scrollTop = 0;
                 hideLoading();
                 
             } catch (error) {
@@ -999,44 +1000,75 @@
         }
 
         // =================================================================
-        // ===== 3D PAGE FLIP ANIMATION =====
+        // ===== REALISTIC PAGE CURL ANIMATION =====
         // =================================================================
         
         async function goToPageAnimated(pageNum) {
             if (!canvasViewer.pdfDoc || pageNum < 1 || pageNum > canvasViewer.totalPages || pageNum === canvasViewer.currentPage) return;
             
             const container = document.getElementById('pdf-canvas-container');
+            const overlay = document.getElementById('page-curl-overlay');
             const isNext = pageNum > canvasViewer.currentPage;
             
-            // 1. Start flipping out
-            container.style.transition = 'transform 0.35s ease-in';
-            container.style.transformOrigin = isNext ? 'left center' : 'right center';
-            container.style.transform = isNext ? 'rotateY(-90deg)' : 'rotateY(90deg)';
+            // Reset any inline styles from previous animations
+            container.style.transition = 'none';
+            container.style.transform = 'rotateY(0deg) translateZ(0) rotateX(0deg)';
+            void container.offsetWidth; // Force reflow
             
-            // 2. Update state and scroll to top immediately
+            // 1. Start the flip (Lift and curl)
+            container.style.transition = 'transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1)';
+            container.style.transformOrigin = isNext ? 'left center' : 'right center';
+            
+            // Lift the edge, rotate, and add a slight skew to simulate the bend
+            const liftTransform = isNext 
+                ? 'rotateY(-60deg) translateZ(40px) rotateX(2deg)' 
+                : 'rotateY(60deg) translateZ(40px) rotateX(2deg)';
+                
+            container.style.transform = liftTransform;
+            
+            // Animate the shadow/highlight overlay to simulate light hitting the curl
+            overlay.style.transition = 'opacity 0.2s ease-in, background 0.6s linear';
+            overlay.style.opacity = '1';
+            if (isNext) {
+                // Shadow on the left (spine), highlight on the right (lifting edge)
+                overlay.style.background = 'linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 20%, transparent 50%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.4) 100%)';
+            } else {
+                // Shadow on the right (spine), highlight on the left (lifting edge)
+                overlay.style.background = 'linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 20%, transparent 50%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.4) 100%)';
+            }
+
+            // Update state
             canvasViewer.currentPage = pageNum;
             cv.scrollArea.scrollTop = 0;
             
             const renderPromise = renderCurrentPage(false); 
             
-            // 3. Wait for both the flip-out animation and the PDF rendering to complete
-            await Promise.all([
-                new Promise(resolve => setTimeout(resolve, 350)),
-                renderPromise
-            ]);
+            // Wait for the first half of the animation
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await renderPromise;
             
-            // 4. Snap to the other side without transition
+            // 2. Snap to the other side without transition
             container.style.transition = 'none';
-            container.style.transform = isNext ? 'rotateY(90deg)' : 'rotateY(-90deg)';
+            const snapTransform = isNext 
+                ? 'rotateY(60deg) translateZ(40px) rotateX(2deg)' 
+                : 'rotateY(-60deg) translateZ(40px) rotateX(2deg)';
+            container.style.transform = snapTransform;
             
-            // Force reflow to apply the snap immediately
+            // Force reflow
             void container.offsetWidth; 
             
-            // 5. Flip in
-            container.style.transition = 'transform 0.35s ease-out';
-            container.style.transform = 'rotateY(0deg)';
+            // 3. Complete the flip (Drop the page down)
+            container.style.transition = 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            container.style.transform = 'rotateY(0deg) translateZ(0) rotateX(0deg)';
             
-            // Save position after flip
+            // Fade out the overlay
+            overlay.style.transition = 'opacity 0.4s ease-out, background 0.6s linear';
+            overlay.style.background = 'transparent';
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+            }, 200);
+            
+            // Save position
             if (currentBookId) {
                 schedulePositionSave(currentBookId, canvasViewer.currentPage, 'canvas');
             }
@@ -1067,9 +1099,7 @@
             hideLoading();
             
             const container = document.getElementById('pdf-canvas-container');
-            if (container) {
-                container.style.transform = 'rotateY(0deg)';
-            }
+            if (container) container.style.transform = 'rotateY(0deg) translateZ(0) rotateX(0deg)';
             
             if (cv.canvas) {
                 const ctx = getCanvasContext();
@@ -1078,6 +1108,12 @@
             
             const textLayerDiv = document.getElementById('text-layer');
             if (textLayerDiv) textLayerDiv.innerHTML = '';
+            
+            const overlay = document.getElementById('page-curl-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                overlay.style.background = 'transparent';
+            }
         }
 
         cv.btnPrev.addEventListener('click', () => goToPageAnimated(canvasViewer.currentPage - 1));
@@ -1086,7 +1122,6 @@
         cv.btnZoomOut.addEventListener('click', zoomOut);
         cv.btnFullscreen.addEventListener('click', toggleFullscreen);
 
-        // Swipe navigation (with text selection protection)
         if (cv.scrollArea) {
             let touchStartX = 0, touchStartY = 0;
             let isVerticalScroll = false;
@@ -1106,7 +1141,6 @@
             }, { passive: true });
             
             cv.scrollArea.addEventListener('touchend', (e) => {
-                // Don't swipe if user is selecting text
                 const selection = window.getSelection();
                 if (selection && selection.toString().length > 0) return;
                 
@@ -1177,7 +1211,7 @@
         tabCompiled.addEventListener('click', () => switchMainTab('compiled'));
 
         // =================================================================
-        // ===== BOOKS LIST =====
+        // ===== BOOKS LIST & DEEP LINKING =====
         // =================================================================
         
         function getBookDisplayName(book) { return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - '); }
@@ -1234,10 +1268,156 @@
                     listContainer.appendChild(item);
                     generateThumbnail(`Giao_trinh_triet_hoc/${book.filename}`, `thumb-${idx}`);
                 });
+
+                // ===== DEEP LINKING: Check URL for direct book link =====
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetBookId = urlParams.get('book');
+                if (targetBookId && allBooksMap[targetBookId]) {
+                    setTimeout(() => {
+                        openViewer(`Giao_trinh_triet_hoc/${allBooksMap[targetBookId].filename}`, allBooksMap[targetBookId]);
+                    }, 150);
+                }
             }).catch(err => {
                 listContainer.innerHTML = `<div class="text-center p-8 rounded" style="background: rgba(220,38,38,0.05); border: 1px solid var(--neon-red);"><p class="font-mono" style="color: var(--neon-red);">// Lỗi tải danh sách.</p></div>`;
             });
         }
+
+        // =================================================================
+        // ===== OPEN/CLOSE VIEWER & URL ROUTING =====
+        // =================================================================
+        
+        const mobileNotesArea = document.getElementById('mobile-notes-area');
+        const mobileSaveStatus = document.getElementById('mobile-save-status');
+        const mobileClearBtn = document.getElementById('mobile-clear-notes');
+
+        if (mobileNotesArea) {
+            let mobileSaveTimeout;
+            mobileNotesArea.addEventListener('input', (e) => {
+                if (currentBookId) {
+                    localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
+                    noteArea.value = e.target.value;
+                    mobileSaveStatus.style.opacity = '1';
+                    saveStatus.style.opacity = '1';
+                    clearTimeout(mobileSaveTimeout);
+                    mobileSaveTimeout = setTimeout(() => { mobileSaveStatus.style.opacity = '0'; saveStatus.style.opacity = '0'; }, 1500);
+                }
+            });
+        }
+
+        if (mobileClearBtn) {
+            mobileClearBtn.addEventListener('click', () => {
+                if (currentBookId && confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) {
+                    mobileNotesArea.value = ''; noteArea.value = '';
+                    localStorage.removeItem(`red_notes_${currentBookId}`);
+                }
+            });
+        }
+
+        function openViewer(url, book) {
+            currentFile = book.filename; 
+            currentBookId = book.id;
+            modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
+            noteIdDisplay.textContent = `ID: ${currentBookId}`;
+            
+            // Update URL for deep linking without reloading
+            const currentUrl = new URL(window.location);
+            if (currentUrl.searchParams.get('book') !== book.id) {
+                currentUrl.searchParams.set('book', book.id);
+                window.history.pushState({ bookId: book.id }, '', currentUrl);
+            }
+            
+            let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
+            if (!savedNotes) {
+                const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
+                if (oldNotes) { savedNotes = oldNotes; localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); localStorage.removeItem(`red_notes_${book.filename}`); }
+                else { savedNotes = ''; }
+            }
+            noteArea.value = savedNotes;
+            if (mobileNotesArea) mobileNotesArea.value = savedNotes;
+            
+            const savedPos = loadPosition(currentBookId);
+            const targetPage = (savedPos && savedPos.page && savedPos.page >= 1) ? savedPos.page : 1;
+            
+            loadPDF(url, targetPage);
+            viewerModal.classList.remove('hidden');
+        }
+
+        function closeModalInternal() {
+            if (currentBookId && canvasViewer.pdfDoc) {
+                savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
+            }
+            clearTimeout(positionSaveTimer);
+            viewerModal.classList.add('hidden'); 
+            cleanupCanvasViewer();
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            }
+        }
+
+        function closeViewer() { 
+            closeModalInternal();
+            // Clean URL when manually closed
+            const currentUrl = new URL(window.location);
+            if (currentUrl.searchParams.has('book')) {
+                currentUrl.searchParams.delete('book');
+                window.history.replaceState({}, '', currentUrl);
+            }
+        }
+
+        // Handle browser back/forward buttons for deep linking
+        window.addEventListener('popstate', (event) => {
+            const currentUrl = new URL(window.location);
+            const bookId = currentUrl.searchParams.get('book');
+            
+            if (!bookId && !viewerModal.classList.contains('hidden')) {
+                // User pressed back to close the modal
+                closeModalInternal();
+            } else if (bookId && allBooksMap[bookId] && viewerModal.classList.contains('hidden')) {
+                // User pressed forward to open a book
+                openViewer(`Giao_trinh_triet_hoc/${allBooksMap[bookId].filename}`, allBooksMap[bookId]);
+            }
+        });
+
+        document.getElementById('close-modal').addEventListener('click', closeViewer);
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !viewerModal.classList.contains('hidden')) closeViewer(); });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && currentBookId && canvasViewer.pdfDoc) {
+                savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
+            }
+        });
+
+        let saveTimeout;
+        noteArea.addEventListener('input', (e) => {
+            localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
+            if (mobileNotesArea) mobileNotesArea.value = e.target.value;
+            saveStatus.style.opacity = '1';
+            mobileSaveStatus.style.opacity = '1';
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => { saveStatus.style.opacity = '0'; mobileSaveStatus.style.opacity = '0'; }, 1500);
+        });
+
+        document.getElementById('btn-clear-notes').addEventListener('click', () => {
+            if (confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) { 
+                noteArea.value = ''; 
+                if (mobileNotesArea) mobileNotesArea.value = '';
+                localStorage.removeItem(`red_notes_${currentBookId}`); 
+            }
+        });
+
+        document.getElementById('btn-download-pdf').addEventListener('click', () => { 
+            const link = document.createElement('a'); 
+            link.href = canvasViewer.currentUrl; 
+            link.download = currentFile; 
+            link.click(); 
+        });
+        
+        document.getElementById('btn-download-notes').addEventListener('click', () => {
+            const text = noteArea.value; if (!text.trim()) { alert('Chưa có ghi chú!'); return; }
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `ID_${currentBookId}_notes.txt`; link.click(); URL.revokeObjectURL(url);
+        });
 
         // =================================================================
         // ===== COMPILED NOTES =====
@@ -1296,114 +1476,6 @@
             const blob = new Blob([allNotesText], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a'); link.href = url; link.download = 'RED_Education_All_Notes.txt'; link.click(); URL.revokeObjectURL(url);
-        });
-
-        // =================================================================
-        // ===== OPEN/CLOSE VIEWER =====
-        // =================================================================
-        
-        const mobileNotesArea = document.getElementById('mobile-notes-area');
-        const mobileSaveStatus = document.getElementById('mobile-save-status');
-        const mobileClearBtn = document.getElementById('mobile-clear-notes');
-
-        if (mobileNotesArea) {
-            let mobileSaveTimeout;
-            mobileNotesArea.addEventListener('input', (e) => {
-                if (currentBookId) {
-                    localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
-                    noteArea.value = e.target.value;
-                    mobileSaveStatus.style.opacity = '1';
-                    saveStatus.style.opacity = '1';
-                    clearTimeout(mobileSaveTimeout);
-                    mobileSaveTimeout = setTimeout(() => { mobileSaveStatus.style.opacity = '0'; saveStatus.style.opacity = '0'; }, 1500);
-                }
-            });
-        }
-
-        if (mobileClearBtn) {
-            mobileClearBtn.addEventListener('click', () => {
-                if (currentBookId && confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) {
-                    mobileNotesArea.value = ''; noteArea.value = '';
-                    localStorage.removeItem(`red_notes_${currentBookId}`);
-                }
-            });
-        }
-
-        function openViewer(url, book) {
-            currentFile = book.filename; 
-            currentBookId = book.id;
-            modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
-            noteIdDisplay.textContent = `ID: ${currentBookId}`;
-            
-            let savedNotes = localStorage.getItem(`red_notes_${currentBookId}`);
-            if (!savedNotes) {
-                const oldNotes = localStorage.getItem(`red_notes_${book.filename}`);
-                if (oldNotes) { savedNotes = oldNotes; localStorage.setItem(`red_notes_${currentBookId}`, savedNotes); localStorage.removeItem(`red_notes_${book.filename}`); }
-                else { savedNotes = ''; }
-            }
-            noteArea.value = savedNotes;
-            if (mobileNotesArea) mobileNotesArea.value = savedNotes;
-            
-            const savedPos = loadPosition(currentBookId);
-            const targetPage = (savedPos && savedPos.page && savedPos.page >= 1) ? savedPos.page : 1;
-            
-            loadPDF(url, targetPage);
-            viewerModal.classList.remove('hidden');
-        }
-
-        function closeViewer() { 
-            if (currentBookId && canvasViewer.pdfDoc) {
-                savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
-            }
-            
-            clearTimeout(positionSaveTimer);
-            
-            viewerModal.classList.add('hidden'); 
-            cleanupCanvasViewer();
-            
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-            }
-        }
-        document.getElementById('close-modal').addEventListener('click', closeViewer);
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !viewerModal.classList.contains('hidden')) closeViewer(); });
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && currentBookId && canvasViewer.pdfDoc) {
-                savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
-            }
-        });
-
-        let saveTimeout;
-        noteArea.addEventListener('input', (e) => {
-            localStorage.setItem(`red_notes_${currentBookId}`, e.target.value);
-            if (mobileNotesArea) mobileNotesArea.value = e.target.value;
-            saveStatus.style.opacity = '1';
-            mobileSaveStatus.style.opacity = '1';
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => { saveStatus.style.opacity = '0'; mobileSaveStatus.style.opacity = '0'; }, 1500);
-        });
-
-        document.getElementById('btn-clear-notes').addEventListener('click', () => {
-            if (confirm(`Xóa tất cả ghi chú của sách ID ${currentBookId}?`)) { 
-                noteArea.value = ''; 
-                if (mobileNotesArea) mobileNotesArea.value = '';
-                localStorage.removeItem(`red_notes_${currentBookId}`); 
-            }
-        });
-
-        document.getElementById('btn-download-pdf').addEventListener('click', () => { 
-            const link = document.createElement('a'); 
-            link.href = canvasViewer.currentUrl; 
-            link.download = currentFile; 
-            link.click(); 
-        });
-        
-        document.getElementById('btn-download-notes').addEventListener('click', () => {
-            const text = noteArea.value; if (!text.trim()) { alert('Chưa có ghi chú!'); return; }
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `ID_${currentBookId}_notes.txt`; link.click(); URL.revokeObjectURL(url);
         });
 
         // =================================================================
