@@ -11,7 +11,6 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="RED. Education">
     
-    <!-- Twitter Card Meta Tags (Also used by some other apps) -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="RED. Education - Kho tàng triết học">
     <meta name="twitter:description" content="Đọc và ghi chú trực tiếp các tác phẩm triết học.">
@@ -230,7 +229,6 @@
         #btn-download-notes { background: transparent !important; border: 2px solid var(--neon-red) !important; color: var(--neon-red) !important; transition: all 0.3s; }
         #btn-download-notes:hover { background: rgba(220, 38, 38, 0.1) !important; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); }
 
-        /* ===== NOTES PANEL (Smaller Size) ===== */
         #notes-panel {
             background: var(--bg-surface) !important;
             border-left: 1px solid var(--border-subtle);
@@ -265,14 +263,12 @@
         .tech-corner.bottom-right { bottom: 20px; right: 20px; border-bottom: 1px solid var(--neon-red); border-right: 1px solid var(--neon-red); }
         .data-tag { position: fixed; font-family: 'JetBrains Mono', monospace !important; font-size: 10px; color: var(--neon-red); opacity: 0.3; pointer-events: none; z-index: 3; letter-spacing: 0.1em; }
 
-        /* ===== FULLSCREEN ===== */
         #viewer-modal:fullscreen,
         #viewer-modal:-webkit-full-screen { width: 100vw; height: 100vh; background: var(--bg-main); }
         .fullscreen-btn { transition: all 0.2s; }
         .fullscreen-btn:hover { color: var(--neon-red); }
         .fullscreen-btn.active { color: var(--neon-red); }
 
-        /* ===== CANVAS VIEWER LAYOUT ===== */
         #pdf-viewer-canvas {
             flex: 1;
             flex-direction: column;
@@ -334,7 +330,6 @@
             pointer-events: auto;
         }
         
-        /* Container for 3D flip */
         #pdf-canvas-container {
             position: relative;
             display: inline-block;
@@ -351,17 +346,15 @@
             z-index: 1;
         }
 
-        /* ===== PAGE CURL OVERLAY ===== */
         #page-curl-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
-            z-index: 5; /* Above canvas, below text layer */
+            z-index: 5;
             opacity: 0;
             transition: opacity 0.3s ease;
         }
         
-        /* ===== TEXT SELECTION LAYER (Bulletproof) ===== */
         #text-layer, #text-layer * {
             pointer-events: auto !important;
             user-select: text !important;
@@ -395,7 +388,6 @@
             color: transparent !important;
         }
         
-        /* ===== DARK MODE PDF CANVAS FIX ===== */
         body.dark-mode #pdf-canvas {
             filter: brightness(0.92); 
         }
@@ -417,7 +409,6 @@
         #canvas-loading-overlay i { font-size: 2rem; color: var(--neon-red); margin-bottom: 0.5rem; }
         #canvas-loading-overlay .error-icon { color: var(--neon-red); }
 
-        /* ===== MOBILE NOTES ===== */
         #mobile-notes-section { display: none; width: 100%; flex-shrink: 0; background: var(--bg-surface); border-top: 2px solid var(--border-color); }
         #mobile-notes-header { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.75rem; background: var(--bg-main); border-bottom: 1px solid var(--border-subtle); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); }
         #mobile-notes-header .header-left { display: flex; align-items: center; gap: 0.4rem; }
@@ -430,7 +421,45 @@
         #mobile-notes-area::placeholder { color: var(--text-secondary); font-style: italic; }
         #mobile-notes-area:focus { box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.15); }
 
-        /* ===== SCREEN-WIDTH MEDIA QUERIES ===== */
+        /* ===== TTS PLAYER STYLES ===== */
+        #tts-player-bar {
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+        #tts-progress-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border-subtle);
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+            transition: background 0.2s;
+        }
+        #tts-progress-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--neon-red);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--neon-red-glow);
+            transition: transform 0.1s;
+        }
+        #tts-progress-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        #tts-progress-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--neon-red);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px var(--neon-red-glow);
+        }
+
         @media (max-width: 768px) {
             .desktop-nav { display: none !important; }
             #mobile-notes-section { display: block; }
@@ -443,6 +472,8 @@
             .pdf-item .w-16 { width: 3.5rem !important; height: 4.5rem !important; }
             .pdf-item h3 { font-size: 1rem !important; }
             #notes-panel { width: 100% !important; border-left: none !important; border-top: 1px solid var(--border-subtle); }
+            #tts-player-bar .flex-col { gap: 0.5rem !important; padding: 0.5rem !important; }
+            #tts-player-bar select { max-width: 100px !important; font-size: 0.7rem !important; }
         }
 
         @media (min-width: 769px) {
@@ -581,7 +612,6 @@
         </div>
         <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
             
-            <!-- ===== CANVAS PDF VIEWER ===== -->
             <div id="pdf-viewer-canvas">
                 <div id="canvas-controls-bar">
                     <button id="btn-canvas-prev" title="Trang trước"><i class="fas fa-chevron-left"></i></button>
@@ -592,10 +622,56 @@
                         <span id="canvas-zoom-level">100%</span>
                         <button id="btn-canvas-zoom-in" title="Phóng to"><i class="fas fa-plus"></i></button>
                     </div>
+                    <button id="btn-toggle-tts" class="relative" title="Mở trình đọc văn bản">
+                        <i class="fas fa-headphones"></i>
+                        <span id="tts-active-indicator" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[var(--neon-red)] rounded-full hidden animate-pulse"></span>
+                    </button>
                     <button id="btn-canvas-fullscreen" class="fullscreen-btn" title="Toàn màn hình" style="margin-left: 0.5rem; padding-left: 0.75rem; border-left: 1px solid var(--border-subtle);">
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
+
+                <!-- ===== TTS PLAYER BAR ===== -->
+                <div id="tts-player-bar" class="hidden flex-col p-3 gap-3 shadow-lg z-10">
+                    <div class="flex items-center gap-3 text-xs font-mono text-secondary w-full">
+                        <span id="tts-progress-text" class="min-w-[80px] text-right font-semibold">0:00 / 0:00</span>
+                        <input type="range" id="tts-progress-slider" min="0" max="100" value="0" class="flex-1 cursor-pointer">
+                        <button id="tts-close-player" class="text-secondary hover:text-[var(--neon-red)] transition px-2" title="Đóng"><i class="fas fa-times"></i></button>
+                    </div>
+                    
+                    <div class="flex items-center justify-between w-full">
+                        <div class="flex items-center gap-1 sm:gap-3">
+                            <button id="tts-rewind" class="p-2 rounded-lg hover:bg-[var(--neon-red)]/10 hover:text-[var(--neon-red)] transition" title="Lùi 1 đoạn">
+                                <i class="fas fa-backward-step"></i>
+                            </button>
+                            
+                            <button id="tts-play-pause" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[var(--neon-red)] text-white flex items-center justify-center hover:bg-[var(--neon-red-dark)] transition shadow-lg shadow-[var(--neon-red)]/30" title="Phát">
+                                <i class="fas fa-play text-lg"></i>
+                            </button>
+                            
+                            <button id="tts-forward" class="p-2 rounded-lg hover:bg-[var(--neon-red)]/10 hover:text-[var(--neon-red)] transition" title="Tiến 1 đoạn">
+                                <i class="fas fa-forward-step"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <select id="tts-voice-select" class="text-xs bg-[var(--bg-solid)] border border-[var(--border-subtle)] rounded-lg px-2 py-1.5 text-[var(--text-primary)] max-w-[120px] sm:max-w-[200px] truncate cursor-pointer focus:border-[var(--neon-red)] focus:outline-none">
+                                <option value="">Đang tải giọng đọc...</option>
+                            </select>
+                            <select id="tts-rate-select" class="text-xs bg-[var(--bg-solid)] border border-[var(--border-subtle)] rounded-lg px-2 py-1.5 text-[var(--text-primary)] cursor-pointer focus:border-[var(--neon-red)] focus:outline-none">
+                                <option value="0.7">0.7x</option>
+                                <option value="0.8">0.8x</option>
+                                <option value="0.9">0.9x</option>
+                                <option value="1" selected>1.0x</option>
+                                <option value="1.1">1.1x</option>
+                                <option value="1.2">1.2x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2.0">2.0x</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="canvas-scroll-area">
                     <div id="canvas-loading-overlay">
                         <i class="fas fa-circle-notch fa-spin" id="canvas-loading-icon"></i>
@@ -621,7 +697,6 @@
                 </div>
             </div>
             
-            <!-- ===== DESKTOP NOTES PANEL ===== -->
             <div id="notes-panel" class="flex flex-col flex-shrink-0 min-h-0 notes-panel-desktop">
                 <div class="px-3 sm:px-4 py-3 flex justify-between items-center shadow-sm flex-shrink-0">
                     <div class="flex items-center space-x-2">
@@ -796,7 +871,6 @@
         // =================================================================
         // ===== POSITION CACHE =====
         // =================================================================
-        
         const POSITION_KEY_PREFIX = 'red_position_';
         
         function savePosition(bookId, page, mode) {
@@ -829,7 +903,6 @@
         // =================================================================
         // ===== CANVAS PDF VIEWER =====
         // =================================================================
-        
         const canvasViewer = {
             pdfDoc: null,
             currentPage: 1,
@@ -903,7 +976,6 @@
 
         async function renderCurrentPage(scrollToTop = true) {
             if (!canvasViewer.pdfDoc || !cv.canvas) return;
-            
             try {
                 const page = await canvasViewer.pdfDoc.getPage(canvasViewer.currentPage);
                 const ctx = getCanvasContext();
@@ -934,7 +1006,6 @@
                 textLayerDiv.style.setProperty('--scale-factor', scale);
                 
                 const textContent = await page.getTextContent();
-                
                 if (textContent && textContent.items && textContent.items.length > 0) {
                     try {
                         if (typeof pdfjsLib.TextLayer !== 'undefined') {
@@ -956,11 +1027,9 @@
                         console.error("[Text Layer] Render error:", e);
                     }
                 }
-                
                 updateControls();
                 if (scrollToTop) cv.scrollArea.scrollTop = 0;
                 hideLoading();
-                
             } catch (error) {
                 console.error('Render error:', error);
                 showError('Lỗi khi render trang');
@@ -972,24 +1041,18 @@
                 try { canvasViewer.pdfDoc.destroy(); } catch(e) {}
                 canvasViewer.pdfDoc = null;
             }
-            
             canvasViewer.currentUrl = url;
             canvasViewer.currentPage = Math.max(1, parseInt(startPage) || 1);
             canvasViewer.currentScale = 1.0;
-            
             showLoading('Đang tải PDF...');
-            
             try {
                 const loadingTask = pdfjsLib.getDocument(url);
                 canvasViewer.pdfDoc = await loadingTask.promise;
                 canvasViewer.totalPages = canvasViewer.pdfDoc.numPages;
-                
                 if (canvasViewer.currentPage > canvasViewer.totalPages) {
                     canvasViewer.currentPage = 1;
                 }
-                
                 await renderCurrentPage(true);
-                
                 if (currentBookId) {
                     savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
                 }
@@ -1002,7 +1065,6 @@
         // =================================================================
         // ===== REALISTIC PAGE CURL ANIMATION =====
         // =================================================================
-        
         async function goToPageAnimated(pageNum) {
             if (!canvasViewer.pdfDoc || pageNum < 1 || pageNum > canvasViewer.totalPages || pageNum === canvasViewer.currentPage) return;
             
@@ -1010,65 +1072,47 @@
             const overlay = document.getElementById('page-curl-overlay');
             const isNext = pageNum > canvasViewer.currentPage;
             
-            // Reset any inline styles from previous animations
             container.style.transition = 'none';
             container.style.transform = 'rotateY(0deg) translateZ(0) rotateX(0deg)';
-            void container.offsetWidth; // Force reflow
+            void container.offsetWidth;
             
-            // 1. Start the flip (Lift and curl)
             container.style.transition = 'transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1)';
             container.style.transformOrigin = isNext ? 'left center' : 'right center';
             
-            // Lift the edge, rotate, and add a slight skew to simulate the bend
             const liftTransform = isNext 
                 ? 'rotateY(-60deg) translateZ(40px) rotateX(2deg)' 
                 : 'rotateY(60deg) translateZ(40px) rotateX(2deg)';
-                
             container.style.transform = liftTransform;
             
-            // Animate the shadow/highlight overlay to simulate light hitting the curl
             overlay.style.transition = 'opacity 0.2s ease-in, background 0.6s linear';
             overlay.style.opacity = '1';
             if (isNext) {
-                // Shadow on the left (spine), highlight on the right (lifting edge)
                 overlay.style.background = 'linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 20%, transparent 50%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.4) 100%)';
             } else {
-                // Shadow on the right (spine), highlight on the left (lifting edge)
                 overlay.style.background = 'linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 20%, transparent 50%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.4) 100%)';
             }
 
-            // Update state
             canvasViewer.currentPage = pageNum;
             cv.scrollArea.scrollTop = 0;
             
             const renderPromise = renderCurrentPage(false); 
-            
-            // Wait for the first half of the animation
             await new Promise(resolve => setTimeout(resolve, 300));
             await renderPromise;
             
-            // 2. Snap to the other side without transition
             container.style.transition = 'none';
             const snapTransform = isNext 
                 ? 'rotateY(60deg) translateZ(40px) rotateX(2deg)' 
                 : 'rotateY(-60deg) translateZ(40px) rotateX(2deg)';
             container.style.transform = snapTransform;
-            
-            // Force reflow
             void container.offsetWidth; 
             
-            // 3. Complete the flip (Drop the page down)
             container.style.transition = 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
             container.style.transform = 'rotateY(0deg) translateZ(0) rotateX(0deg)';
             
-            // Fade out the overlay
             overlay.style.transition = 'opacity 0.4s ease-out, background 0.6s linear';
             overlay.style.background = 'transparent';
-            setTimeout(() => {
-                overlay.style.opacity = '0';
-            }, 200);
+            setTimeout(() => { overlay.style.opacity = '0'; }, 200);
             
-            // Save position
             if (currentBookId) {
                 schedulePositionSave(currentBookId, canvasViewer.currentPage, 'canvas');
             }
@@ -1105,10 +1149,8 @@
                 const ctx = getCanvasContext();
                 if (ctx) ctx.clearRect(0, 0, cv.canvas.width, cv.canvas.height);
             }
-            
             const textLayerDiv = document.getElementById('text-layer');
             if (textLayerDiv) textLayerDiv.innerHTML = '';
-            
             const overlay = document.getElementById('page-curl-overlay');
             if (overlay) {
                 overlay.style.opacity = '0';
@@ -1143,7 +1185,6 @@
             cv.scrollArea.addEventListener('touchend', (e) => {
                 const selection = window.getSelection();
                 if (selection && selection.toString().length > 0) return;
-                
                 const diffX = touchStartX - e.changedTouches[0].screenX;
                 if (!isVerticalScroll && Math.abs(diffX) > SWIPE_THRESHOLD) {
                     if (diffX > 0) goToPageAnimated(canvasViewer.currentPage + 1);
@@ -1155,7 +1196,6 @@
         // =================================================================
         // ===== FULLSCREEN =====
         // =================================================================
-        
         const btnFullscreen = document.getElementById('btn-fullscreen');
         
         function toggleFullscreen() {
@@ -1172,7 +1212,6 @@
             const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
             const icon = isFullscreen ? 'fa-compress' : 'fa-expand';
             const text = isFullscreen ? 'Exit' : 'Fullscreen';
-            
             if (btnFullscreen) {
                 btnFullscreen.querySelector('i').className = `fas ${icon} mr-1 sm:mr-2`;
                 btnFullscreen.querySelector('span').textContent = text;
@@ -1191,7 +1230,6 @@
         // =================================================================
         // ===== TABS =====
         // =================================================================
-        
         function switchMainTab(tabName) {
             const tabs = [
                 { btn: tabBooks, content: contentBooks, name: 'books' },
@@ -1213,7 +1251,6 @@
         // =================================================================
         // ===== BOOKS LIST & DEEP LINKING =====
         // =================================================================
-        
         function getBookDisplayName(book) { return book.title || book.filename.replace('.pdf', '').replace(/-/g, ' ').replace(' cua ', ' - '); }
 
         async function generateThumbnail(pdfUrl, canvasId) {
@@ -1241,7 +1278,6 @@
                     const item = document.createElement('div');
                     item.className = 'pdf-item flex items-center p-4 rounded cursor-pointer';
                     const authorText = book.author || 'Ẩn danh';
-                    
                     const savedPos = loadPosition(book.id);
                     const positionHint = savedPos && savedPos.page > 1 
                         ? `// Tiếp tục từ trang ${savedPos.page}` 
@@ -1269,7 +1305,6 @@
                     generateThumbnail(`Giao_trinh_triet_hoc/${book.filename}`, `thumb-${idx}`);
                 });
 
-                // ===== DEEP LINKING: Check URL for direct book link =====
                 const urlParams = new URLSearchParams(window.location.search);
                 const targetBookId = urlParams.get('book');
                 if (targetBookId && allBooksMap[targetBookId]) {
@@ -1285,7 +1320,6 @@
         // =================================================================
         // ===== OPEN/CLOSE VIEWER & URL ROUTING =====
         // =================================================================
-        
         const mobileNotesArea = document.getElementById('mobile-notes-area');
         const mobileSaveStatus = document.getElementById('mobile-save-status');
         const mobileClearBtn = document.getElementById('mobile-clear-notes');
@@ -1314,12 +1348,15 @@
         }
 
         function openViewer(url, book) {
+            if (ttsState.isPlaying || ttsState.isPaused) {
+                stopTTS();
+            }
+
             currentFile = book.filename; 
             currentBookId = book.id;
             modalTitle.textContent = `${getBookDisplayName(book)} — ${book.author || ''}`;
             noteIdDisplay.textContent = `ID: ${currentBookId}`;
             
-            // Update URL for deep linking without reloading
             const currentUrl = new URL(window.location);
             if (currentUrl.searchParams.get('book') !== book.id) {
                 currentUrl.searchParams.set('book', book.id);
@@ -1343,6 +1380,8 @@
         }
 
         function closeModalInternal() {
+            if (ttsState.isPlaying || ttsState.isPaused) stopTTS();
+            
             if (currentBookId && canvasViewer.pdfDoc) {
                 savePosition(currentBookId, canvasViewer.currentPage, 'canvas');
             }
@@ -1357,7 +1396,6 @@
 
         function closeViewer() { 
             closeModalInternal();
-            // Clean URL when manually closed
             const currentUrl = new URL(window.location);
             if (currentUrl.searchParams.has('book')) {
                 currentUrl.searchParams.delete('book');
@@ -1365,16 +1403,12 @@
             }
         }
 
-        // Handle browser back/forward buttons for deep linking
         window.addEventListener('popstate', (event) => {
             const currentUrl = new URL(window.location);
             const bookId = currentUrl.searchParams.get('book');
-            
             if (!bookId && !viewerModal.classList.contains('hidden')) {
-                // User pressed back to close the modal
                 closeModalInternal();
             } else if (bookId && allBooksMap[bookId] && viewerModal.classList.contains('hidden')) {
-                // User pressed forward to open a book
                 openViewer(`Giao_trinh_triet_hoc/${allBooksMap[bookId].filename}`, allBooksMap[bookId]);
             }
         });
@@ -1422,7 +1456,6 @@
         // =================================================================
         // ===== COMPILED NOTES =====
         // =================================================================
-        
         function loadCompiledNotes() {
             compiledNotesList.innerHTML = '';
             const notesData = [];
@@ -1479,9 +1512,384 @@
         });
 
         // =================================================================
+        // ===== ADVANCED TTS PLAYER (TIME-BASED) =====
+        // =================================================================
+        const ttsState = {
+            synth: window.speechSynthesis,
+            voices: [],
+            selectedVoiceURI: localStorage.getItem('red_tts_voice') || '',
+            rate: parseFloat(localStorage.getItem('red_tts_rate')) || 1.0,
+            isPlaying: false,
+            isPaused: false,
+            textChunks: [],
+            chunkDurations: [],
+            totalEstimatedTime: 0,
+            elapsedTime: 0,
+            lastTick: 0,
+            timerInterval: null,
+            currentChunkIndex: 0,
+            utterance: null
+        };
+
+        function initTTSVoices() {
+            if (!ttsState.synth) return;
+            const loadVoices = () => {
+                ttsState.voices = ttsState.synth.getVoices();
+                const voiceSelect = document.getElementById('tts-voice-select');
+                voiceSelect.innerHTML = '';
+                
+                const sortedVoices = [...ttsState.voices].sort((a, b) => {
+                    const aVi = a.lang.startsWith('vi') ? 0 : 1;
+                    const bVi = b.lang.startsWith('vi') ? 0 : 1;
+                    if (aVi !== bVi) return aVi - bVi;
+                    return a.name.localeCompare(b.name);
+                });
+
+                sortedVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.voiceURI;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    if (voice.voiceURI === ttsState.selectedVoiceURI || (!ttsState.selectedVoiceURI && voice.lang.startsWith('vi'))) {
+                        option.selected = true;
+                        ttsState.selectedVoiceURI = voice.voiceURI;
+                    }
+                    voiceSelect.appendChild(option);
+                });
+                
+                if (ttsState.selectedVoiceURI) {
+                    localStorage.setItem('red_tts_voice', ttsState.selectedVoiceURI);
+                }
+            };
+            
+            loadVoices();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+        }
+        initTTSVoices();
+
+        function formatTime(seconds) {
+            let m = Math.floor(seconds / 60);
+            let s = Math.floor(seconds % 60);
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function chunkText(text) {
+            const chunks = [];
+            const sentences = text.match(/[^.?!;\n]+[.?!;\n]+/g) || [text];
+            let currentChunk = "";
+            
+            for (let sentence of sentences) {
+                if ((currentChunk + sentence).length > 1500) {
+                    if (currentChunk.trim()) chunks.push(currentChunk.trim());
+                    currentChunk = sentence;
+                } else {
+                    currentChunk += sentence;
+                }
+            }
+            if (currentChunk.trim()) chunks.push(currentChunk.trim());
+            return chunks;
+        }
+
+        function updateTTSProgressUI() {
+            const slider = document.getElementById('tts-progress-slider');
+            const text = document.getElementById('tts-progress-text');
+            
+            let current = Math.min(ttsState.elapsedTime, ttsState.totalEstimatedTime);
+            let total = ttsState.totalEstimatedTime;
+            
+            let percentage = total > 0 ? (current / total) * 100 : 0;
+            
+            slider.max = 100;
+            slider.value = percentage;
+            text.textContent = `${formatTime(current)} / ${formatTime(total)}`;
+            
+            slider.style.background = `linear-gradient(to right, var(--neon-red) 0%, var(--neon-red) ${percentage}%, var(--border-subtle) ${percentage}%, var(--border-subtle) 100%)`;
+        }
+
+        function playNextChunk() {
+            if (ttsState.currentChunkIndex >= ttsState.textChunks.length) {
+                stopTTS();
+                return;
+            }
+
+            const textToRead = ttsState.textChunks[ttsState.currentChunkIndex];
+            ttsState.utterance = new SpeechSynthesisUtterance(textToRead);
+            
+            const selectedVoice = ttsState.voices.find(v => v.voiceURI === ttsState.selectedVoiceURI);
+            if (selectedVoice) ttsState.utterance.voice = selectedVoice;
+            
+            ttsState.utterance.lang = 'vi-VN';
+            ttsState.utterance.rate = ttsState.rate;
+            
+            ttsState.utterance.onstart = () => {
+                ttsState.isPlaying = true;
+                ttsState.isPaused = false;
+                ttsState.lastTick = Date.now();
+                updateTTSPlayerUI();
+                
+                ttsState.timerInterval = setInterval(() => {
+                    if (ttsState.isPlaying) {
+                        let now = Date.now();
+                        ttsState.elapsedTime += (now - ttsState.lastTick) / 1000;
+                        ttsState.lastTick = now;
+                        updateTTSProgressUI();
+                    }
+                }, 500); 
+            };
+            
+            ttsState.utterance.onend = () => {
+                clearInterval(ttsState.timerInterval);
+                ttsState.currentChunkIndex++;
+                if (ttsState.isPlaying) {
+                    playNextChunk();
+                }
+            };
+
+            ttsState.utterance.onerror = (e) => {
+                clearInterval(ttsState.timerInterval);
+                if (e.error !== 'canceled' && e.error !== 'interrupted') {
+                    console.error('TTS Error:', e);
+                    stopTTS();
+                }
+            };
+            
+            ttsState.synth.speak(ttsState.utterance);
+        }
+
+        function startTTS() {
+            if (!ttsState.synth) {
+                alert('Trình duyệt của bạn không hỗ trợ tính năng đọc aloud.');
+                return;
+            }
+            
+            if (ttsState.isPaused) {
+                ttsState.synth.resume();
+                ttsState.isPaused = false;
+                ttsState.isPlaying = true;
+                ttsState.lastTick = Date.now();
+                updateTTSPlayerUI();
+                return;
+            }
+
+            if (ttsState.isPlaying) return;
+
+            const playBtn = document.getElementById('tts-play-pause');
+            playBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin text-lg"></i>';
+            playBtn.title = "Đang tải...";
+            
+            if (!currentBookId) {
+                alert('Trình đọc không tương thích với tác phẩm này.');
+                updateTTSPlayerUI();
+                return;
+            }
+
+            if (ttsState.textChunks.length === 0) {
+                fetch(`Giao_trinh_triet_hoc/${currentBookId}.txt`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('File not found');
+                        return response.text();
+                    })
+                    .then(fullText => {
+                        if (!fullText || fullText.trim().length < 10) throw new Error('Empty file');
+                        ttsState.textChunks = chunkText(fullText.trim());
+                        
+                        ttsState.chunkDurations = [];
+                        let cumulativeTime = 0;
+                        for (let chunk of ttsState.textChunks) {
+                            cumulativeTime += chunk.length * 0.05; 
+                            ttsState.chunkDurations.push(cumulativeTime);
+                        }
+                        ttsState.totalEstimatedTime = cumulativeTime;
+                        ttsState.elapsedTime = 0;
+                        ttsState.currentChunkIndex = 0;
+                        
+                        updateTTSProgressUI();
+                        playNextChunk();
+                    })
+                    .catch(error => {
+                        console.error('TTS Fetch Error:', error);
+                        alert('Trình đọc không tương thích với tác phẩm này.');
+                        updateTTSPlayerUI();
+                    });
+            } else {
+                playNextChunk();
+            }
+        }
+
+        function pauseTTS() {
+            if (ttsState.synth && ttsState.isPlaying) {
+                ttsState.synth.pause();
+                ttsState.isPaused = true;
+                ttsState.isPlaying = false;
+                clearInterval(ttsState.timerInterval);
+                updateTTSPlayerUI();
+            }
+        }
+
+        function stopTTS() {
+            if (ttsState.synth) {
+                ttsState.synth.cancel();
+            }
+            clearInterval(ttsState.timerInterval);
+            ttsState.isPlaying = false;
+            ttsState.isPaused = false;
+            ttsState.textChunks = [];
+            ttsState.chunkDurations = [];
+            ttsState.totalEstimatedTime = 0;
+            ttsState.elapsedTime = 0;
+            ttsState.currentChunkIndex = 0;
+            updateTTSPlayerUI();
+        }
+
+        function seekTTS(percentage) {
+            if (ttsState.textChunks.length === 0) return;
+            
+            ttsState.synth.cancel();
+            clearInterval(ttsState.timerInterval);
+            
+            let targetTime = (percentage / 100) * ttsState.totalEstimatedTime;
+            
+            let targetChunkIndex = 0;
+            for (let i = 0; i < ttsState.chunkDurations.length; i++) {
+                if (targetTime <= ttsState.chunkDurations[i]) {
+                    targetChunkIndex = i;
+                    break;
+                }
+            }
+            
+            ttsState.currentChunkIndex = targetChunkIndex;
+            let timeAtStartOfChunk = targetChunkIndex > 0 ? ttsState.chunkDurations[targetChunkIndex - 1] : 0;
+            ttsState.elapsedTime = timeAtStartOfChunk;
+            
+            updateTTSProgressUI();
+            
+            if (ttsState.isPlaying || ttsState.isPaused) {
+                ttsState.isPlaying = false;
+                playNextChunk();
+            }
+        }
+
+        // FIXED: Robust UI update that directly rewrites the button's inner HTML
+        // to prevent the icon from getting stuck or deleted.
+        function updateTTSPlayerUI() {
+            const playBtn = document.getElementById('tts-play-pause');
+            const indicator = document.getElementById('tts-active-indicator');
+            const playerBar = document.getElementById('tts-player-bar');
+            
+            if (ttsState.isPlaying) {
+                playBtn.innerHTML = '<i class="fas fa-pause text-lg"></i>';
+                playBtn.title = "Tạm dừng";
+                indicator.classList.remove('hidden');
+                playerBar.classList.remove('hidden');
+                playerBar.classList.add('flex');
+            } else if (ttsState.isPaused) {
+                playBtn.innerHTML = '<i class="fas fa-play text-lg"></i>';
+                playBtn.title = "Tiếp tục phát";
+                indicator.classList.remove('hidden');
+                playerBar.classList.remove('hidden');
+                playerBar.classList.add('flex');
+            } else {
+                playBtn.innerHTML = '<i class="fas fa-play text-lg"></i>';
+                playBtn.title = "Phát";
+                indicator.classList.add('hidden');
+                if (ttsState.textChunks.length > 0) {
+                    playerBar.classList.remove('hidden');
+                    playerBar.classList.add('flex');
+                }
+            }
+        }
+
+        // TTS Event Listeners
+        document.getElementById('btn-toggle-tts').addEventListener('click', () => {
+            const playerBar = document.getElementById('tts-player-bar');
+            if (playerBar.classList.contains('hidden')) {
+                playerBar.classList.remove('hidden');
+                playerBar.classList.add('flex');
+                if (ttsState.textChunks.length === 0 && currentBookId) {
+                    startTTS();
+                }
+            } else {
+                if (ttsState.isPlaying) pauseTTS();
+                else if (ttsState.textChunks.length > 0) startTTS();
+            }
+        });
+
+        document.getElementById('tts-close-player').addEventListener('click', () => {
+            stopTTS();
+            document.getElementById('tts-player-bar').classList.add('hidden');
+            document.getElementById('tts-player-bar').classList.remove('flex');
+        });
+
+        document.getElementById('tts-play-pause').addEventListener('click', () => {
+            if (ttsState.isPlaying) pauseTTS();
+            else startTTS();
+        });
+
+        document.getElementById('tts-rewind').addEventListener('click', () => {
+            if (ttsState.textChunks.length === 0) return;
+            ttsState.synth.cancel();
+            clearInterval(ttsState.timerInterval);
+            ttsState.currentChunkIndex = Math.max(0, ttsState.currentChunkIndex - 1);
+            let timeAtStart = ttsState.currentChunkIndex > 0 ? ttsState.chunkDurations[ttsState.currentChunkIndex - 1] : 0;
+            ttsState.elapsedTime = timeAtStart;
+            updateTTSProgressUI();
+            if (ttsState.isPlaying || ttsState.isPaused) {
+                ttsState.isPlaying = false;
+                playNextChunk();
+            }
+        });
+
+        document.getElementById('tts-forward').addEventListener('click', () => {
+            if (ttsState.textChunks.length === 0) return;
+            ttsState.synth.cancel();
+            clearInterval(ttsState.timerInterval);
+            ttsState.currentChunkIndex = Math.min(ttsState.textChunks.length - 1, ttsState.currentChunkIndex + 1);
+            let timeAtStart = ttsState.currentChunkIndex > 0 ? ttsState.chunkDurations[ttsState.currentChunkIndex - 1] : 0;
+            ttsState.elapsedTime = timeAtStart;
+            updateTTSProgressUI();
+            if (ttsState.isPlaying || ttsState.isPaused) {
+                ttsState.isPlaying = false;
+                playNextChunk();
+            }
+        });
+
+        const ttsSlider = document.getElementById('tts-progress-slider');
+        ttsSlider.addEventListener('input', (e) => {
+            const total = ttsState.totalEstimatedTime;
+            const percentage = parseInt(e.target.value);
+            const targetTime = (percentage / 100) * total;
+            document.getElementById('tts-progress-text').textContent = `${formatTime(targetTime)} / ${formatTime(total)}`;
+        });
+        
+        ttsSlider.addEventListener('change', (e) => {
+            const percentage = parseInt(e.target.value);
+            seekTTS(percentage);
+        });
+
+        document.getElementById('tts-voice-select').addEventListener('change', (e) => {
+            ttsState.selectedVoiceURI = e.target.value;
+            localStorage.setItem('red_tts_voice', ttsState.selectedVoiceURI);
+            if (ttsState.isPlaying) {
+                ttsState.synth.cancel();
+                clearInterval(ttsState.timerInterval);
+                playNextChunk();
+            }
+        });
+
+        document.getElementById('tts-rate-select').addEventListener('change', (e) => {
+            ttsState.rate = parseFloat(e.target.value);
+            localStorage.setItem('red_tts_rate', ttsState.rate);
+            if (ttsState.isPlaying) {
+                ttsState.synth.cancel();
+                clearInterval(ttsState.timerInterval);
+                playNextChunk();
+            }
+        });
+
+        // =================================================================
         // ===== INIT =====
         // =================================================================
-        
         loadBooksList(true);
 
         document.getElementById('btn-refresh').addEventListener('click', () => {
